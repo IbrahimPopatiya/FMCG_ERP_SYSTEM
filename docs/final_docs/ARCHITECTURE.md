@@ -44,7 +44,7 @@ For a single shop with ≤1000 customers, these are ranked deliberately — don'
 | Team | 2 developers: backend+mobile (you), frontend (your brother) | team reality |
 | Backend language | Python (FastAPI) — chosen because it's your strongest language | stack decision |
 | Frontend | Next.js/React — your brother's strongest stack | stack decision |
-| Mobile | Flutter, single codebase, role-based UI, offline-first (Drift/SQLite) | PRD §5, §9 |
+| Mobile | React Native (Expo), single codebase, role-based UI, offline-first (Expo SQLite/WatermelonDB) | PRD §5, §9 |
 | External system | Tally Prime — must remain system of record for Inventory/Ledger/GST/Invoice numbering; connects via XML API (ODBC fallback) | PRD §4.3, §11 |
 | Deployment environment | Client's local network/middleware host must be able to reach Tally's XML/ODBC interface | PRD §11 |
 | Scale ceiling | ≤1000 customers, single shop, single warehouse | product decision |
@@ -77,8 +77,8 @@ For a single shop with ≤1000 customers, these are ranked deliberately — don'
 
 | From | To | Protocol | Notes |
 |---|---|---|---|
-| Customer App (Flutter) | Backend | HTTPS/REST (+ WebSocket for live status) | Public-facing, OTP-authenticated |
-| ERP Mobile App (Flutter) | Backend | HTTPS/REST (+ WebSocket) | Staff-authenticated, offline-first sync |
+| Customer App (React Native) | Backend | HTTPS/REST (+ WebSocket for live status) | Public-facing, OTP-authenticated |
+| ERP Mobile App (React Native) | Backend | HTTPS/REST (+ WebSocket) | Staff-authenticated, offline-first sync |
 | Admin Web (Next.js) | Backend | HTTPS/REST (+ WebSocket) | Staff-authenticated |
 | Backend | PostgreSQL | SQL (SQLModel/SQLAlchemy) | Primary data store |
 | Backend | Redis | Redis protocol | Cache + Celery broker |
@@ -96,7 +96,7 @@ The core architectural decisions, and why:
 3. **Async queue isolates Tally.** All Tally communication goes through Celery + Redis, never inline in a request. If Tally is offline, orders/invoices queue and retry — nothing in the customer-facing flow ever waits on Tally (PRD §10, Availability).
 4. **Flat schema, no premature abstraction.** Matches `PHASE1_SIMPLE_SCHEMA.md` — 14 tables, no RBAC tables, no multi-price-lists, no polymorphic audit log. Architecture follows data: fewer moving parts end to end.
 5. **Contract-first development.** Section 8 (API design) is written and agreed before implementation starts, so backend (you) and frontend (your brother) can build in parallel without blocking each other.
-6. **Offline-first only where the business needs it.** Warehouse/Driver/Salesman flows can happen with poor connectivity (a warehouse floor, a delivery route) — Flutter apps queue writes locally (Drift/SQLite) and sync on reconnect. The Admin dashboard and Customer app assume normal connectivity — no need to over-engineer offline support where it isn't a real problem.
+6. **Offline-first only where the business needs it.** Warehouse/Driver/Salesman flows can happen with poor connectivity (a warehouse floor, a delivery route) — React Native apps queue writes locally (Expo SQLite/WatermelonDB) and sync on reconnect. The Admin dashboard and Customer app assume normal connectivity — no need to over-engineer offline support where it isn't a real problem.
 
 ---
 
@@ -107,7 +107,7 @@ The core architectural decisions, and why:
 ```
 ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
 │  Customer App     │   │  ERP Mobile App   │   │  Admin Web        │
-│  (Flutter)        │   │  (Flutter)        │   │  (Next.js)        │
+│  (React Native)   │   │  (React Native)   │   │  (Next.js)        │
 └────────┬─────────┘   └────────┬─────────┘   └────────┬─────────┘
          │                      │                       │
          └──────────────────────┼───────────────────────┘
@@ -229,7 +229,7 @@ Kept intentionally simple for this scale — one environment, no orchestration p
 │  server)             │          │  (on client's LAN)   │
 └──────────────────┘          └──────────────────┘
 
-  Flutter apps (Customer, ERP Mobile) — distributed via
+  React Native apps (Customer, ERP Mobile) — distributed via
   Play Store / App Store, talk to the server over HTTPS
 ```
 
@@ -253,10 +253,10 @@ Every state-changing action on `orders`, `dispatches`, `deliveries`, `payments` 
 
 ### 8.4 Error handling & idempotency
 - All Tally-bound Celery tasks are idempotent (retry-safe) — a task checks "is this already synced?" before acting, so a retry after a partial failure never double-creates an invoice.
-- API errors return consistent shape: `{ "error_code": "...", "message": "..." }` — same contract across all endpoints so both Flutter and Next.js clients handle errors uniformly.
+- API errors return consistent shape: `{ "error_code": "...", "message": "..." }` — same contract across all endpoints so both React Native and Next.js clients handle errors uniformly.
 
 ### 8.5 Offline support (mobile only)
-Warehouse/Salesman/Driver flows in the ERP Mobile App write to local Drift/SQLite first, queue a sync job, and reconcile with the backend on reconnect. Conflict rule: server is always authoritative on reconnect (last-write-wins is not used for financial data — conflicting local writes are flagged for manual review, never silently merged).
+Warehouse/Salesman/Driver flows in the ERP Mobile App write to local Expo SQLite/WatermelonDB first, queue a sync job, and reconcile with the backend on reconnect. Conflict rule: server is always authoritative on reconnect (last-write-wins is not used for financial data — conflicting local writes are flagged for manual review, never silently merged).
 
 ### 8.6 Notifications
 Domain modules emit events (`OrderApproved`, `InvoiceGenerated`, `DeliveryCompleted`, …); the `notifications` module subscribes and sends Push/SMS/WhatsApp. Domain modules never call a notification provider directly — keeps `orders.service` free of messaging-provider concerns.
@@ -273,7 +273,8 @@ Domain modules emit events (`OrderApproved`, `InvoiceGenerated`, `DeliveryComple
 | 4 | Celery + Redis for Tally sync | Inline synchronous calls | Tally can be offline; must never block order placement (PRD §10 Availability) |
 | 5 | Flat 14-table schema | 83-table DDD schema | Matches actual scale (≤1000 customers); avoid premature complexity |
 | 6 | Single deployable backend | Separate service per domain | Same reasoning as #2 |
-| 7 | JWT auth, role column (not full RBAC tables) | Roles/permissions tables | Handful of staff; add RBAC tables only if that changes |
+| 7 | React Native (Expo) for mobile | Flutter | Neither developer knows Dart/Flutter; React Native reuses the team's existing React/JS knowledge (your brother's frontend skill transfers directly), and Expo SQLite/WatermelonDB still gives real offline storage — unlike a wrapped-website (Capacitor) approach, which was also considered and rejected for weaker offline reliability |
+| 8 | JWT auth, role column (not full RBAC tables) | Roles/permissions tables | Handful of staff; add RBAC tables only if that changes |
 
 ---
 
@@ -307,6 +308,6 @@ Domain modules emit events (`OrderApproved`, `InvoiceGenerated`, `DeliveryComple
 | Goals, constraints | `docs/PRD.md` §1–2, §10–11 |
 | Data shapes referenced throughout | `docs/database_docs/PHASE1_SIMPLE_SCHEMA.md` |
 | Tally integration options | `docs/second_chat.md` |
-| Stack decisions | This conversation (FastAPI/Next.js/Flutter/Celery) |
+| Stack decisions | This conversation (FastAPI/Next.js/React Native/Celery) |
 
 **Next step:** Section 8's API-contract-first approach means the next document to write is the **API Contract** — endpoint list per module, request/response shapes — so you and your brother can start building in parallel against a shared, agreed interface.

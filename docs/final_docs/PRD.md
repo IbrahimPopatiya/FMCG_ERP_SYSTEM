@@ -116,8 +116,8 @@ Deferred to later phases (see Section 8 below and Section 8 of `requirements_doc
 
 | Application | Platform | Users | Why separate |
 |---|---|---|---|
-| **Customer Ordering App** | Flutter (Android/iOS) | Retailers/shopkeepers | External trust boundary, shopping-app UX |
-| **ERP Mobile App** | Flutter, single codebase, role-based UI | Salesman, Warehouse Supervisor, Loader, Driver, Cashier | Same login/permission system; screen shown depends on role, not a separate build |
+| **Customer Ordering App** | React Native (Android/iOS) | Retailers/shopkeepers | External trust boundary, shopping-app UX |
+| **ERP Mobile App** | React Native, single codebase, role-based UI | Salesman, Warehouse Supervisor, Loader, Driver, Cashier | Same login/permission system; screen shown depends on role, not a separate build |
 | **Admin Web Dashboard** | Next.js (web) | Admin, Sales Manager, Accountant | Desktop-heavy workflows (approval queues, reports, invoice review, catalogue management) |
 | **Tally Prime** | Existing, unmodified | Accountant (continues normal use) | System of record for inventory/ledger/GST/invoicing |
 
@@ -203,7 +203,7 @@ Full detail lives in `phase_1_roadmap.md`; summarized here for product-level con
 - **Architecture:** Domain-Driven Design — each business domain (Auth, Customer, Catalog, Sales, Planning, Warehouse, Accounting, Delivery, Payment, Notification, Audit, Alert, Integration) is an isolated backend module. Nothing outside the **Integration module** is allowed to know Tally exists.
 - **Tally connection:** via Tally's XML API, queued through Redis/Celery so orders/invoices are never lost if Tally is closed or offline — retried automatically.
 - **Event-driven:** domain actions (e.g. `OrderApproved`) emit events; Notification/Audit/Alert modules subscribe rather than being called directly, so new side effects can be added without touching core logic.
-- **Stack:** FastAPI + PostgreSQL + SQLModel/SQLAlchemy + Alembic (backend), Flutter (mobile, offline-first via local SQLite/Drift), Next.js + TypeScript (admin web), Redis + Celery (cache/queue), FastAPI native WebSockets (realtime), S3-compatible storage (documents/photos).
+- **Stack:** FastAPI + PostgreSQL + SQLModel/SQLAlchemy + Alembic (backend), React Native + Expo (mobile, offline-first via Expo SQLite/WatermelonDB), Next.js + TypeScript (admin web), Redis + Celery (cache/queue), FastAPI native WebSockets (realtime), S3-compatible storage (documents/photos).
 - **Security default:** nothing from the client is trusted — price, discount, GST, credit, and stock warnings are always recalculated server-side.
 - **Build sequence:** 11 sprints, ordered by dependency (Auth → Catalog → Customer → Sales → Planning → Warehouse → Integration/Accounting → Delivery/Payment → Notification/Audit/Alert hardening → Client Pilot). Full sprint-by-sprint plan in `phase_1_roadmap.md`.
 
@@ -222,7 +222,7 @@ Full detail lives in `phase_1_roadmap.md`; summarized here for product-level con
 | Scalability | Schema reserves `branch_id`/`company_id` for future multi-branch growth without redesign |
 | Usability | Customer-facing screens usable by non-technical shopkeepers — icon-first, simple flows |
 | Localization | Configurable app language per user/customer |
-| Compatibility | Android + iOS via single Flutter codebase |
+| Compatibility | Android + iOS via single React Native (Expo) codebase |
 
 ---
 
