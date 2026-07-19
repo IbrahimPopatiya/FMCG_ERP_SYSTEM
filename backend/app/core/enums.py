@@ -19,3 +19,8 @@ class UserRole(str, Enum):
     MANAGER = "manager"
     DISPATCHER = "dispatcher"
     CASHIER = "cashier"
+
+
+class RouteStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
