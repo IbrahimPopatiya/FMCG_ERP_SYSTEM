@@ -1,7 +1,10 @@
 import uuid
+from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
+
+from app.core.enums import UserRole, UserStatus
 
 
 class UserCreate(BaseModel):
@@ -9,13 +12,17 @@ class UserCreate(BaseModel):
     mobile: str
     email: EmailStr
     password: str
-    role: str  # admin, salesman, driver, manager, dispatcher, cashier
+    role: UserRole
 
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
-    role: Optional[str] = None
+    role: Optional[UserRole] = None
+
+
+class UserStatusUpdate(BaseModel):
+    status: UserStatus
 
 
 class UserResponse(BaseModel):
@@ -23,8 +30,14 @@ class UserResponse(BaseModel):
     full_name: str
     mobile: str
     email: EmailStr
-    role: str
-    status: str
+    role: UserRole
+    status: UserStatus
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserDeleteResponse(BaseModel):
+    id: uuid.UUID
+    deleted_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

@@ -1,10 +1,17 @@
 import uuid
+from datetime import datetime, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.enums import UserStatus
 from app.core.security import hash_password
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
+
+
+class DuplicateUserError(Exception):
+    """Raised when mobile or email is already used by another user."""
 
 
 def create_user(db: Session, data: UserCreate) -> User:
@@ -16,7 +23,11 @@ def create_user(db: Session, data: UserCreate) -> User:
         role=data.role,
     )
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise DuplicateUserError("A user with this mobile or email already exists")
     db.refresh(user)
     return user
 
@@ -35,6 +46,28 @@ def update_user(db: Session, user_id: uuid.UUID, data: UserUpdate) -> User | Non
     for field, value in updates.items():
         setattr(user, field, value)
 
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def set_user_status(db: Session, user_id: uuid.UUID, new_status: UserStatus) -> User | None:
+    user = get_user(db, user_id)
+    if user is None:
+        return None
+
+    user.status = new_status
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def soft_delete_user(db: Session, user_id: uuid.UUID) -> User | None:
+    user = get_user(db, user_id)
+    if user is None:
+        return None
+
+    user.deleted_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(user)
     return user
