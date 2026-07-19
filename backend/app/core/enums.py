@@ -34,3 +34,13 @@ class CustomerStatus(str, Enum):
 class ProductStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
+
+
+class SupplierStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
+
+class WarehouseStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
