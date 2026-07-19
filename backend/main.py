@@ -12,7 +12,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import health
+from app.api import health, users
 from app.db.init_db import create_all_tables
 
 app = FastAPI(title="DMS API")
@@ -26,8 +26,9 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
     create_all_tables()
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
