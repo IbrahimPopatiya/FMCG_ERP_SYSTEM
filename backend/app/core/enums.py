@@ -24,3 +24,9 @@ class UserRole(str, Enum):
 class RouteStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
+
+
+class CustomerStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    BLOCKED = "blocked"
