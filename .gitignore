@@ -14,6 +14,11 @@ backend/*.log
 # Alembic
 backend/alembic/versions/__pycache__/
 
+# Backend has no npm/node dependency - ignore in case of accidental npm install
+backend/node_modules/
+backend/package.json
+backend/package-lock.json
+
 # ===== Frontend (Next.js) =====
 frontend/node_modules/
 frontend/.next/

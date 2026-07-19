@@ -12,7 +12,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import health, users, routes, customers
+from app.api import health, users, routes, customers, categories, brands
 from app.db.init_db import create_all_tables
 
 app = FastAPI(title="DMS API")
@@ -29,6 +29,8 @@ app.include_router(health.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
 app.include_router(routes.router, prefix="/api/v1")
 app.include_router(customers.router, prefix="/api/v1")
+app.include_router(categories.router, prefix="/api/v1")
+app.include_router(brands.router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
