@@ -87,3 +87,60 @@ def test_create_customer_without_route_or_price_list_is_allowed(client):
     response = client.post("/api/v1/customers", json=make_customer_payload(), headers=headers)
 
     assert response.status_code == 201
+
+
+# ---------- PATCH /customers/{id} ----------
+
+def test_update_customer_changes_only_sent_fields(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-100"), headers=headers
+    ).json()
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}",
+        json={"business_name": "Updated Store Name"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["business_name"] == "Updated Store Name"
+
+
+def test_update_customer_without_token_returns_401_or_403(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-101"), headers=headers
+    ).json()
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}", json={"business_name": "No Auth"}
+    )
+
+    assert response.status_code in (401, 403)
+
+
+def test_update_customer_not_found_returns_404(client):
+    headers = auth_headers(client)
+    fake_id = uuid.uuid4()
+
+    response = client.patch(
+        f"/api/v1/customers/{fake_id}", json={"business_name": "Nobody"}, headers=headers
+    )
+
+    assert response.status_code == 404
+
+
+def test_update_customer_credit_limit(client):
+    """Business rule check: credit_limit is a decimal field, must accept and
+    persist a new numeric value (this is what stock/order limits will rely on)."""
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-102"), headers=headers
+    ).json()
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}", json={"credit_limit": 75000.50}, headers=headers
+    )
+
+    assert response.status_code == 200

@@ -25,6 +25,22 @@ class CustomerCreate(BaseModel):
     price_list_id: Optional[uuid.UUID] = None
 
 
+class CustomerUpdate(BaseModel):
+    business_name: Optional[str] = None
+    owner_name: Optional[str] = None
+    mobile: Optional[str] = None
+    alternate_mobile: Optional[str] = None
+    gst_number: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    pincode: Optional[str] = None
+    credit_limit: Optional[Decimal] = None
+    payment_terms: Optional[int] = None
+    route_id: Optional[uuid.UUID] = None
+    price_list_id: Optional[uuid.UUID] = None
+
+
 class CustomerResponse(BaseModel):
     id: uuid.UUID
     customer_code: str
