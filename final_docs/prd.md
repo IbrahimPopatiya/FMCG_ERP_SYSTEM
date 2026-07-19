@@ -4,15 +4,17 @@
 | | |
 |---|---|
 | **Document Owner** | Product Team |
-| **Status** | Draft v1.0 |
-| **Last Updated** | 2026-07-18 |
-| **Related Docs** | `database_schema_docs.markdown`, `apis_doc.md` |
+| **Status** | Draft v2.0 |
+| **Last Updated** | 2026-07-19 |
+| **Related Docs** | `database_schema_docs.markdown`, `apis_doc.md`, `api_reference.md`, `ui_ux_functional_requirements.md` |
+
+> **v2 change:** Customers can now **place their own orders** through a customer self-service portal (previously staff-only). This adds a Customer persona (§4), customer self-ordering requirements (§6.2), and small additive schema/API changes (§9). The rest of the staff-driven flow is unchanged.
 
 ---
 
 ## 1. Purpose / Overview
 
-This document defines the product requirements for a **Distribution Management System (DMS)** — a B2B wholesale/distribution platform built for the Indian FMCG market. It digitizes the full order-to-cash and procurement cycle for a distributor: taking orders from retail customers (shops), invoicing with GST, delivering via van, collecting payment, purchasing stock from suppliers, and handling returns — with full inventory and financial traceability.
+This document defines the product requirements for a **Distribution Management System (DMS)** — a B2B wholesale/distribution platform built for the Indian FMCG market. It digitizes the full order-to-cash and procurement cycle for a distributor: taking orders from retail customers (shops) — **both via field salesmen and directly by customers through a self-service portal** — invoicing with GST, delivering via van, collecting payment, purchasing stock from suppliers, and handling returns — with full inventory and financial traceability.
 
 ---
 
@@ -40,8 +42,8 @@ Distributors currently manage orders, stock, and collections through manual regi
 
 - Vehicle operational tracking (fuel, mileage, daily trip logs).
 - Full Tally two-way sync (v1 is one-way push, retry on failure).
-- Customer-facing ordering app (v1 is internal staff-facing only).
 - Multi-currency support (INR only).
+- Customer self-service beyond ordering and viewing their own orders/invoices/dues/deliveries (no customer-managed returns or payments online in v1 — those stay staff-processed).
 
 ---
 
@@ -54,6 +56,9 @@ Distributors currently manage orders, stock, and collections through manual regi
 | **Driver** | Delivery & collection | Load van, deliver, collect payment, capture signature/GPS |
 | **Cashier** | Finance | Verify payments, reconcile invoices, mark cheque bounces |
 | **Warehouse Staff** | Inventory | Receive purchases, process returns, adjust stock |
+| **Customer (Shop)** | Self-service (external) | Log in, browse the catalogue at their own price list, place their own orders, and track their orders, invoices, outstanding dues, and deliveries |
+
+> The Customer is an **external** persona (a shop owner/buyer), unlike the internal staff personas above. Customers authenticate against the `CUSTOMERS` record, not the `USERS` table, and can only ever see and act on their **own** data.
 
 ---
 
@@ -62,13 +67,14 @@ Distributors currently manage orders, stock, and collections through manual regi
 ### 5.1 In Scope (Core Modules)
 
 1. **Master Data**: Users, Routes, Customers, Categories, Brands, Products, Price Lists, Warehouses, Suppliers, Vehicles.
-2. **Selling Flow**: Sales Order → Approval → Invoice → Delivery → Payment.
-3. **Buying Flow**: Purchase → Receipt → Stock update.
-4. **Returns Flow**: Return request → Approval → Stock reconciliation.
-5. **Inventory Ledger**: Append-only movement log + rebuildable stock summary.
-6. **Audit Log**: System-wide who-did-what trail.
-7. **File Handling**: Signatures, product images, return/delivery photos via object storage.
-8. **Tally Sync**: One-way push of invoices/payments/returns with retry.
+2. **Selling Flow**: Sales Order → Approval → Invoice → Delivery → Payment. Orders can be created **either by a salesman** (on the customer's behalf) **or by the customer directly** via the self-service portal; both feed the same approval → invoice → delivery → payment flow.
+3. **Customer Self-Service Portal**: Customer login, catalogue browsing at the customer's own price list, self-ordering, and read-only tracking of their own orders, invoices, dues, and deliveries.
+4. **Buying Flow**: Purchase → Receipt → Stock update.
+5. **Returns Flow**: Return request → Approval → Stock reconciliation.
+6. **Inventory Ledger**: Append-only movement log + rebuildable stock summary.
+7. **Audit Log**: System-wide who-did-what trail.
+8. **File Handling**: Signatures, product images, return/delivery photos via object storage.
+9. **Tally Sync**: One-way push of invoices/payments/returns with retry.
 
 ### 5.2 Out of Scope
 
@@ -89,6 +95,8 @@ See Non-Goals above.
 
 ### 6.2 Selling Flow
 - FR-8: Salesman can create a Sales Order with multiple line items for a customer; prices pull from the customer's assigned price list.
+- FR-8a: A **customer can create their own Sales Order** through the self-service portal. The `customer_id` is taken from the authenticated customer (never sent/trusted from the client); such orders have **no salesman** and are marked `order_source = customer`. They enter the same `pending` state and follow the same approval → invoice → delivery → payment flow.
+- FR-8b: A customer can browse the product catalogue and see **their own price-list prices** and stock availability, and can view (read-only) their **own** orders, invoices, outstanding dues, and delivery status. A customer can never see or act on another customer's data, nor access any staff/master-data function.
 - FR-9: System auto-calculates subtotal, discount, GST (CGST+SGST or IGST based on warehouse vs. customer state), round-off, and total — server-side only.
 - FR-10: Admin/Manager can approve an order (sets `approved_qty`), which reserves stock via an inventory movement.
 - FR-11: Warehouse staff confirms loaded quantities (`loaded_qty`), which deducts stock (`sold_out` movement).
@@ -141,17 +149,21 @@ This PRD is built directly on top of:
 
 Key architectural principle carried into this PRD: **the frontend never directly edits inventory, GST totals, or payment status** — these are always server-derived, written through business-action APIs, and backed by the audit/movement ledgers.
 
+Extended for customer self-service: **the identity of the ordering customer is server-derived too.** When a customer places an order, the backend uses the `customer_id` from the authenticated session — it never trusts a `customer_id` sent in the request body. Every customer-facing API is scoped so a customer can only read/write their own records. Staff-only actions (approve, load, invoice, deliver, payment verify, master data) remain unavailable to customers regardless of what the client sends.
+
 ---
 
 ## 9. Known Gaps / Open Items
 
 These are identified mismatches between current schema/API design and likely full requirements — to be resolved before/during build:
 
-1. **Customer GPS**: `CUSTOMERS` table has no latitude/longitude columns yet; needed for location capture.
-2. **Roles**: `role` enum needs `dispatcher` and `cashier` added.
-3. **Delivery detail**: Missing fields for delivery photos, UPI screenshot, returned-goods photo, voice notes, and outcome states (`partial`, `customer_closed`, `customer_refused`), plus item-level delivered/pending quantities.
-4. **Vehicle operations**: Current `VEHICLES` table is master-only; daily trip/fuel/mileage tracking needs new tables (future phase).
-5. **Confirm business rules**: unique-code reuse after soft delete, rounding convention, inventory movement quantity sign convention, and full audit-log scope (see schema doc §9).
+1. **Customer authentication (new in v2)**: `CUSTOMERS` has no credentials today. To let customers log in, add a nullable `password_hash` and a `login_enabled` flag to `CUSTOMERS`. Login is unified (`POST /auth/login` resolves a staff user *or* a customer by mobile + password and returns the principal type). Customers are **not** rows in `USERS` and have no `role`.
+2. **Order source (new in v2)**: `SALES_ORDERS.salesman_id` must become **nullable** (customer-placed orders have no salesman), and a new `order_source` enum (`salesman`, `customer`) should be added to distinguish them. `created_by` stays null for customer-placed orders.
+3. **Customer GPS**: `CUSTOMERS` table has no latitude/longitude columns yet; needed for location capture.
+4. **Roles**: `role` enum needs `dispatcher` and `cashier` added.
+5. **Delivery detail**: Missing fields for delivery photos, UPI screenshot, returned-goods photo, voice notes, and outcome states (`partial`, `customer_closed`, `customer_refused`), plus item-level delivered/pending quantities.
+6. **Vehicle operations**: Current `VEHICLES` table is master-only; daily trip/fuel/mileage tracking needs new tables (future phase).
+7. **Confirm business rules**: unique-code reuse after soft delete, rounding convention, inventory movement quantity sign convention, and full audit-log scope (see schema doc §9).
 
 ---
 
@@ -171,7 +183,7 @@ These are identified mismatches between current schema/API design and likely ful
 |---|---|
 | **Phase 1 — MVP** | Master data, Sales Order → Invoice → Delivery → Payment, basic Inventory ledger |
 | **Phase 2** | Purchases, Returns, Audit Log, File uploads |
-| **Phase 3** | Tally sync, reporting/dashboards, offline sync hardening |
+| **Phase 3** | Customer self-service portal (login, catalogue, self-ordering, order/invoice/dues/delivery tracking), Tally sync, reporting/dashboards, offline sync hardening |
 | **Phase 4** | Vehicle operations tracking, advanced delivery outcomes, customer GPS |
 
 ---

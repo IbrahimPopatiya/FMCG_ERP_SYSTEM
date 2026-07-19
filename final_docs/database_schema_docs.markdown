@@ -34,6 +34,9 @@ These are the concrete changes applied compared to the original schema. Confirm 
 8. **New `AUDIT_LOG` table.** A general who-did-what trail across the system.
 9. **Indexing strategy** documented in Section 8 (all FKs, all UQ columns, plus targeted
    composite indexes).
+10. **Customer self-service ordering.** `CUSTOMERS` gains `password_hash` + `login_enabled` and
+    a **unique** `mobile` so customers can log in and place their own orders. `SALES_ORDERS`
+    gains `order_source` (`salesman` / `customer`) and its `salesman_id` becomes nullable.
 
 ---
 
@@ -188,7 +191,7 @@ All staff. The `role` column decides whether someone is a salesman, driver, admi
 | customer_code | UQ, NOT_NULL | Varchar(50) | Short unique shop code. |
 | business_name | NOT_NULL | Varchar(200) | Shop / business name. |
 | owner_name | NOT_NULL | Varchar(150) | Owner / contact name. |
-| mobile | NOT_NULL | Varchar(20) | Primary mobile. |
+| mobile | UQ, NOT_NULL | Varchar(20) | Primary mobile. **Changed (v2): now unique** (partial unique on non-deleted rows) because it is the customer's portal login. |
 | alternate_mobile | NULL | Varchar(20) | Optional second mobile. |
 | gst_number | NULL | Varchar(30) | GST number (optional). |
 | address | NOT_NULL | Text | Full address. |
@@ -199,8 +202,12 @@ All staff. The `role` column decides whether someone is a salesman, driver, admi
 | payment_terms | NOT_NULL | Integer | Credit period in days. |
 | route_id | FK | Uuid | Route → `ROUTES.id`. |
 | price_list_id | FK | Uuid | Price list → `PRICE_LISTS.id`. |
+| password_hash | NULL | Varchar(255) | **New (v2):** encrypted password for the customer self-service portal. Null = no portal login set up. Login is by `mobile` + password. |
+| login_enabled | NOT_NULL | Boolean | **New (v2):** whether this customer may log in to the self-service portal. Defaults to false; independent of `status`. |
 | status | NOT_NULL | Enum | Active / inactive / blocked. |
 | created_at | NOT_NULL | Timestamp | When added. |
+
+> **Customer self-service (v2):** customers authenticate against this table, **not** `USERS`. They have no `role`; their permissions are fixed (see the API docs) — read/write only their own orders and read-only access to their own invoices, dues, and deliveries. A customer's `mobile` is their login and is used with a **partial unique** index (see §8) so it stays unique among non-deleted customers.
 
 #### PRICE_LISTS
 *Audit columns added: `created_at`, `updated_at`, `deleted_at`.*
@@ -353,7 +360,8 @@ trail, lets you reconcile when counters look wrong, and is essential for offline
 | id | PK | Uuid | Unique ID. |
 | order_number | UQ, NOT_NULL | Varchar(80) | Unique order number. |
 | customer_id | FK | Uuid | → `CUSTOMERS.id`. |
-| salesman_id | FK | Uuid | → `USERS.id`. |
+| salesman_id | FK, NULL | Uuid | → `USERS.id`. **Changed (v2): now nullable** — null when the customer placed the order themselves. |
+| order_source | NOT_NULL | Enum | **New (v2):** who placed the order — `salesman` or `customer`. Defaults to `salesman`. |
 | order_date | NOT_NULL | Timestamp | When placed. |
 | status | NOT_NULL | Enum | pending / approved / loaded / delivered / cancelled. |
 | remarks | NULL | Text | Optional notes. |
@@ -625,6 +633,7 @@ document, so you never get a document without its matching stock movement.
 | SUPPLIERS | status | `active`, `inactive` |
 | VEHICLES | status | `available`, `in_use`, `maintenance` |
 | SALES_ORDERS | status | `pending`, `approved`, `loaded`, `delivered`, `cancelled` |
+| SALES_ORDERS | order_source | `salesman`, `customer` |
 | PURCHASES | status | `draft`, `received`, `cancelled` |
 | INVOICES | payment_status | `unpaid`, `partial`, `paid` |
 | INVOICES | tally_sync_status | `pending`, `synced`, `failed` |
@@ -696,6 +705,12 @@ Apply the same pattern to `sku`, `barcode`, `order_number`, `invoice_number`,
   `INVENTORY_MOVEMENTS.quantity`.
 - **Audit log scope** — confirm which actions/tables must be logged (all financial writes at
   minimum).
+- **Unified login & mobile uniqueness (v2)** — login accepts a mobile + password and resolves to
+  either a `USERS` row or a `CUSTOMERS` row. `mobile` is unique *within* each table, but a staff
+  member and a customer could in theory share a mobile number. Confirm the rule: either enforce
+  mobile is globally unique across both tables, or disambiguate at login (e.g. check staff first,
+  then customer). Recommended: treat staff and customer as distinct principal types and check
+  `USERS` first, then `CUSTOMERS`.
 
 ---
 
