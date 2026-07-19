@@ -105,3 +105,44 @@ def test_update_user_status_invalid_value_returns_422(client):
     response = client.patch(f"/api/v1/users/{created['id']}/status", json={"status": "deleted"})
 
     assert response.status_code == 422
+
+
+# ---------- DELETE /users/{id} ----------
+
+def test_delete_user_sets_deleted_at(client):
+    created = client.post("/api/v1/users", json=make_user_payload()).json()
+
+    response = client.delete(f"/api/v1/users/{created['id']}")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == created["id"]
+    assert body["deleted_at"] is not None
+
+
+def test_deleted_user_no_longer_updatable(client):
+    """Soft-deleted users should behave as if they don't exist for other APIs."""
+    created = client.post("/api/v1/users", json=make_user_payload()).json()
+    client.delete(f"/api/v1/users/{created['id']}")
+
+    response = client.patch(f"/api/v1/users/{created['id']}", json={"full_name": "Ghost"})
+
+    assert response.status_code == 404
+
+
+def test_delete_user_not_found_returns_404(client):
+    fake_id = uuid.uuid4()
+
+    response = client.delete(f"/api/v1/users/{fake_id}")
+
+    assert response.status_code == 404
+
+
+def test_delete_user_twice_returns_404_on_second_call(client):
+    created = client.post("/api/v1/users", json=make_user_payload()).json()
+
+    first = client.delete(f"/api/v1/users/{created['id']}")
+    second = client.delete(f"/api/v1/users/{created['id']}")
+
+    assert first.status_code == 200
+    assert second.status_code == 404

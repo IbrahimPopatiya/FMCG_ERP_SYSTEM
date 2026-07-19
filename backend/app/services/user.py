@@ -62,6 +62,7 @@ def set_user_status(db: Session, user_id: uuid.UUID, new_status: UserStatus) -> 
     return user
 
 
+
 def soft_delete_user(db: Session, user_id: uuid.UUID) -> User | None:
     user = get_user(db, user_id)
     if user is None:

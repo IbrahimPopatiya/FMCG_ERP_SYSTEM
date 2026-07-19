@@ -36,6 +36,7 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+
 class UserDeleteResponse(BaseModel):
     id: uuid.UUID
     deleted_at: datetime
