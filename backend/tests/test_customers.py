@@ -257,3 +257,68 @@ def test_update_customer_location_missing_field_returns_422(client):
     )
 
     assert response.status_code == 422
+
+
+# ---------- DELETE /customers/{id} ----------
+
+def test_delete_customer_sets_deleted_at(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-400"), headers=headers
+    ).json()
+
+    response = client.delete(f"/api/v1/customers/{created['id']}", headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == created["id"]
+    assert body["deleted_at"] is not None
+
+
+def test_delete_customer_without_token_returns_401_or_403(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-401"), headers=headers
+    ).json()
+
+    response = client.delete(f"/api/v1/customers/{created['id']}")
+
+    assert response.status_code in (401, 403)
+
+
+def test_delete_customer_not_found_returns_404(client):
+    headers = auth_headers(client)
+    fake_id = uuid.uuid4()
+
+    response = client.delete(f"/api/v1/customers/{fake_id}", headers=headers)
+
+    assert response.status_code == 404
+
+
+def test_deleted_customer_no_longer_updatable(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-402"), headers=headers
+    ).json()
+    client.delete(f"/api/v1/customers/{created['id']}", headers=headers)
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}",
+        json={"business_name": "Ghost Store"},
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+
+
+def test_delete_customer_twice_returns_404_on_second_call(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-403"), headers=headers
+    ).json()
+
+    first = client.delete(f"/api/v1/customers/{created['id']}", headers=headers)
+    second = client.delete(f"/api/v1/customers/{created['id']}", headers=headers)
+
+    assert first.status_code == 200
+    assert second.status_code == 404

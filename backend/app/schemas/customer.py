@@ -67,3 +67,10 @@ class CustomerResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CustomerDeleteResponse(BaseModel):
+    id: uuid.UUID
+    deleted_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

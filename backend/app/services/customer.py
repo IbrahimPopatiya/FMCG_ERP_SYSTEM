@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
@@ -88,6 +89,17 @@ def update_customer_location(
 
     customer.latitude = latitude
     customer.longitude = longitude
+    db.commit()
+    db.refresh(customer)
+    return customer
+
+
+def soft_delete_customer(db: Session, customer_id: uuid.UUID) -> Customer | None:
+    customer = get_customer(db, customer_id)
+    if customer is None:
+        return None
+
+    customer.deleted_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(customer)
     return customer

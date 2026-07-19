@@ -13,6 +13,7 @@ from app.schemas.customer import (
     CustomerLocationUpdate,
     CustomerLocationResponse,
     CustomerResponse,
+    CustomerDeleteResponse,
 )
 from app.services import customer as customer_service
 from app.services.customer import DuplicateCustomerError
@@ -72,6 +73,18 @@ def update_customer_location(
     customer = customer_service.update_customer_location(
         db, customer_id, data.latitude, data.longitude
     )
+    if customer is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+    return customer
+
+
+@router.delete("/{customer_id}", response_model=CustomerDeleteResponse)
+def delete_customer(
+    customer_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    customer = customer_service.soft_delete_customer(db, customer_id)
     if customer is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
     return customer
