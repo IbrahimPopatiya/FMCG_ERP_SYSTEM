@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -73,6 +74,20 @@ def set_customer_status(
         return None
 
     customer.status = new_status
+    db.commit()
+    db.refresh(customer)
+    return customer
+
+
+def update_customer_location(
+    db: Session, customer_id: uuid.UUID, latitude: Decimal, longitude: Decimal
+) -> Customer | None:
+    customer = get_customer(db, customer_id)
+    if customer is None:
+        return None
+
+    customer.latitude = latitude
+    customer.longitude = longitude
     db.commit()
     db.refresh(customer)
     return customer

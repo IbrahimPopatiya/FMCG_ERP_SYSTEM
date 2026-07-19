@@ -197,3 +197,63 @@ def test_update_customer_status_invalid_value_returns_422(client):
     )
 
     assert response.status_code == 422
+
+
+# ---------- PATCH /customers/{id}/location ----------
+
+def test_update_customer_location(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-300"), headers=headers
+    ).json()
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}/location",
+        json={"latitude": 18.5204303, "longitude": 73.8567437},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert float(body["latitude"]) == 18.5204303
+    assert float(body["longitude"]) == 73.8567437
+
+
+def test_update_customer_location_without_token_returns_401_or_403(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-301"), headers=headers
+    ).json()
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}/location",
+        json={"latitude": 18.5, "longitude": 73.8},
+    )
+
+    assert response.status_code in (401, 403)
+
+
+def test_update_customer_location_not_found_returns_404(client):
+    headers = auth_headers(client)
+    fake_id = uuid.uuid4()
+
+    response = client.patch(
+        f"/api/v1/customers/{fake_id}/location",
+        json={"latitude": 18.5, "longitude": 73.8},
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+
+
+def test_update_customer_location_missing_field_returns_422(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-302"), headers=headers
+    ).json()
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}/location", json={"latitude": 18.5}, headers=headers
+    )
+
+    assert response.status_code == 422

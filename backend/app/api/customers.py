@@ -10,6 +10,8 @@ from app.schemas.customer import (
     CustomerCreate,
     CustomerUpdate,
     CustomerStatusUpdate,
+    CustomerLocationUpdate,
+    CustomerLocationResponse,
     CustomerResponse,
 )
 from app.services import customer as customer_service
@@ -55,6 +57,21 @@ def update_customer_status(
     current_user: User = Depends(get_current_user),
 ):
     customer = customer_service.set_customer_status(db, customer_id, data.status)
+    if customer is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+    return customer
+
+
+@router.patch("/{customer_id}/location", response_model=CustomerLocationResponse)
+def update_customer_location(
+    customer_id: uuid.UUID,
+    data: CustomerLocationUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    customer = customer_service.update_customer_location(
+        db, customer_id, data.latitude, data.longitude
+    )
     if customer is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
     return customer

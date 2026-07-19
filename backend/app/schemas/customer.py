@@ -45,6 +45,20 @@ class CustomerStatusUpdate(BaseModel):
     status: CustomerStatus
 
 
+class CustomerLocationUpdate(BaseModel):
+    latitude: Decimal
+    longitude: Decimal
+
+
+class CustomerLocationResponse(BaseModel):
+    id: uuid.UUID
+    latitude: Optional[Decimal]
+    longitude: Optional[Decimal]
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CustomerResponse(BaseModel):
     id: uuid.UUID
     customer_code: str
