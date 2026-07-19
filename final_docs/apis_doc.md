@@ -35,6 +35,8 @@ Below is the **API list that can make changes to tables**.
 
 I would **not** create APIs such as `/admins`, `/drivers`, `/salesmen`, `/cashiers`. They are all users differentiated by `role`.
 
+**Customer self-service login (v2):** `POST /auth/login` is **unified** — the same endpoint logs in both staff (a `USERS` row) and customers (a `CUSTOMERS` row using the self-service portal). The server checks staff first, then customers, and returns a `principal_type` of `user` or `customer` so the frontend knows which app to show. Customers are **not** rows in `USERS` and have no `role`; they get a customer-scoped token that only reaches their own data (see Section 10 and the customer-scoping rule at the end of this doc). Do not build a separate `/customers/login` — keep it on `/auth/login`.
+
 Your current schema should eventually add `dispatcher` and `cashier` to the role enum because the requirements contain those roles but the current schema only suggests `admin`, `salesman`, `driver`, and `manager`. 
 
 ### 2. Routes
@@ -192,6 +194,8 @@ Example conceptually:
   ]
 }
 ```
+
+**Customer self-ordering (v2):** `POST /orders` is also callable by a **customer** using the self-service portal. When the caller is a customer, the backend takes `customer_id` from the authenticated token (a `customer_id` in the body is ignored), and saves the order with `order_source = customer` and `salesman_id = null`. When the caller is staff, `customer_id` comes from the body and `order_source = salesman`. Both paths produce a `pending` order that flows through the same approve → invoice → deliver → pay lifecycle. Customers may edit/cancel only their **own** `pending` orders and can never approve, load, or invoice.
 
 The frontend should **not send trusted totals, GST calculations, or selling prices** if the server can calculate them.
 
@@ -531,6 +535,12 @@ One important rule will keep your backend clean:
 > **Never expose `INVENTORY_MOVEMENTS` or `AUDIT_LOG` as normal create/update APIs to the frontend.**
 
 Those are **system-generated tables**. When an order is approved, stock received, return completed, payment recorded, etc., your backend writes those records automatically. The same applies to calculated fields such as invoice `payment_status`, stock summaries, GST totals, and outstanding balances.
+
+A second rule keeps the customer portal safe:
+
+> **A customer token may only ever touch that customer's own data.**
+
+When a request carries a customer-scoped token, the backend derives `customer_id` from the token (never the body), filters every read to that customer, and rejects all staff/master-data/other-customer actions. Enforce this in one place (auth/permission layer), not per-endpoint.
 
 This gives you a clean architecture:
 
