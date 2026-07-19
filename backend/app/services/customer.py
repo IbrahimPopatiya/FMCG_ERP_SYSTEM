@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.enums import CustomerStatus
 from app.models.customer import Customer
 from app.schemas.customer import CustomerCreate, CustomerUpdate
 
@@ -60,5 +61,18 @@ def update_customer(db: Session, customer_id: uuid.UUID, data: CustomerUpdate) -
     except IntegrityError:
         db.rollback()
         raise DuplicateCustomerError("A customer with this mobile already exists")
+    db.refresh(customer)
+    return customer
+
+
+def set_customer_status(
+    db: Session, customer_id: uuid.UUID, new_status: CustomerStatus
+) -> Customer | None:
+    customer = get_customer(db, customer_id)
+    if customer is None:
+        return None
+
+    customer.status = new_status
+    db.commit()
     db.refresh(customer)
     return customer

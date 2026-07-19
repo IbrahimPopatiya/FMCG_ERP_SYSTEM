@@ -144,3 +144,56 @@ def test_update_customer_credit_limit(client):
     )
 
     assert response.status_code == 200
+
+
+# ---------- PATCH /customers/{id}/status ----------
+
+def test_block_customer(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-200"), headers=headers
+    ).json()
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}/status", json={"status": "blocked"}, headers=headers
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "blocked"
+
+
+def test_update_customer_status_without_token_returns_401_or_403(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-201"), headers=headers
+    ).json()
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}/status", json={"status": "blocked"}
+    )
+
+    assert response.status_code in (401, 403)
+
+
+def test_update_customer_status_not_found_returns_404(client):
+    headers = auth_headers(client)
+    fake_id = uuid.uuid4()
+
+    response = client.patch(
+        f"/api/v1/customers/{fake_id}/status", json={"status": "blocked"}, headers=headers
+    )
+
+    assert response.status_code == 404
+
+
+def test_update_customer_status_invalid_value_returns_422(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-202"), headers=headers
+    ).json()
+
+    response = client.patch(
+        f"/api/v1/customers/{created['id']}/status", json={"status": "vip"}, headers=headers
+    )
+
+    assert response.status_code == 422

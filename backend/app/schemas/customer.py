@@ -41,6 +41,10 @@ class CustomerUpdate(BaseModel):
     price_list_id: Optional[uuid.UUID] = None
 
 
+class CustomerStatusUpdate(BaseModel):
+    status: CustomerStatus
+
+
 class CustomerResponse(BaseModel):
     id: uuid.UUID
     customer_code: str
