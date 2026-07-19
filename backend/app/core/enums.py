@@ -30,3 +30,7 @@ class CustomerStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     BLOCKED = "blocked"
+    
+class ProductStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
