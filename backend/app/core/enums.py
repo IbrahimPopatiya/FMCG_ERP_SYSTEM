@@ -81,3 +81,16 @@ class DeliveryStatus(str, Enum):
     OUT_FOR_DELIVERY = "out_for_delivery"
     DELIVERED = "delivered"
     FAILED = "failed"
+
+
+class MovementType(str, Enum):
+    PURCHASE_IN = "purchase_in"
+    RESERVED = "reserved"
+    UNRESERVED = "unreserved"
+    SOLD_OUT = "sold_out"
+    RETURNED_IN = "returned_in"
+    DAMAGED = "damaged"
+    EXPIRED = "expired"
+    ADJUSTMENT = "adjustment"
+    TRANSFER_IN = "transfer_in"
+    TRANSFER_OUT = "transfer_out"
