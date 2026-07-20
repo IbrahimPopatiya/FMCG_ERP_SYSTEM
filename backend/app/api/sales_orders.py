@@ -3,13 +3,18 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import Principal, get_current_principal
+from app.core.deps import Principal, get_current_principal, require_staff
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.sales_order import (
     SalesOrderCreate,
     SalesOrderUpdate,
     SalesOrderResponse,
     SalesOrderCancelResponse,
+    SalesOrderApproveRequest,
+    SalesOrderApproveResponse,
+    SalesOrderLoadRequest,
+    SalesOrderLoadResponse,
 )
 from app.services import sales_order as sales_order_service
 from app.services.sales_order import (
@@ -18,6 +23,9 @@ from app.services.sales_order import (
     NotAuthorizedForCustomerError,
     NoFulfillingWarehouseError,
     OrderNotEditableError,
+    OrderNotApprovableError,
+    OrderNotLoadableError,
+    SalesOrderItemNotFoundError,
 )
 
 router = APIRouter(prefix="/orders", tags=["sales-orders"])
@@ -73,6 +81,44 @@ def update_order(
     except NoFulfillingWarehouseError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except OrderNotEditableError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    return order
+
+
+@router.post("/{order_id}/approve", response_model=SalesOrderApproveResponse)
+def approve_order(
+    order_id: uuid.UUID,
+    data: SalesOrderApproveRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    try:
+        order = sales_order_service.approve_sales_order(db, order_id, data.items, current_user.id)
+    except SalesOrderItemNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except OrderNotApprovableError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    return order
+
+
+@router.post("/{order_id}/load", response_model=SalesOrderLoadResponse)
+def load_order(
+    order_id: uuid.UUID,
+    data: SalesOrderLoadRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    try:
+        order = sales_order_service.load_sales_order(db, order_id, data.items, current_user.id)
+    except SalesOrderItemNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except OrderNotLoadableError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
     if order is None:

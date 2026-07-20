@@ -420,3 +420,222 @@ def test_create_order_without_token_returns_401_or_403(client):
     response = client.post("/api/v1/orders", json={"items": []})
 
     assert response.status_code in (401, 403)
+
+
+# ---------- POST /orders/{id}/approve ----------
+
+def get_inventory(db_session, warehouse_id, product_id):
+    from app.models.inventory import Inventory
+
+    return db_session.query(Inventory).filter(
+        Inventory.warehouse_id == uuid.UUID(warehouse_id),
+        Inventory.product_id == uuid.UUID(product_id),
+    ).first()
+
+
+def test_approve_pending_order_reserves_stock(client, db_session):
+    headers = admin_headers(client)
+    salesman_headers, customer, warehouse = setup_salesman_and_customer(client, headers)
+    product = create_product(client, headers, sku="SKU-APR-1", barcode="8801234567910")
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_id": product["id"], "ordered_qty": 3}],
+        },
+        headers=salesman_headers,
+    ).json()
+    item_id = order["items"][0]["id"]
+
+    response = client.post(
+        f"/api/v1/orders/{order['id']}/approve",
+        json={"items": [{"item_id": item_id, "approved_qty": 3}]},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "approved"
+    assert float(body["items"][0]["approved_qty"]) == 3
+
+    inventory = get_inventory(db_session, warehouse["id"], product["id"])
+    assert inventory.reserved_stock == 3
+
+
+def test_approve_already_approved_order_returns_409(client, db_session):
+    headers = admin_headers(client)
+    salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
+    product = create_product(client, headers, sku="SKU-APR-2", barcode="8801234567911")
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_id": product["id"], "ordered_qty": 1}],
+        },
+        headers=salesman_headers,
+    ).json()
+    item_id = order["items"][0]["id"]
+    client.post(
+        f"/api/v1/orders/{order['id']}/approve",
+        json={"items": [{"item_id": item_id, "approved_qty": 1}]},
+        headers=headers,
+    )
+
+    response = client.post(
+        f"/api/v1/orders/{order['id']}/approve",
+        json={"items": [{"item_id": item_id, "approved_qty": 1}]},
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+
+
+def test_approve_unknown_item_id_returns_404(client, db_session):
+    headers = admin_headers(client)
+    salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
+    product = create_product(client, headers, sku="SKU-APR-3", barcode="8801234567912")
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_id": product["id"], "ordered_qty": 1}],
+        },
+        headers=salesman_headers,
+    ).json()
+    fake_item_id = uuid.uuid4()
+
+    response = client.post(
+        f"/api/v1/orders/{order['id']}/approve",
+        json={"items": [{"item_id": str(fake_item_id), "approved_qty": 1}]},
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+
+
+def test_approve_order_as_customer_returns_403(client, db_session):
+    headers = admin_headers(client)
+    salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
+    product = create_product(client, headers, sku="SKU-APR-4", barcode="8801234567913")
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_id": product["id"], "ordered_qty": 1}],
+        },
+        headers=salesman_headers,
+    ).json()
+    item_id = order["items"][0]["id"]
+    customer_headers = customer_login_headers(client, "9876566666")
+
+    response = client.post(
+        f"/api/v1/orders/{order['id']}/approve",
+        json={"items": [{"item_id": item_id, "approved_qty": 1}]},
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 403
+
+
+def test_approve_order_not_found_returns_404(client):
+    headers = admin_headers(client)
+    fake_id = uuid.uuid4()
+
+    response = client.post(
+        f"/api/v1/orders/{fake_id}/approve", json={"items": []}, headers=headers
+    )
+
+    assert response.status_code == 404
+
+
+# ---------- POST /orders/{id}/load ----------
+
+def test_load_approved_order_reduces_stock(client, db_session):
+    headers = admin_headers(client)
+    salesman_headers, customer, warehouse = setup_salesman_and_customer(client, headers)
+    product = create_product(client, headers, sku="SKU-LOAD-1", barcode="8801234567920")
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_id": product["id"], "ordered_qty": 5}],
+        },
+        headers=salesman_headers,
+    ).json()
+    item_id = order["items"][0]["id"]
+    client.post(
+        f"/api/v1/orders/{order['id']}/approve",
+        json={"items": [{"item_id": item_id, "approved_qty": 5}]},
+        headers=headers,
+    )
+
+    response = client.post(
+        f"/api/v1/orders/{order['id']}/load",
+        json={"items": [{"item_id": item_id, "loaded_qty": 5}]},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "loaded"
+
+    inventory = get_inventory(db_session, warehouse["id"], product["id"])
+    assert inventory.physical_stock == -5
+    assert inventory.reserved_stock == 0
+
+
+def test_load_pending_order_returns_409(client, db_session):
+    headers = admin_headers(client)
+    salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
+    product = create_product(client, headers, sku="SKU-LOAD-2", barcode="8801234567921")
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_id": product["id"], "ordered_qty": 1}],
+        },
+        headers=salesman_headers,
+    ).json()
+    item_id = order["items"][0]["id"]
+
+    response = client.post(
+        f"/api/v1/orders/{order['id']}/load",
+        json={"items": [{"item_id": item_id, "loaded_qty": 1}]},
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+
+
+def test_load_order_as_customer_returns_403(client, db_session):
+    headers = admin_headers(client)
+    salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
+    product = create_product(client, headers, sku="SKU-LOAD-3", barcode="8801234567922")
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_id": product["id"], "ordered_qty": 1}],
+        },
+        headers=salesman_headers,
+    ).json()
+    item_id = order["items"][0]["id"]
+    customer_headers = customer_login_headers(client, "9876566666")
+
+    response = client.post(
+        f"/api/v1/orders/{order['id']}/load",
+        json={"items": [{"item_id": item_id, "loaded_qty": 1}]},
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 403
+
+
+def test_load_order_not_found_returns_404(client):
+    headers = admin_headers(client)
+    fake_id = uuid.uuid4()
+
+    response = client.post(
+        f"/api/v1/orders/{fake_id}/load", json={"items": []}, headers=headers
+    )
+
+    assert response.status_code == 404

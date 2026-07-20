@@ -139,7 +139,7 @@ Tally Sync
 | 1 | Auth & Users | ✅ `/auth/login` done (unified staff+customer); `/auth/logout`, Users CRUD assumed already built | USERS |
 | 2 | Routes | 🟡 Assumed already built (unchanged this round) | ROUTES |
 | 3 | Customers | 🟡 Built; gained `password_hash`/`login_enabled` + unique `mobile` this round | CUSTOMERS |
-| 4 | Sales Orders | 🟡 Create/edit/cancel/list/get done; approve/load still open | SALES_ORDERS, SALES_ORDER_ITEMS |
+| 4 | Sales Orders | ✅ All 7 endpoints done, including approve/load (uses Amin's Inventory) | SALES_ORDERS, SALES_ORDER_ITEMS |
 | 5 | Invoices | ✅ Generate + cancel done | INVOICES |
 | 6 | Delivery / Driver | ✅ Full state machine done (create/start/arrive/complete/fail) | DELIVERIES |
 | 7 | Payments | ⬜ Not started | PAYMENTS |
@@ -176,8 +176,10 @@ Sales Orders
   [x] POST   /orders/{id}/cancel     -- pending-only, ownership-checked
   [x] GET    /orders                 -- scoped: customer sees own, salesman sees own route's customers
   [x] GET    /orders/{id}
-  [ ] POST   /orders/{id}/approve    -- next up; will need Inventory (Amin) for stock reservation
-  [ ] POST   /orders/{id}/load       -- needs Inventory (Amin)
+  [x] POST   /orders/{id}/approve    -- staff-only, pending-only; writes a RESERVED movement per item
+                                         via Amin's record_movement(), no route-ownership restriction
+  [x] POST   /orders/{id}/load       -- staff-only, approved-only; writes a SOLD_OUT movement per item
+                                         (reduces physical_stock and reserved_stock together)
 
 Invoices
   [x] POST   /orders/{id}/invoice   -- staff-only, requires order status approved/loaded, one invoice per order
@@ -263,10 +265,10 @@ Track 1 — Amin
 [x] Products             (GET added by Ibrahim's track)
 [x] Price Lists          (item shape changed to discount_percent)
 [x] Warehouses           (built by Ibrahim's track - do not rebuild)
-[ ] Suppliers
-[ ] Vehicles
-[ ] Inventory
-[ ] Purchases
+[x] Suppliers
+[x] Vehicles
+[x] Inventory            (record_movement() now also used by Sales Orders approve/load)
+[x] Purchases
 [ ] Tally Sync
 
 Track 2 — Ibrahim
@@ -274,14 +276,14 @@ Track 2 — Ibrahim
 [x] Routes
 [x] Customers
 [ ] File Uploads
-[x] Sales Orders          (approve/load still open, blocked on Inventory)
+[x] Sales Orders          (all 7 endpoints done, including approve/load)
 [x] Invoices
 [x] Delivery / Driver
 [ ] Payments
 [ ] Returns
 ```
 
-*Last updated: 2026-07-20, after building Deliveries (`features/delivery` branch, not yet merged to `develop`). Invoices already merged.*
+*Last updated: 2026-07-21, after building Sales Orders approve/load (`features/sales-order` branch, not yet merged to `develop`). Invoices and Deliveries already merged; Amin's Suppliers/Vehicles/Inventory/Purchases already merged.*
 
 ---
 

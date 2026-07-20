@@ -66,3 +66,55 @@ class SalesOrderCancelResponse(BaseModel):
     status: OrderStatus
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SalesOrderApproveItem(BaseModel):
+    item_id: uuid.UUID
+    approved_qty: Decimal
+
+
+class SalesOrderApproveRequest(BaseModel):
+    items: list[SalesOrderApproveItem]
+
+
+class SalesOrderApproveItemResponse(BaseModel):
+    id: uuid.UUID
+    ordered_qty: Decimal
+    approved_qty: Decimal
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SalesOrderApproveResponse(BaseModel):
+    id: uuid.UUID
+    status: OrderStatus
+    items: list[SalesOrderApproveItemResponse]
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SalesOrderLoadItem(BaseModel):
+    item_id: uuid.UUID
+    loaded_qty: Decimal
+
+
+class SalesOrderLoadRequest(BaseModel):
+    items: list[SalesOrderLoadItem]
+
+
+class SalesOrderLoadItemResponse(BaseModel):
+    id: uuid.UUID
+    approved_qty: Decimal
+    loaded_qty: Decimal
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SalesOrderLoadResponse(BaseModel):
+    id: uuid.UUID
+    status: OrderStatus
+    items: list[SalesOrderLoadItemResponse]
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

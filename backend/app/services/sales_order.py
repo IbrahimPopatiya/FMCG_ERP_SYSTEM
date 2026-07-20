@@ -4,7 +4,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.core.deps import Principal
-from app.core.enums import OrderSource, OrderStatus
+from app.core.enums import MovementType, OrderSource, OrderStatus
 from app.db.mixins import generate_uuid7
 from app.models.customer import Customer
 from app.models.product import Product
@@ -12,6 +12,7 @@ from app.models.route import Route
 from app.models.sales_order import SalesOrder, SalesOrderItem
 from app.models.warehouse import Warehouse
 from app.schemas.sales_order import SalesOrderCreate, SalesOrderUpdate
+from app.services.inventory import record_movement
 from app.services.price_list import get_effective_price
 
 
@@ -33,6 +34,18 @@ class NoFulfillingWarehouseError(Exception):
 
 class OrderNotEditableError(Exception):
     """Raised when editing/cancelling an order that isn't still pending."""
+
+
+class OrderNotApprovableError(Exception):
+    """Raised when approving an order that isn't pending."""
+
+
+class OrderNotLoadableError(Exception):
+    """Raised when loading an order that isn't approved."""
+
+
+class SalesOrderItemNotFoundError(Exception):
+    """Raised when an approve/load request references an item not on the order."""
 
 
 def _resolve_customer_and_source(
@@ -214,6 +227,78 @@ def cancel_sales_order(db: Session, order_id: uuid.UUID, principal: Principal) -
         raise OrderNotEditableError("Only pending orders can be cancelled")
 
     order.status = OrderStatus.CANCELLED
+    db.commit()
+    db.refresh(order)
+    return order
+
+
+def approve_sales_order(
+    db: Session, order_id: uuid.UUID, items_data, approved_by: uuid.UUID
+) -> SalesOrder | None:
+    order = get_sales_order(db, order_id)
+    if order is None:
+        return None
+
+    if order.status != OrderStatus.PENDING:
+        raise OrderNotApprovableError("Only a pending order can be approved")
+
+    warehouse = _get_fulfilling_warehouse(db)
+    item_map = {item.id: item for item in order.items}
+
+    for req in items_data:
+        item = item_map.get(req.item_id)
+        if item is None:
+            raise SalesOrderItemNotFoundError(f"Order item {req.item_id} not found on this order")
+
+        item.approved_qty = req.approved_qty
+        record_movement(
+            db,
+            warehouse_id=warehouse.id,
+            product_id=item.product_id,
+            movement_type=MovementType.RESERVED,
+            quantity=int(req.approved_qty),
+            reference_type="sales_order",
+            reference_id=order.id,
+            user_id=approved_by,
+        )
+
+    order.status = OrderStatus.APPROVED
+    db.commit()
+    db.refresh(order)
+    return order
+
+
+def load_sales_order(
+    db: Session, order_id: uuid.UUID, items_data, loaded_by: uuid.UUID
+) -> SalesOrder | None:
+    order = get_sales_order(db, order_id)
+    if order is None:
+        return None
+
+    if order.status != OrderStatus.APPROVED:
+        raise OrderNotLoadableError("Only an approved order can be loaded")
+
+    warehouse = _get_fulfilling_warehouse(db)
+    item_map = {item.id: item for item in order.items}
+
+    for req in items_data:
+        item = item_map.get(req.item_id)
+        if item is None:
+            raise SalesOrderItemNotFoundError(f"Order item {req.item_id} not found on this order")
+
+        item.loaded_qty = req.loaded_qty
+        record_movement(
+            db,
+            warehouse_id=warehouse.id,
+            product_id=item.product_id,
+            movement_type=MovementType.SOLD_OUT,
+            quantity=int(req.loaded_qty),
+            reference_type="sales_order",
+            reference_id=order.id,
+            user_id=loaded_by,
+        )
+
+    order.status = OrderStatus.LOADED
     db.commit()
     db.refresh(order)
     return order
