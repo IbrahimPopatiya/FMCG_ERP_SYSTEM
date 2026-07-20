@@ -141,7 +141,7 @@ Tally Sync
 | 3 | Customers | 🟡 Built; gained `password_hash`/`login_enabled` + unique `mobile` this round | CUSTOMERS |
 | 4 | Sales Orders | 🟡 Create/edit/cancel/list/get done; approve/load still open | SALES_ORDERS, SALES_ORDER_ITEMS |
 | 5 | Invoices | ✅ Generate + cancel done | INVOICES |
-| 6 | Delivery / Driver | ⬜ Not started | DELIVERIES |
+| 6 | Delivery / Driver | ✅ Full state machine done (create/start/arrive/complete/fail) | DELIVERIES |
 | 7 | Payments | ⬜ Not started | PAYMENTS |
 | 8 | Returns | ⬜ Not started | RETURNS, RETURN_ITEMS |
 | 9 | File Uploads | ⬜ Not started | (object storage only, no table) |
@@ -184,11 +184,14 @@ Invoices
   [x] POST   /invoices/{id}/cancel  -- staff-only, only while payment_status is unpaid (soft delete)
 
 Delivery / Driver
-  [ ] POST   /deliveries
-  [ ] POST   /deliveries/{id}/start
-  [ ] POST   /deliveries/{id}/arrive
-  [ ] POST   /deliveries/{id}/complete
-  [ ] POST   /deliveries/{id}/fail
+  [x] POST   /deliveries              -- one delivery per invoice
+  [x] POST   /deliveries/{id}/start   -- pending -> out_for_delivery
+  [x] POST   /deliveries/{id}/arrive  -- records GPS/timestamp only, no status change
+  [x] POST   /deliveries/{id}/complete -- creates a cleared Payment, recomputes invoice.payment_status,
+                                          sets order.status = delivered. status field in request is
+                                          restricted to "delivered" (detailed outcomes are a documented
+                                          v2 schema gap, not built - see database_schema_docs.markdown note 10)
+  [x] POST   /deliveries/{id}/fail    -- out_for_delivery -> failed only
 
 Payments
   [ ] POST   /payments
@@ -273,12 +276,12 @@ Track 2 — Ibrahim
 [ ] File Uploads
 [x] Sales Orders          (approve/load still open, blocked on Inventory)
 [x] Invoices
-[ ] Delivery / Driver
+[x] Delivery / Driver
 [ ] Payments
 [ ] Returns
 ```
 
-*Last updated: 2026-07-20, after building Invoices (`features/invoices` branch, not yet merged to `develop`).*
+*Last updated: 2026-07-20, after building Deliveries (`features/delivery` branch, not yet merged to `develop`). Invoices already merged.*
 
 ---
 

@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
@@ -7,6 +8,7 @@ from app.core.enums import OrderStatus, PaymentStatus
 from app.db.mixins import generate_uuid7
 from app.models.customer import Customer
 from app.models.invoice import Invoice
+from app.models.payment import Payment
 from app.services.sales_order import get_sales_order
 
 
@@ -74,3 +76,26 @@ def cancel_invoice(db: Session, invoice_id: uuid.UUID, reason: str) -> Invoice |
     db.commit()
     db.refresh(invoice)
     return invoice
+
+
+def recompute_payment_status(db: Session, invoice_id: uuid.UUID) -> str:
+    """Recomputes payment_status from cleared payments - the single place
+    this is derived, so Deliveries and Payments both call it instead of
+    each rewriting the unpaid/partial/paid comparison."""
+    invoice = get_invoice(db, invoice_id)
+
+    amounts = db.query(Payment.total_amount).filter(
+        Payment.invoice_id == invoice_id, Payment.status == "cleared"
+    ).all()
+    cleared_sum = sum((row[0] for row in amounts), start=Decimal("0"))
+
+    if cleared_sum <= 0:
+        invoice.payment_status = PaymentStatus.UNPAID
+    elif cleared_sum >= invoice.total:
+        invoice.payment_status = PaymentStatus.PAID
+    else:
+        invoice.payment_status = PaymentStatus.PARTIAL
+
+    db.commit()
+    db.refresh(invoice)
+    return invoice.payment_status

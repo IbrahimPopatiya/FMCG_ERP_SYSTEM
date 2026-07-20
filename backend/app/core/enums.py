@@ -64,3 +64,10 @@ class TallySyncStatus(str, Enum):
     PENDING = "pending"
     SYNCED = "synced"
     FAILED = "failed"
+
+
+class DeliveryStatus(str, Enum):
+    PENDING = "pending"
+    OUT_FOR_DELIVERY = "out_for_delivery"
+    DELIVERED = "delivered"
+    FAILED = "failed"
