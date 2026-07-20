@@ -5,8 +5,10 @@ each test first creates a user and builds a token by hand.
 """
 
 import uuid
+from decimal import Decimal
 
 from app.core.security import create_access_token
+from app.services import price_list as price_list_service
 
 
 def auth_headers(client):
@@ -132,7 +134,7 @@ def test_create_price_list_item_returns_201(client):
 
     response = client.post(
         f"/api/v1/price-lists/{price_list['id']}/items",
-        json={"product_id": product["id"], "price": 33.00},
+        json={"product_id": product["id"], "discount_percent": 10.00},
         headers=headers,
     )
 
@@ -162,7 +164,7 @@ def test_create_price_list_item_price_list_not_found_returns_404(client):
 
     response = client.post(
         f"/api/v1/price-lists/{fake_price_list_id}/items",
-        json={"product_id": product["id"], "price": 33.00},
+        json={"product_id": product["id"], "discount_percent": 10.00},
         headers=headers,
     )
 
@@ -177,22 +179,40 @@ def test_create_price_list_item_duplicate_product_returns_409(client):
     product = create_product(client, headers)
     client.post(
         f"/api/v1/price-lists/{price_list['id']}/items",
-        json={"product_id": product["id"], "price": 33.00},
+        json={"product_id": product["id"], "discount_percent": 10.00},
         headers=headers,
     )
 
     response = client.post(
         f"/api/v1/price-lists/{price_list['id']}/items",
-        json={"product_id": product["id"], "price": 34.00},
+        json={"product_id": product["id"], "discount_percent": 20.00},
         headers=headers,
     )
 
     assert response.status_code == 409
 
 
+# ---------- POST /price-lists/{id}/items validation ----------
+
+def test_create_price_list_item_discount_over_100_returns_422(client):
+    headers = auth_headers(client)
+    price_list = client.post(
+        "/api/v1/price-lists", json={"name": "Tier 1"}, headers=headers
+    ).json()
+    product = create_product(client, headers)
+
+    response = client.post(
+        f"/api/v1/price-lists/{price_list['id']}/items",
+        json={"product_id": product["id"], "discount_percent": 150},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+
+
 # ---------- PATCH /price-lists/{id}/items/{itemId} ----------
 
-def test_update_price_list_item_price(client):
+def test_update_price_list_item_discount_percent(client):
     headers = auth_headers(client)
     price_list = client.post(
         "/api/v1/price-lists", json={"name": "Tier 1"}, headers=headers
@@ -200,18 +220,18 @@ def test_update_price_list_item_price(client):
     product = create_product(client, headers)
     item = client.post(
         f"/api/v1/price-lists/{price_list['id']}/items",
-        json={"product_id": product["id"], "price": 33.00},
+        json={"product_id": product["id"], "discount_percent": 10.00},
         headers=headers,
     ).json()
 
     response = client.patch(
         f"/api/v1/price-lists/{price_list['id']}/items/{item['id']}",
-        json={"price": 34.50},
+        json={"discount_percent": 15.00},
         headers=headers,
     )
 
     assert response.status_code == 200
-    assert float(response.json()["price"]) == 34.50
+    assert float(response.json()["discount_percent"]) == 15.00
 
 
 def test_update_price_list_item_not_found_returns_404(client):
@@ -223,7 +243,7 @@ def test_update_price_list_item_not_found_returns_404(client):
 
     response = client.patch(
         f"/api/v1/price-lists/{price_list['id']}/items/{fake_item_id}",
-        json={"price": 34.50},
+        json={"discount_percent": 15.00},
         headers=headers,
     )
 
@@ -240,7 +260,7 @@ def test_delete_price_list_item_returns_removed_true(client):
     product = create_product(client, headers)
     item = client.post(
         f"/api/v1/price-lists/{price_list['id']}/items",
-        json={"product_id": product["id"], "price": 33.00},
+        json={"product_id": product["id"], "discount_percent": 10.00},
         headers=headers,
     ).json()
 
@@ -264,3 +284,38 @@ def test_delete_price_list_item_not_found_returns_404(client):
     )
 
     assert response.status_code == 404
+
+
+# ---------- get_effective_price ----------
+
+def test_get_effective_price_applies_discount_when_item_exists(client, db_session):
+    headers = auth_headers(client)
+    price_list = client.post(
+        "/api/v1/price-lists", json={"name": "Tier 1"}, headers=headers
+    ).json()
+    product = create_product(client, headers)
+    client.post(
+        f"/api/v1/price-lists/{price_list['id']}/items",
+        json={"product_id": product["id"], "discount_percent": 10.00},
+        headers=headers,
+    )
+
+    result = price_list_service.get_effective_price(
+        db_session, uuid.UUID(price_list["id"]), uuid.UUID(product["id"]), Decimal("100.00")
+    )
+
+    assert result == Decimal("90.00")
+
+
+def test_get_effective_price_returns_base_price_when_no_item(client, db_session):
+    headers = auth_headers(client)
+    price_list = client.post(
+        "/api/v1/price-lists", json={"name": "Tier 1"}, headers=headers
+    ).json()
+    product = create_product(client, headers)
+
+    result = price_list_service.get_effective_price(
+        db_session, uuid.UUID(price_list["id"]), uuid.UUID(product["id"]), Decimal("100.00")
+    )
+
+    assert result == Decimal("100.00")

@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -63,7 +64,11 @@ def create_price_list_item(
     if get_price_list(db, price_list_id) is None:
         return None
 
-    item = PriceListItem(price_list_id=price_list_id, product_id=data.product_id, price=data.price)
+    item = PriceListItem(
+        price_list_id=price_list_id,
+        product_id=data.product_id,
+        discount_percent=data.discount_percent,
+    )
     db.add(item)
     try:
         db.commit()
@@ -75,13 +80,13 @@ def create_price_list_item(
 
 
 def update_price_list_item(
-    db: Session, price_list_id: uuid.UUID, item_id: uuid.UUID, price
+    db: Session, price_list_id: uuid.UUID, item_id: uuid.UUID, discount_percent
 ) -> PriceListItem | None:
     item = get_price_list_item(db, price_list_id, item_id)
     if item is None:
         return None
 
-    item.price = price
+    item.discount_percent = discount_percent
     db.commit()
     db.refresh(item)
     return item
@@ -95,3 +100,23 @@ def remove_price_list_item(db: Session, price_list_id: uuid.UUID, item_id: uuid.
     db.delete(item)
     db.commit()
     return True
+
+
+def get_effective_price(
+    db: Session, price_list_id: uuid.UUID | None, product_id: uuid.UUID, base_price: Decimal
+) -> Decimal:
+    """Applies the price list's discount for this product to the base selling price.
+
+    No discount row for this product (or no price list at all) means full price.
+    """
+    item = None
+    if price_list_id is not None:
+        item = db.query(PriceListItem).filter(
+            PriceListItem.price_list_id == price_list_id,
+            PriceListItem.product_id == product_id,
+        ).first()
+
+    if item is None:
+        return base_price
+
+    return base_price - (base_price * item.discount_percent / 100)
