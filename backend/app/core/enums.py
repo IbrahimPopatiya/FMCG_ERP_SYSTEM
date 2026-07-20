@@ -45,6 +45,10 @@ class SupplierStatus(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
 
+class VehicleStatus(str, Enum):
+    AVAILABLE = "available"
+    IN_USE = "in_use"
+    MAINTENANCE = "maintenance"
 
 
 class OrderSource(str, Enum):
