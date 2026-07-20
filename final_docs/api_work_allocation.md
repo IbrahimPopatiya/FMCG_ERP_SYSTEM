@@ -144,7 +144,7 @@ Tally Sync
 | 6 | Delivery / Driver | ✅ Full state machine done (create/start/arrive/complete/fail) | DELIVERIES |
 | 7 | Payments | ⬜ Not started | PAYMENTS |
 | 8 | Returns | ⬜ Not started | RETURNS, RETURN_ITEMS |
-| 9 | File Uploads | ⬜ Not started | (object storage only, no table) |
+| 9 | File Uploads | ✅ Local-disk storage, `UPLOAD_DIR` env var | (object storage only, no table) |
 
 **APIs to build in each domain** (checked = already done in the current codebase):
 
@@ -207,7 +207,8 @@ Returns
   [ ] POST   /returns/{id}/complete
 
 File Uploads
-  [ ] POST   /files
+  [x] POST   /files   -- multipart, {file, category?}; saves under UPLOAD_DIR/<category>/<year>/<uuid>.<ext>,
+                          returns {file_url: "<category>/<year>/<uuid>.<ext>"}; any authenticated principal
 ```
 
 **Build order for this track:**
@@ -275,7 +276,7 @@ Track 2 — Ibrahim
 [x] Auth & Users          (login done; logout still open)
 [x] Routes
 [x] Customers
-[ ] File Uploads
+[x] File Uploads
 [x] Sales Orders          (all 7 endpoints done, including approve/load)
 [x] Invoices
 [x] Delivery / Driver
@@ -283,7 +284,7 @@ Track 2 — Ibrahim
 [ ] Returns
 ```
 
-*Last updated: 2026-07-21, after building Sales Orders approve/load (`features/sales-order` branch, not yet merged to `develop`). Invoices and Deliveries already merged; Amin's Suppliers/Vehicles/Inventory/Purchases already merged.*
+*Last updated: 2026-07-21, after building File Uploads (`features/file-uploads-v2` branch, not yet merged to `develop`). Sales Orders approve/load, Invoices, Deliveries, and Amin's Suppliers/Vehicles/Inventory/Purchases already merged.*
 
 ---
 

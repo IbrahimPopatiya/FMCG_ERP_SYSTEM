@@ -14,6 +14,9 @@ backend/*.log
 # Alembic
 backend/alembic/versions/__pycache__/
 
+# Uploaded files (local dev storage, not source)
+backend/uploads/
+
 # Backend has no npm/node dependency - ignore in case of accidental npm install
 backend/node_modules/
 backend/package.json

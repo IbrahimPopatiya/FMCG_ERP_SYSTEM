@@ -29,6 +29,7 @@ from app.api import (
     vehicles,
     inventory,
     purchases,
+    file_uploads,
 )
 from app.db.init_db import create_all_tables
 
@@ -59,6 +60,7 @@ app.include_router(suppliers.router, prefix="/api/v1")
 app.include_router(vehicles.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
 app.include_router(purchases.router, prefix="/api/v1")
+app.include_router(file_uploads.router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
