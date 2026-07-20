@@ -142,7 +142,7 @@ Tally Sync
 | 4 | Sales Orders | ✅ All 7 endpoints done, including approve/load (uses Amin's Inventory) | SALES_ORDERS, SALES_ORDER_ITEMS |
 | 5 | Invoices | ✅ Generate + cancel done | INVOICES |
 | 6 | Delivery / Driver | ✅ Full state machine done (create/start/arrive/complete/fail) | DELIVERIES |
-| 7 | Payments | ⬜ Not started | PAYMENTS |
+| 7 | Payments | ✅ Record/verify/bounce done | PAYMENTS |
 | 8 | Returns | ⬜ Not started | RETURNS, RETURN_ITEMS |
 | 9 | File Uploads | ✅ Local-disk storage, `UPLOAD_DIR` env var | (object storage only, no table) |
 
@@ -196,9 +196,9 @@ Delivery / Driver
   [x] POST   /deliveries/{id}/fail    -- out_for_delivery -> failed only
 
 Payments
-  [ ] POST   /payments
-  [ ] POST   /payments/{id}/verify
-  [ ] POST   /payments/{id}/bounce
+  [x] POST   /payments             -- staff-only, records pending (needs >=1 amount > 0)
+  [x] POST   /payments/{id}/verify -- pending-only -> cleared; recomputes invoice.payment_status
+  [x] POST   /payments/{id}/bounce -- pending-only -> bounced
 
 Returns
   [ ] POST   /returns
@@ -280,11 +280,11 @@ Track 2 — Ibrahim
 [x] Sales Orders          (all 7 endpoints done, including approve/load)
 [x] Invoices
 [x] Delivery / Driver
-[ ] Payments
+[x] Payments
 [ ] Returns
 ```
 
-*Last updated: 2026-07-21, after building File Uploads (`features/file-uploads-v2` branch, not yet merged to `develop`). Sales Orders approve/load, Invoices, Deliveries, and Amin's Suppliers/Vehicles/Inventory/Purchases already merged.*
+*Last updated: 2026-07-21, after building Payments (`features/payment` branch, not yet merged to `develop`). File Uploads, Sales Orders approve/load, Invoices, Deliveries, and Amin's Suppliers/Vehicles/Inventory/Purchases already merged. **Returns is the last domain on Ibrahim's track.***
 
 ---
 

@@ -100,3 +100,9 @@ class MovementType(str, Enum):
     ADJUSTMENT = "adjustment"
     TRANSFER_IN = "transfer_in"
     TRANSFER_OUT = "transfer_out"
+
+
+class PaymentRecordStatus(str, Enum):
+    PENDING = "pending"
+    CLEARED = "cleared"
+    BOUNCED = "bounced"
