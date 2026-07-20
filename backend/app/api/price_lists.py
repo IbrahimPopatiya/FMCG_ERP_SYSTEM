@@ -85,7 +85,7 @@ def update_price_list_item(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    item = price_list_service.update_price_list_item(db, price_list_id, item_id, data.price)
+    item = price_list_service.update_price_list_item(db, price_list_id, item_id, data.discount_percent)
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Price list item not found")
     return item

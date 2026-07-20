@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PriceListCreate(BaseModel):
@@ -33,18 +33,18 @@ class PriceListDeleteResponse(BaseModel):
 
 class PriceListItemCreate(BaseModel):
     product_id: uuid.UUID
-    price: Decimal
+    discount_percent: Decimal = Field(ge=0, le=100)
 
 
 class PriceListItemUpdate(BaseModel):
-    price: Decimal
+    discount_percent: Decimal = Field(ge=0, le=100)
 
 
 class PriceListItemResponse(BaseModel):
     id: uuid.UUID
     price_list_id: uuid.UUID
     product_id: uuid.UUID
-    price: Decimal
+    discount_percent: Decimal
 
     model_config = ConfigDict(from_attributes=True)
 

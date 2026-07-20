@@ -22,4 +22,4 @@ class PriceListItem(Base, UUIDPKMixin, TimestampMixin):
 
     price_list_id = Column(UUID(as_uuid=True), ForeignKey("price_lists.id"), nullable=False)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
-    price = Column(Numeric(12, 2), nullable=False)
+    discount_percent = Column(Numeric(5, 2), nullable=False, default=0)
