@@ -52,3 +52,15 @@ class OrderStatus(str, Enum):
     LOADED = "loaded"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
+
+
+class PaymentStatus(str, Enum):
+    UNPAID = "unpaid"
+    PARTIAL = "partial"
+    PAID = "paid"
+
+
+class TallySyncStatus(str, Enum):
+    PENDING = "pending"
+    SYNCED = "synced"
+    FAILED = "failed"

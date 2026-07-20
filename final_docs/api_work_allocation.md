@@ -140,7 +140,7 @@ Tally Sync
 | 2 | Routes | 🟡 Assumed already built (unchanged this round) | ROUTES |
 | 3 | Customers | 🟡 Built; gained `password_hash`/`login_enabled` + unique `mobile` this round | CUSTOMERS |
 | 4 | Sales Orders | 🟡 Create/edit/cancel/list/get done; approve/load still open | SALES_ORDERS, SALES_ORDER_ITEMS |
-| 5 | Invoices | ⬜ Not started | INVOICES |
+| 5 | Invoices | ✅ Generate + cancel done | INVOICES |
 | 6 | Delivery / Driver | ⬜ Not started | DELIVERIES |
 | 7 | Payments | ⬜ Not started | PAYMENTS |
 | 8 | Returns | ⬜ Not started | RETURNS, RETURN_ITEMS |
@@ -180,8 +180,8 @@ Sales Orders
   [ ] POST   /orders/{id}/load       -- needs Inventory (Amin)
 
 Invoices
-  [ ] POST   /orders/{id}/invoice
-  [ ] POST   /invoices/{id}/cancel
+  [x] POST   /orders/{id}/invoice   -- staff-only, requires order status approved/loaded, one invoice per order
+  [x] POST   /invoices/{id}/cancel  -- staff-only, only while payment_status is unpaid (soft delete)
 
 Delivery / Driver
   [ ] POST   /deliveries
@@ -271,14 +271,14 @@ Track 2 — Ibrahim
 [x] Routes
 [x] Customers
 [ ] File Uploads
-[x] Sales Orders          (approve/load still open)
-[ ] Invoices
+[x] Sales Orders          (approve/load still open, blocked on Inventory)
+[x] Invoices
 [ ] Delivery / Driver
 [ ] Payments
 [ ] Returns
 ```
 
-*Last updated: 2026-07-20, after merging `feature/price-list-discount-percent` and `feature/customer-self-service-ordering` into `develop`.*
+*Last updated: 2026-07-20, after building Invoices (`features/invoices` branch, not yet merged to `develop`).*
 
 ---
 
