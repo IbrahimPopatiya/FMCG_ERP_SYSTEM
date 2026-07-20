@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.enums import CustomerStatus
+from app.core.security import hash_password
 from app.models.customer import Customer
 from app.schemas.customer import CustomerCreate, CustomerUpdate
 
@@ -30,6 +31,7 @@ def create_customer(db: Session, data: CustomerCreate) -> Customer:
         payment_terms=data.payment_terms,
         route_id=data.route_id,
         price_list_id=data.price_list_id,
+        password_hash=hash_password(data.password),
     )
     db.add(customer)
     try:

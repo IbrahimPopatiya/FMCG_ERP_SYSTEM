@@ -32,6 +32,7 @@ def make_customer_payload(**overrides):
         "pincode": "411001",
         "credit_limit": 50000.00,
         "payment_terms": 15,
+        "password": "customerpass123",
     }
     payload.update(overrides)
     return payload

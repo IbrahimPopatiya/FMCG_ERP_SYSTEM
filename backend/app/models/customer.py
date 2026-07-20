@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Integer, Numeric, ForeignKey
+from sqlalchemy import Column, String, Text, Integer, Numeric, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.session import Base
@@ -25,3 +25,5 @@ class Customer(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     status = Column(String(20), nullable=False, default="active")  # active, inactive, blocked
     latitude = Column(Numeric(10, 7), nullable=True)
     longitude = Column(Numeric(10, 7), nullable=True)
+    password_hash = Column(String(255), nullable=True)
+    login_enabled = Column(Boolean, nullable=False, default=True)

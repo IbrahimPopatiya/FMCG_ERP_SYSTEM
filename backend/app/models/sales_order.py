@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Text, DateTime, Numeric, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 from app.db.session import Base
 from app.db.mixins import UUIDPKMixin, TimestampMixin, SoftDeleteMixin
@@ -14,6 +15,7 @@ class SalesOrder(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     order_date = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     status = Column(String(20), nullable=False, default="pending")
     # pending, approved, loaded, delivered, cancelled
+    order_source = Column(String(20), nullable=False, default="salesman")  # salesman, customer
     remarks = Column(Text, nullable=True)
     expected_delivery = Column(DateTime(timezone=True), nullable=True)
     subtotal = Column(Numeric(12, 2), nullable=False, default=0)
@@ -25,6 +27,8 @@ class SalesOrder(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     total = Column(Numeric(12, 2), nullable=False, default=0)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    items = relationship("SalesOrderItem", cascade="all, delete-orphan")
 
 
 class SalesOrderItem(Base, UUIDPKMixin, TimestampMixin):

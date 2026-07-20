@@ -11,7 +11,19 @@ already exist.
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import health, users, routes, customers, categories, brands,products,price_lists
+from app.api import (
+    health,
+    users,
+    routes,
+    customers,
+    categories,
+    brands,
+    products,
+    price_lists,
+    auth,
+    sales_orders,
+    warehouses,
+)
 from app.db.init_db import create_all_tables
 
 app = FastAPI(title="DMS API")
@@ -32,6 +44,9 @@ app.include_router(categories.router, prefix="/api/v1")
 app.include_router(brands.router, prefix="/api/v1")
 app.include_router(products.router, prefix="/api/v1")
 app.include_router(price_lists.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(sales_orders.router, prefix="/api/v1")
+app.include_router(warehouses.router, prefix="/api/v1")
 
 
 if __name__ == "__main__":

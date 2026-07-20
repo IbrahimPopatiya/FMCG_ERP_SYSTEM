@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user
+from app.core.deps import Principal, get_current_principal, get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.product import (
@@ -11,12 +11,42 @@ from app.schemas.product import (
     ProductUpdate,
     ProductStatusUpdate,
     ProductResponse,
+    ProductCatalogResponse,
     ProductDeleteResponse,
 )
+from app.services import price_list as price_list_service
 from app.services import product as product_service
 from app.services.product import DuplicateProductError
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+
+@router.get("", response_model=list[ProductCatalogResponse])
+def list_products(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Catalog listing. A customer token sees their own price-list price;
+    a staff token sees the base selling price."""
+    price_list_id = principal.customer.price_list_id if principal.type == "customer" else None
+
+    products = product_service.list_active_products(db)
+    return [
+        ProductCatalogResponse(
+            id=p.id,
+            sku=p.sku,
+            name=p.name,
+            unit=p.unit,
+            packing=p.packing,
+            mrp=p.mrp,
+            effective_price=price_list_service.get_effective_price(
+                db, price_list_id, p.id, p.selling_price
+            ),
+            gst_rate=p.gst_rate,
+            image=p.image,
+        )
+        for p in products
+    ]
 
 
 @router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
