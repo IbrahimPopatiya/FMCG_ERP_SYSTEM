@@ -23,6 +23,7 @@ from app.api import (
     auth,
     sales_orders,
     warehouses,
+    suppliers,
 )
 from app.db.init_db import create_all_tables
 
@@ -47,6 +48,7 @@ app.include_router(price_lists.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(sales_orders.router, prefix="/api/v1")
 app.include_router(warehouses.router, prefix="/api/v1")
+app.include_router(suppliers.router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
