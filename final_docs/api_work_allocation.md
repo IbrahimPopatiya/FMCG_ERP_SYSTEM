@@ -143,7 +143,7 @@ Tally Sync
 | 5 | Invoices | ✅ Generate + cancel done | INVOICES |
 | 6 | Delivery / Driver | ✅ Full state machine done (create/start/arrive/complete/fail) | DELIVERIES |
 | 7 | Payments | ✅ Record/verify/bounce done | PAYMENTS |
-| 8 | Returns | ⬜ Not started | RETURNS, RETURN_ITEMS |
+| 8 | Returns | ✅ Full lifecycle + new Credit Notes sub-domain (see note below) | RETURNS, RETURN_ITEMS, CREDIT_NOTES (new table) |
 | 9 | File Uploads | ✅ Local-disk storage, `UPLOAD_DIR` env var | (object storage only, no table) |
 
 **APIs to build in each domain** (checked = already done in the current codebase):
@@ -201,10 +201,24 @@ Payments
   [x] POST   /payments/{id}/bounce -- pending-only -> bounced
 
 Returns
-  [ ] POST   /returns
-  [ ] POST   /returns/{id}/approve
-  [ ] POST   /returns/{id}/reject
-  [ ] POST   /returns/{id}/complete
+  [x] POST   /returns              -- each item now carries its OWN reason (damaged/expired/
+                                       wrong_item/not_needed) - not one reason for the whole return,
+                                       since customers often return mixed items for different reasons
+  [x] POST   /returns/{id}/approve
+  [x] POST   /returns/{id}/reject
+  [x] POST   /returns/{id}/complete -- writes one stock movement per item (type driven by that item's
+                                        own reason) AND auto-creates a pending Credit Note valued at
+                                        original sale price (qty * SalesOrderItem.price, summed)
+
+Credit Notes -- NEW sub-domain, not in the original 18-domain list or api_reference.md.
+  New table `credit_notes` (migration d4e9a2c7f1b3): return_id (unique FK), customer_id, amount,
+  status (pending/approved/rejected), approved_by. Auto-created by /returns/{id}/complete above.
+  Ledger only - no running balance column on customers; "how much credit does a customer have"
+  is a sum-on-demand query, not built as an endpoint yet.
+  [x] POST   /credit-notes/{id}/approve -- only the credit note's customer's route salesman, or an
+                                            admin, may approve/reject (403 otherwise) - matches the
+                                            same route-ownership check used for Sales Order creation
+  [x] POST   /credit-notes/{id}/reject
 
 File Uploads
   [x] POST   /files   -- multipart, {file, category?}; saves under UPLOAD_DIR/<category>/<year>/<uuid>.<ext>,
@@ -281,10 +295,12 @@ Track 2 — Ibrahim
 [x] Invoices
 [x] Delivery / Driver
 [x] Payments
-[ ] Returns
+[x] Returns               (+ new Credit Notes sub-domain, see Section 3 above)
 ```
 
-*Last updated: 2026-07-21, after building Payments (`features/payment` branch, not yet merged to `develop`). File Uploads, Sales Orders approve/load, Invoices, Deliveries, and Amin's Suppliers/Vehicles/Inventory/Purchases already merged. **Returns is the last domain on Ibrahim's track.***
+**Track 2 (Ibrahim) is now fully done**, except `/auth/logout` (small, not yet built).
+
+*Last updated: 2026-07-21, after building Returns + Credit Notes (`features/returns` branch, not yet merged to `develop`). Payments, File Uploads, Sales Orders approve/load, Invoices, Deliveries, and Amin's Suppliers/Vehicles/Inventory/Purchases already merged.*
 
 ---
 

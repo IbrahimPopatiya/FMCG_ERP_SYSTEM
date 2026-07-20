@@ -106,3 +106,23 @@ class PaymentRecordStatus(str, Enum):
     PENDING = "pending"
     CLEARED = "cleared"
     BOUNCED = "bounced"
+
+
+class ReturnStatus(str, Enum):
+    REQUESTED = "requested"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    COMPLETED = "completed"
+
+
+class ReturnReason(str, Enum):
+    DAMAGED = "damaged"
+    EXPIRED = "expired"
+    WRONG_ITEM = "wrong_item"
+    NOT_NEEDED = "not_needed"
+
+
+class CreditNoteStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
