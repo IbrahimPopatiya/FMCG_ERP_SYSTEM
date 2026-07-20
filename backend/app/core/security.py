@@ -19,17 +19,21 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(user_id: uuid.UUID) -> str:
-    """Builds a signed JWT that identifies a user. `sub` (subject) holds the user id."""
+def create_access_token(user_id: uuid.UUID, principal_type: str = "user") -> str:
+    """Builds a signed JWT that identifies a principal (staff user or customer).
+
+    `sub` holds the principal's id, `type` says which table it belongs to
+    (`"user"` or `"customer"`) so a single token scheme can serve both.
+    """
     expires_at = datetime.now(timezone.utc) + timedelta(
         minutes=settings.access_token_expire_minutes
     )
-    payload = {"sub": str(user_id), "exp": expires_at}
+    payload = {"sub": str(user_id), "type": principal_type, "exp": expires_at}
     return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
 
 
-def decode_access_token(token: str) -> uuid.UUID | None:
-    """Returns the user id encoded in the token, or None if the token is invalid/expired."""
+def decode_token(token: str) -> dict | None:
+    """Returns the decoded payload (with `sub` as a UUID), or None if invalid/expired."""
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
     except JWTError:
@@ -40,6 +44,14 @@ def decode_access_token(token: str) -> uuid.UUID | None:
         return None
 
     try:
-        return uuid.UUID(subject)
+        payload["sub"] = uuid.UUID(subject)
     except ValueError:
         return None
+
+    return payload
+
+
+def decode_access_token(token: str) -> uuid.UUID | None:
+    """Returns the principal id encoded in the token, or None if invalid/expired."""
+    payload = decode_token(token)
+    return payload["sub"] if payload else None

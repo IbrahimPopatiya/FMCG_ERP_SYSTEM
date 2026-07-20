@@ -19,6 +19,12 @@ def get_product(db: Session, product_id: uuid.UUID) -> Product | None:
     ).first()
 
 
+def list_active_products(db: Session) -> list[Product]:
+    return db.query(Product).filter(
+        Product.deleted_at.is_(None), Product.status == ProductStatus.ACTIVE
+    ).all()
+
+
 def create_product(db: Session, data: ProductCreate) -> Product:
     product = Product(**data.model_dump())
     db.add(product)

@@ -23,6 +23,7 @@ class CustomerCreate(BaseModel):
     payment_terms: int
     route_id: Optional[uuid.UUID] = None
     price_list_id: Optional[uuid.UUID] = None
+    password: str
 
 
 class CustomerUpdate(BaseModel):
@@ -39,6 +40,7 @@ class CustomerUpdate(BaseModel):
     payment_terms: Optional[int] = None
     route_id: Optional[uuid.UUID] = None
     price_list_id: Optional[uuid.UUID] = None
+    login_enabled: Optional[bool] = None
 
 
 class CustomerStatusUpdate(BaseModel):
@@ -64,6 +66,7 @@ class CustomerResponse(BaseModel):
     customer_code: str
     business_name: str
     status: CustomerStatus
+    login_enabled: bool
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

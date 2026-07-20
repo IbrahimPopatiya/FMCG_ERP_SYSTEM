@@ -62,6 +62,20 @@ class ProductResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ProductCatalogResponse(BaseModel):
+    id: uuid.UUID
+    sku: str
+    name: str
+    unit: str
+    packing: str
+    mrp: Decimal
+    effective_price: Decimal
+    gst_rate: Decimal
+    image: Optional[str]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ProductDeleteResponse(BaseModel):
     id: uuid.UUID
     deleted_at: datetime
