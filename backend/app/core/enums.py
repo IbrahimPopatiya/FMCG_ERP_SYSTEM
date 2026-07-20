@@ -83,6 +83,12 @@ class DeliveryStatus(str, Enum):
     FAILED = "failed"
 
 
+class PurchaseStatus(str, Enum):
+    DRAFT = "draft"
+    RECEIVED = "received"
+    CANCELLED = "cancelled"
+
+
 class MovementType(str, Enum):
     PURCHASE_IN = "purchase_in"
     RESERVED = "reserved"

@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, DateTime, Numeric, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 from app.db.session import Base
 from app.db.mixins import UUIDPKMixin, TimestampMixin, SoftDeleteMixin
@@ -21,6 +22,8 @@ class Purchase(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     total = Column(Numeric(12, 2), nullable=False, default=0)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    items = relationship("PurchaseItem", cascade="all, delete-orphan")
 
 
 class PurchaseItem(Base, UUIDPKMixin, TimestampMixin):
