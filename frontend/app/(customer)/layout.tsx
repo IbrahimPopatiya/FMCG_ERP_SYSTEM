@@ -1,19 +1,28 @@
+"use client";
+
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { CartProvider, useCart } from "@/components/cart/CartProvider";
 
 // Mobile-first shell for shopkeepers: no dashboard, just the bottom nav for
 // the four things a customer needs — browse, cart, order status, account.
-const NAV_ITEMS = [
-  { href: "/products", label: "Products" },
-  { href: "/cart", label: "Cart" },
-  { href: "/orders", label: "Orders" },
-  { href: "/account", label: "Account" },
-];
+function CustomerNav() {
+  const { totalQty } = useCart();
+  const items = [
+    { href: "/products", label: "Products" },
+    { href: "/cart", label: "Cart", badge: totalQty },
+    { href: "/orders", label: "Orders" },
+    { href: "/account", label: "Account" },
+  ];
+  return <MobileBottomNav items={items} />;
+}
 
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
-      <MobileBottomNav items={NAV_ITEMS} />
-    </div>
+    <CartProvider>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+        <CustomerNav />
+      </div>
+    </CartProvider>
   );
 }

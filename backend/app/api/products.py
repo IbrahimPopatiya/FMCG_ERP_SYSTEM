@@ -37,6 +37,8 @@ def list_products(
             id=p.id,
             sku=p.sku,
             name=p.name,
+            category_id=p.category_id,
+            brand_id=p.brand_id,
             unit=p.unit,
             packing=p.packing,
             mrp=p.mrp,

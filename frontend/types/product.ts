@@ -42,6 +42,8 @@ export interface ProductCatalogResponse {
   id: string;
   sku: string;
   name: string;
+  category_id: string | null;
+  brand_id: string | null;
   unit: string;
   packing: string;
   mrp: number;

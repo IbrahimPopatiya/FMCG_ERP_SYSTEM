@@ -72,6 +72,25 @@ class CustomerResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CustomerMeResponse(BaseModel):
+    id: uuid.UUID
+    customer_code: str
+    business_name: str
+    owner_name: str
+    mobile: str
+    alternate_mobile: Optional[str]
+    gst_number: Optional[str]
+    address: str
+    city: str
+    state: str
+    pincode: str
+    credit_limit: Decimal
+    payment_terms: int
+    status: CustomerStatus
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CustomerDeleteResponse(BaseModel):
     id: uuid.UUID
     deleted_at: datetime

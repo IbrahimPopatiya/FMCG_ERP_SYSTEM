@@ -96,3 +96,12 @@ def require_staff(principal: Principal = Depends(get_current_principal)) -> User
             status_code=status.HTTP_403_FORBIDDEN, detail="Staff access required"
         )
     return principal.user
+
+
+def require_customer(principal: Principal = Depends(get_current_principal)) -> Customer:
+    """Use on routes only a customer may call - rejects a staff token."""
+    if principal.type != "customer":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Customer access required"
+        )
+    return principal.customer

@@ -1,6 +1,16 @@
 export type OrderStatus = "pending" | "approved" | "loaded" | "delivered" | "cancelled";
 export type OrderSource = "staff" | "customer";
 
+export interface SalesOrderItemCreate {
+  product_id: string;
+  ordered_qty: number;
+}
+
+export interface SalesOrderCreate {
+  remarks?: string;
+  items: SalesOrderItemCreate[];
+}
+
 export interface SalesOrderItemResponse {
   id: string;
   product_id: string;
