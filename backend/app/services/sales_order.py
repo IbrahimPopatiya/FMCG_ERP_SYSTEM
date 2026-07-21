@@ -4,7 +4,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.core.deps import Principal
-from app.core.enums import MovementType, OrderSource, OrderStatus
+from app.core.enums import MovementType, OrderSource, OrderStatus, UserRole
 from app.db.mixins import generate_uuid7
 from app.models.customer import Customer
 from app.models.product import Product
@@ -173,6 +173,9 @@ def _authorize_order_access(db: Session, order: SalesOrder, principal: Principal
     if principal.type == "customer":
         return order.customer_id == principal.customer.id
 
+    if principal.user.role != UserRole.SALESMAN:
+        return True
+
     customer = db.query(Customer).filter(Customer.id == order.customer_id).first()
     route = None
     if customer and customer.route_id is not None:
@@ -309,9 +312,19 @@ def list_orders_for_principal(db: Session, principal: Principal) -> list[SalesOr
     if principal.type == "customer":
         return query.filter(SalesOrder.customer_id == principal.customer.id).all()
 
+    # Only salesmen are scoped to their own route's customers - every other
+    # staff role (admin, manager, dispatcher, cashier) needs full visibility
+    # to approve/track orders across the business.
+    if principal.user.role != UserRole.SALESMAN:
+        return query.order_by(SalesOrder.created_at.desc()).all()
+
     routes = db.query(Route).filter(Route.salesman_id == principal.user.id).all()
     route_ids = [r.id for r in routes]
     customer_ids = [
         c.id for c in db.query(Customer).filter(Customer.route_id.in_(route_ids)).all()
     ] if route_ids else []
-    return query.filter(SalesOrder.customer_id.in_(customer_ids)).all() if customer_ids else []
+    return (
+        query.filter(SalesOrder.customer_id.in_(customer_ids)).order_by(SalesOrder.created_at.desc()).all()
+        if customer_ids
+        else []
+    )
