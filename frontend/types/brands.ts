@@ -1,4 +1,5 @@
-// TODO: define request/response types matching
-// backend/app/schemas/brand.py, following types/product.ts as the
-// pattern.
-export {};
+export interface BrandResponse {
+  id: string;
+  name: string;
+  logo: string | null;
+}

@@ -1,7 +1,6 @@
 import { api } from "@/lib/api/client";
-// import type { ... } from "@/types/categories";
+import type { CategoryResponse } from "@/types/categories";
 
-// TODO: implement once this domain's screens are built. Base path matches
-// backend/app/api/categories.py (prefix "/categories").
-// Follow the pattern in lib/api/products.ts: one exported function per
-// backend endpoint, typed request/response from types/categories.ts.
+export function listCategories() {
+  return api.get<CategoryResponse[]>("/categories").then((res) => res.data);
+}

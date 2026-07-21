@@ -1,4 +1,6 @@
-// TODO: define request/response types matching
-// backend/app/schemas/category.py, following types/product.ts as the
-// pattern.
-export {};
+export interface CategoryResponse {
+  id: string;
+  name: string;
+  parent_id: string | null;
+  image: string | null;
+}
