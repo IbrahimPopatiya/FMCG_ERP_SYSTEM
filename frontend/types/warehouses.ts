@@ -1,4 +1,9 @@
-// TODO: define request/response types matching
-// backend/app/schemas/warehouse.py, following types/product.ts as the
-// pattern.
-export {};
+export type WarehouseStatus = "active" | "inactive";
+
+export interface WarehouseResponse {
+  id: string;
+  name: string;
+  address: string;
+  state: string;
+  status: WarehouseStatus;
+}

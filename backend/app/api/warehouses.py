@@ -18,6 +18,11 @@ from app.services import warehouse as warehouse_service
 router = APIRouter(prefix="/warehouses", tags=["warehouses"])
 
 
+@router.get("", response_model=list[WarehouseResponse])
+def list_warehouses(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return warehouse_service.list_warehouses(db)
+
+
 @router.post("", response_model=WarehouseResponse, status_code=status.HTTP_201_CREATED)
 def create_warehouse(
     data: WarehouseCreate,

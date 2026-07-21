@@ -13,6 +13,7 @@ const DESKTOP_NAV_ITEMS = [
   { href: "/admin/invoices", label: "Invoices" },
   { href: "/admin/payments", label: "Payments" },
   { href: "/admin/returns", label: "Returns" },
+  { href: "/admin/credit-notes", label: "Credit Notes" },
   { href: "/admin/purchases", label: "Purchases" },
   { href: "/admin/suppliers", label: "Suppliers" },
   { href: "/admin/inventory", label: "Inventory" },
