@@ -18,6 +18,14 @@ from app.services.category import ParentCategoryNotFoundError
 router = APIRouter(prefix="/categories", tags=["categories"])
 
 
+@router.get("", response_model=list[CategoryResponse])
+def list_categories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return category_service.list_categories(db)
+
+
 @router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
 def create_category(
     data: CategoryCreate,

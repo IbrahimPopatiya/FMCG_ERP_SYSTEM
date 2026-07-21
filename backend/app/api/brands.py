@@ -17,6 +17,14 @@ from app.services import brand as brand_service
 router = APIRouter(prefix="/brands", tags=["brands"])
 
 
+@router.get("", response_model=list[BrandResponse])
+def list_brands(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return brand_service.list_brands(db)
+
+
 @router.post("", response_model=BrandResponse, status_code=status.HTTP_201_CREATED)
 def create_brand(
     data: BrandCreate,

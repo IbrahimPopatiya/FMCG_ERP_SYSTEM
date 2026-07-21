@@ -25,6 +25,14 @@ def list_active_products(db: Session) -> list[Product]:
     ).all()
 
 
+def list_all_products(db: Session, page: int, page_size: int) -> tuple[list[Product], int]:
+    """Staff catalog management view - every non-deleted product, any status, paginated."""
+    query = db.query(Product).filter(Product.deleted_at.is_(None)).order_by(Product.name)
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return items, total
+
+
 def create_product(db: Session, data: ProductCreate) -> Product:
     product = Product(**data.model_dump())
     db.add(product)

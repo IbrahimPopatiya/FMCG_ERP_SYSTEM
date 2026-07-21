@@ -24,6 +24,40 @@ def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 
 
+# ---------- GET /categories ----------
+
+def test_list_categories_returns_all_non_deleted_categories(client):
+    headers = auth_headers(client)
+    client.post("/api/v1/categories", json={"name": "Snacks"}, headers=headers)
+    client.post("/api/v1/categories", json={"name": "Dairy"}, headers=headers)
+
+    response = client.get("/api/v1/categories", headers=headers)
+
+    assert response.status_code == 200
+    names = [c["name"] for c in response.json()]
+    assert "Snacks" in names
+    assert "Dairy" in names
+
+
+def test_list_categories_excludes_deleted_categories(client):
+    headers = auth_headers(client)
+    category = client.post(
+        "/api/v1/categories", json={"name": "Deleted Category"}, headers=headers
+    ).json()
+    client.delete(f"/api/v1/categories/{category['id']}", headers=headers)
+
+    response = client.get("/api/v1/categories", headers=headers)
+
+    names = [c["name"] for c in response.json()]
+    assert "Deleted Category" not in names
+
+
+def test_list_categories_without_token_returns_401_or_403(client):
+    response = client.get("/api/v1/categories")
+
+    assert response.status_code in (401, 403)
+
+
 # ---------- POST /categories ----------
 
 def test_create_category_returns_201(client):
