@@ -9,6 +9,7 @@ from app.db.mixins import generate_uuid7
 from app.models.customer import Customer
 from app.models.invoice import Invoice
 from app.models.payment import Payment
+from app.models.sales_order import SalesOrder
 from app.services.sales_order import get_sales_order
 
 
@@ -56,6 +57,32 @@ def generate_invoice(db: Session, order_id: uuid.UUID) -> Invoice | None:
     db.commit()
     db.refresh(invoice)
     return invoice
+
+
+def list_invoices(
+    db: Session, page: int, page_size: int
+) -> tuple[list[tuple[Invoice, uuid.UUID, str]], int]:
+    """Joins SalesOrder in so callers get customer_id/order_number alongside
+    each invoice - a bare Invoice row can't name who it's for."""
+    query = (
+        db.query(Invoice, SalesOrder.customer_id, SalesOrder.order_number)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .filter(Invoice.deleted_at.is_(None))
+        .order_by(Invoice.invoice_date.desc())
+    )
+    total = query.count()
+    rows = query.offset((page - 1) * page_size).limit(page_size).all()
+    return rows, total
+
+
+def get_invoice_with_order(db: Session, invoice_id: uuid.UUID) -> tuple[Invoice, uuid.UUID, str] | None:
+    row = (
+        db.query(Invoice, SalesOrder.customer_id, SalesOrder.order_number)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .filter(Invoice.id == invoice_id, Invoice.deleted_at.is_(None))
+        .first()
+    )
+    return row
 
 
 def get_invoice(db: Session, invoice_id: uuid.UUID) -> Invoice | None:

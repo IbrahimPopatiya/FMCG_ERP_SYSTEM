@@ -1,4 +1,10 @@
-// TODO: define request/response types matching
-// backend/app/schemas/vehicle.py, following types/product.ts as the
-// pattern.
-export {};
+export type VehicleStatus = "available" | "in_use" | "maintenance";
+
+export interface VehicleResponse {
+  id: string;
+  vehicle_number: string;
+  driver_id: string | null;
+  warehouse_id: string | null;
+  capacity: number;
+  status: VehicleStatus;
+}

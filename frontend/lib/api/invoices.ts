@@ -1,7 +1,13 @@
 import { api } from "@/lib/api/client";
-// import type { ... } from "@/types/invoices";
+import type { Page } from "@/types/pagination";
+import type { InvoiceListItem } from "@/types/invoices";
 
-// TODO: implement once this domain's screens are built. Base path matches
-// backend/app/api/invoices.py (prefix "/invoices").
-// Follow the pattern in lib/api/products.ts: one exported function per
-// backend endpoint, typed request/response from types/invoices.ts.
+export function listInvoices(page: number, pageSize: number) {
+  return api
+    .get<Page<InvoiceListItem>>("/invoices", { params: { page, page_size: pageSize } })
+    .then((res) => res.data);
+}
+
+export function getInvoice(invoiceId: string) {
+  return api.get<InvoiceListItem>(`/invoices/${invoiceId}`).then((res) => res.data);
+}
