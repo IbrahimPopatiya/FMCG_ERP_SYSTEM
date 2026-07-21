@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { isAxiosError } from "axios";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -10,6 +11,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { TopBar } from "@/components/layout/TopBar";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
+import { useGenerateInvoice } from "@/lib/hooks/useInvoiceMutations";
+import { useInvoiceSample } from "@/lib/hooks/useInvoices";
 import { useOrder } from "@/lib/hooks/useOrders";
 import { useApproveOrder, useCancelOrder, useLoadOrder } from "@/lib/hooks/useOrderMutations";
 import { useProducts } from "@/lib/hooks/useProducts";
@@ -25,12 +28,15 @@ function actionErrorMessage(error: unknown): string {
 
 export default function AdminOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
+  const router = useRouter();
   const order = useOrder(orderId);
   const customer = useCustomer(order.data?.customer_id ?? "");
   const products = useProducts();
+  const invoices = useInvoiceSample();
   const approveOrder = useApproveOrder(orderId);
   const loadOrder = useLoadOrder(orderId);
   const cancelOrder = useCancelOrder();
+  const generateInvoice = useGenerateInvoice(orderId);
 
   const [qtyByItem, setQtyByItem] = useState<Record<string, string>>({});
   const [actionError, setActionError] = useState<string | null>(null);
@@ -88,6 +94,18 @@ export default function AdminOrderDetailPage() {
       setConfirmCancel(false);
     }
   }
+
+  async function handleGenerateInvoice() {
+    setActionError(null);
+    try {
+      const invoice = await generateInvoice.mutateAsync();
+      router.push(`/admin/invoices/${invoice.id}`);
+    } catch (err) {
+      setActionError(actionErrorMessage(err));
+    }
+  }
+
+  const existingInvoice = invoices.data?.items.find((inv) => inv.sales_order_id === orderId);
 
   const editableStatus = order.data?.status === "pending" || order.data?.status === "approved";
 
@@ -244,6 +262,27 @@ export default function AdminOrderDetailPage() {
                     onClick={handleLoad}
                   >
                     Mark as loaded
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {(data.status === "approved" || data.status === "loaded") && (
+              <div className="flex justify-end">
+                {existingInvoice ? (
+                  <Link href={`/admin/invoices/${existingInvoice.id}`}>
+                    <Button type="button" variant="secondary">
+                      View invoice
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    isLoading={generateInvoice.isPending}
+                    onClick={handleGenerateInvoice}
+                  >
+                    Generate invoice
                   </Button>
                 )}
               </div>
