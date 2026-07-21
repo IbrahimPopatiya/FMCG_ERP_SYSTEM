@@ -12,16 +12,16 @@ interface TableProps<T> {
 
 export function Table<T>({ columns, rows, rowKey, emptyMessage = "No records found." }: TableProps<T>) {
   if (rows.length === 0) {
-    return <p className="py-8 text-center text-sm text-zinc-500">{emptyMessage}</p>;
+    return <p className="py-8 text-center text-sm text-ink-muted">{emptyMessage}</p>;
   }
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-zinc-200 text-zinc-500">
+          <tr className="border-b border-border bg-surface text-ink-muted">
             {columns.map((col) => (
-              <th key={col.header} className="whitespace-nowrap px-3 py-2 font-medium">
+              <th key={col.header} className="whitespace-nowrap px-4 py-3 font-medium">
                 {col.header}
               </th>
             ))}
@@ -29,9 +29,9 @@ export function Table<T>({ columns, rows, rowKey, emptyMessage = "No records fou
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-zinc-100 last:border-0">
+            <tr key={rowKey(row)} className="border-b border-border/70 last:border-0 hover:bg-surface/60">
               {columns.map((col) => (
-                <td key={col.header} className="whitespace-nowrap px-3 py-2 text-zinc-800">
+                <td key={col.header} className="whitespace-nowrap px-4 py-3 text-ink">
                   {col.render(row)}
                 </td>
               ))}

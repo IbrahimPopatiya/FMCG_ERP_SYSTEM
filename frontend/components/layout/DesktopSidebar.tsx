@@ -12,9 +12,9 @@ export function DesktopSidebar({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-56 shrink-0 border-r border-zinc-200 bg-white sm:flex sm:flex-col">
-      <div className="px-4 py-4 text-sm font-semibold text-zinc-900">DMS</div>
-      <nav className="flex flex-col gap-0.5 px-2">
+    <aside className="hidden w-56 shrink-0 flex-col overflow-y-auto border-r border-border bg-white sm:flex">
+      <div className="shrink-0 px-4 py-4 text-sm font-semibold text-ink">DMS</div>
+      <nav className="flex flex-col gap-0.5 px-2 pb-4">
         {items.map((item) => {
           const active = pathname.startsWith(item.href);
           return (
@@ -22,7 +22,7 @@ export function DesktopSidebar({ items }: { items: NavItem[] }) {
               key={item.href}
               href={item.href}
               className={`rounded-md px-3 py-2 text-sm font-medium ${
-                active ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                active ? "bg-primary text-white" : "text-ink-muted hover:bg-surface"
               }`}
             >
               {item.label}

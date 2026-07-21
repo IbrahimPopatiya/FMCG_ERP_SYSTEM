@@ -29,10 +29,10 @@ const MOBILE_NAV_ITEMS = [
 
 export default function StaffLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-full flex-1">
+    <div className="flex flex-1 overflow-hidden">
       <DesktopSidebar items={DESKTOP_NAV_ITEMS} />
-      <div className="flex flex-1 flex-col">
-        <main className="flex-1 pb-16 sm:pb-0">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
         <MobileBottomNav items={MOBILE_NAV_ITEMS} />
       </div>
     </div>
