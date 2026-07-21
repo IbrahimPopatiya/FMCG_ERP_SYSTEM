@@ -1,7 +1,10 @@
 import { api } from "@/lib/api/client";
-// import type { ... } from "@/types/salesOrders";
+import type { SalesOrderResponse } from "@/types/salesOrder";
 
-// TODO: implement once this domain's screens are built. Base path matches
-// backend/app/api/sales_orders.py (prefix "/orders").
-// Follow the pattern in lib/api/products.ts: one exported function per
-// backend endpoint, typed request/response from types/salesOrders.ts.
+export function listOrders() {
+  return api.get<SalesOrderResponse[]>("/orders").then((res) => res.data);
+}
+
+export function getOrder(orderId: string) {
+  return api.get<SalesOrderResponse>(`/orders/${orderId}`).then((res) => res.data);
+}

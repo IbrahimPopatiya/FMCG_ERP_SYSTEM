@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.core.deps import Principal
+from app.core.enums import UserStatus
 from app.core.security import verify_password
 from app.models.customer import Customer
 from app.models.user import User
@@ -18,6 +19,8 @@ def authenticate(db: Session, identifier: str, password: str) -> Principal | Non
     )
     if user is not None:
         if not verify_password(password, user.password_hash):
+            return None
+        if user.status != UserStatus.ACTIVE:
             return None
         return Principal(type="user", user=user)
 

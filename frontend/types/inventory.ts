@@ -1,4 +1,9 @@
-// TODO: define request/response types matching
-// backend/app/schemas/inventory.py, following types/product.ts as the
-// pattern.
-export {};
+export interface InventoryResponse {
+  warehouse_id: string;
+  product_id: string;
+  physical_stock: number;
+  reserved_stock: number;
+  damaged_stock: number;
+  expiry_stock: number;
+  sellable_stock: number;
+}
