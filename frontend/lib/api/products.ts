@@ -11,9 +11,11 @@ export function listProducts() {
   return api.get<ProductCatalogResponse[]>("/products").then((res) => res.data);
 }
 
-export function listProductsForManagement(page: number, pageSize: number) {
+export function listProductsForManagement(page: number, pageSize: number, search?: string) {
   return api
-    .get<Page<ProductResponse>>("/products/manage", { params: { page, page_size: pageSize } })
+    .get<Page<ProductResponse>>("/products/manage", {
+      params: { page, page_size: pageSize, search: search || undefined },
+    })
     .then((res) => res.data);
 }
 

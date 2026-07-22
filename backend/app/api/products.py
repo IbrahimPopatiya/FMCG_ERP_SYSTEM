@@ -1,4 +1,5 @@
 import uuid
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -56,11 +57,13 @@ def list_products(
 def list_products_for_management(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Staff catalog management view - every product, any status, full fields, paginated."""
-    items, total = product_service.list_all_products(db, page, page_size)
+    """Staff catalog management view - every product, any status, full fields, paginated.
+    `search` matches product name, SKU, or brand name."""
+    items, total = product_service.list_all_products(db, page, page_size, search)
     return Page(items=items, total=total, page=page, page_size=page_size)
 
 
