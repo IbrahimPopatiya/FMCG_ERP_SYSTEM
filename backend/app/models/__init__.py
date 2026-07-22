@@ -22,6 +22,7 @@ from app.models.delivery import Delivery
 from app.models.payment import Payment
 from app.models.purchase import Purchase, PurchaseItem
 from app.models.return_ import Return, ReturnItem
+from app.models.credit_note import CreditNote
 from app.models.audit_log import AuditLog
 
 __all__ = [
@@ -47,5 +48,6 @@ __all__ = [
     "PurchaseItem",
     "Return",
     "ReturnItem",
+    "CreditNote",
     "AuditLog",
 ]

@@ -27,7 +27,7 @@
 ## 1. Authentication & Users
 
 ### `POST /auth/login`
-**What it does:** Logs a user in and returns an access token.
+**What it does:** Logs a user in and returns an access token. **Unified login:** the same endpoint works for **staff** (a `USERS` row, identified by `role`) and for **customers** (a `CUSTOMERS` row using the self-service portal). The server checks staff first, then customers. The response tells the frontend which kind of principal logged in via `principal_type`.
 
 **Request**
 ```json
@@ -38,13 +38,14 @@
 ```
 | Field | Required | Description |
 |---|---|---|
-| mobile | required | Registered mobile number |
+| mobile | required | Registered mobile number (staff or customer) |
 | password | required | Account password |
 
-**Response**
+**Response (staff)**
 ```json
 {
   "token": "jwt-token-string",
+  "principal_type": "user",
   "user": {
     "id": "uuid",
     "full_name": "Ramesh Kumar",
@@ -53,6 +54,26 @@
   }
 }
 ```
+
+**Response (customer)**
+```json
+{
+  "token": "jwt-token-string",
+  "principal_type": "customer",
+  "customer": {
+    "id": "uuid",
+    "business_name": "Sharma General Store",
+    "customer_code": "CUST-001",
+    "status": "active"
+  }
+}
+```
+| Field | Description |
+|---|---|
+| principal_type | `user` (staff) or `customer` (self-service portal). The frontend uses this to route to the staff app or the customer portal. |
+| user / customer | Only one is present, matching `principal_type`. A customer has **no** `role`. |
+
+> Only customers with `login_enabled = true` and a set `password_hash` can log in. A customer's token is scoped: it may only place/read that customer's own orders and read that customer's own invoices, dues, and deliveries (see §19). It can never call staff or master-data APIs.
 
 ---
 
@@ -834,7 +855,13 @@ All fields optional — send only what changed.
 ### `POST /orders`
 **What it does:** Creates a new order for a customer, with all its line items, in one step. The server looks up prices from the customer's price list and calculates GST — the frontend does not send prices or totals.
 
-**Request**
+**Who can call it, and how `customer_id` is resolved:**
+- **Staff (salesman/admin/manager):** send `customer_id` in the body (the shop they're ordering for). The order is saved with `order_source = "salesman"` and `salesman_id` = the logged-in user.
+- **Customer (self-service portal):** **do not send `customer_id`** — the server takes it from the authenticated customer's token (a `customer_id` in the body is ignored). The order is saved with `order_source = "customer"` and `salesman_id = null`.
+
+Either way the order enters `status = "pending"` and follows the same approval → invoice → delivery → payment flow.
+
+**Request (staff)**
 ```json
 {
   "customer_id": "uuid",
@@ -846,9 +873,20 @@ All fields optional — send only what changed.
   ]
 }
 ```
+
+**Request (customer self-service)** — same shape **without** `customer_id`:
+```json
+{
+  "expected_delivery": "2026-07-20T00:00:00Z",
+  "remarks": "Deliver before noon",
+  "items": [
+    { "product_id": "uuid", "quantity": 10 }
+  ]
+}
+```
 | Field | Required | Description |
 |---|---|---|
-| customer_id | required | Which customer this order is for |
+| customer_id | staff only | Which customer this order is for. **Ignored** for customer self-service (taken from the token). |
 | expected_delivery | optional | Requested delivery date/time |
 | remarks | optional | Free-text note |
 | items | required | List of products and quantities requested |
@@ -861,6 +899,8 @@ All fields optional — send only what changed.
   "id": "uuid",
   "order_number": "SO-2026-00123",
   "customer_id": "uuid",
+  "order_source": "customer",
+  "salesman_id": null,
   "status": "pending",
   "subtotal": 4500.00,
   "discount": 0.00,
@@ -1562,9 +1602,29 @@ Note: `total_amount` is calculated by the server as the sum of `cash_amount + up
 
 ---
 
-## 19. Common Rules Across All APIs
+## 19. Customer Self-Service (Portal)
+
+Customers log in via the unified `POST /auth/login` (§1) and receive a **customer-scoped token**. That token restricts them to their own data — the server enforces this from the token, never from what the client sends.
+
+**A logged-in customer can:**
+- **Browse the catalogue** — list active products and categories/brands (read-only), with **their own price-list price** and stock availability shown (the server applies the price list linked to their `CUSTOMERS` record).
+- **Place their own order** — `POST /orders` **without** `customer_id` (see §10). Saved as `order_source = "customer"`, `salesman_id = null`, `status = "pending"`.
+- **Edit / cancel their own pending order** — `PATCH /orders/{id}` and `POST /orders/{id}/cancel`, allowed **only** for orders that belong to them and are still `pending`.
+- **Track their own records (read-only)** — their orders and order status, their invoices and GST breakdown, their **outstanding dues**, and their **delivery status**. All list/detail reads are automatically filtered to the authenticated customer.
+
+**A customer can never** (the server rejects these regardless of the request):
+- See or act on **another customer's** orders, invoices, deliveries, or dues.
+- Perform **staff actions**: approve/load orders, generate/cancel invoices, assign/complete deliveries, record/verify/bounce payments, receive purchases, adjust/transfer stock, or process returns.
+- Access **master data or admin** functions (users, routes, products, price lists, warehouses, suppliers, vehicles, Tally, other customers).
+
+> Requirements note: the exact read endpoints (e.g. `GET /orders`, `GET /invoices`, `GET /deliveries`, catalogue reads) follow the standard REST patterns; when called with a customer token they are transparently scoped to that customer. When called with a staff token they behave as the full staff views.
+
+---
+
+## 20. Common Rules Across All APIs
 
 - **The server always calculates**: prices from price lists, GST (CGST/SGST/IGST), discounts, totals, round-off, stock levels, and payment status. The frontend should never send these as trusted final values.
+- **Identity is server-derived for customers**: on customer-scoped calls the `customer_id` comes from the token, never from the request body — and every read is filtered to that customer.
 - **Stock changes only happen through named actions** (order approve/load, purchase receive, return complete, inventory adjustment/transfer) — never through a direct stock edit API.
 - **Deletes are soft deletes.** A `DELETE` call sets `deleted_at`; the record is hidden from normal lists but not removed from the database.
 - **Every write to a financial or stock table also creates an Audit Log entry** in the background — this is automatic and not something the frontend calls directly.

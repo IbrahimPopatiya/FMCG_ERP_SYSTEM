@@ -20,19 +20,108 @@ Both tracks share one dependency: **Auth & Users must be built first**, because 
 
 ---
 
+## ⚠️ Status Update — 2026-07-20 (read this before building anything)
+
+While building **Sales Orders** and the **customer self-service portal** (Ibrahim's track), two things from **Amin's track** had to be built early because Sales Orders couldn't work without them, plus one small addition to Products:
+
+| Domain (Amin's track) | What happened | Status |
+|---|---|---|
+| **Warehouses** | Built in full (`POST/PATCH /warehouses`, `PATCH /warehouses/{id}/status`, `DELETE /warehouses/{id}`) — needed so Sales Orders could compare warehouse state vs customer state for CGST/SGST/IGST. | ✅ **Done — do not rebuild.** |
+| **Products** | `GET /products` (catalog listing) was added — not in the original write-API list, but needed so both staff and customers can browse the catalog with correct pricing. Create/update/status/delete were already there and are untouched. | ✅ **`GET` added — rest unchanged.** |
+| **Price Lists** | `price_list_items.price` was changed to `discount_percent` (a percentage off the product's base price) instead of an absolute override price. This changes the request/response shape of `POST/PATCH /price-lists/{id}/items`. | ⚠️ **Shape changed — see Section 2 below before touching this domain.** |
+
+**Why this happened:** these three pieces were hard blockers for Sales Orders and couldn't wait. It broke the "no shared files" rule for this one occasion — it's not a pattern going forward.
+
+**What this means for Amin:**
+- Pull `develop` before starting anything — these are already merged in.
+- Skip Warehouses entirely — it's done, tested, and in use by Sales Orders.
+- For Products, only `GET` was touched — Amin's planned `POST/PATCH/DELETE` work is untouched and can proceed normally.
+- For Price Lists, read the new shape before adding anything else to that domain (details in Section 2).
+- **New shared alembic head is `c3d8f1a6b2e7`.** Any new migration must set `down_revision = 'c3d8f1a6b2e7'`. Pull `develop` first to confirm — if two people generate migrations from different heads at the same time, talk before resolving it (per `CLAUDE.md` §5.6).
+- A new shared auth mechanism now exists (`app/core/deps.py`): `get_current_principal` / `Principal` / `require_staff`. **Amin's existing/planned routes don't need to change** — `get_current_user` still works exactly as before, since a customer's token is naturally rejected there (different table lookup). Only reach for `get_current_principal` if a route needs to be readable by both staff and customers (like the Products catalog `GET` above) — none of Amin's remaining domains need this.
+
+---
+
 ## 2. Track 1 — Amin: Catalog & Supply
 
-| # | Domain | APIs (from `api_reference.md`) | Tables Owned |
+| # | Domain | Status | Tables Owned |
 |---|---|---|---|
-| 1 | Categories & Brands | `POST/PATCH/DELETE /categories`, `POST/PATCH/DELETE /brands` | CATEGORIES, BRANDS |
-| 2 | Products | `POST/PATCH /products`, `PATCH /products/{id}/status`, `DELETE /products/{id}` | PRODUCTS |
-| 3 | Price Lists | `POST/PATCH/DELETE /price-lists`, `POST/PATCH/DELETE /price-lists/{id}/items` | PRICE_LISTS, PRICE_LIST_ITEMS |
-| 4 | Warehouses | `POST/PATCH /warehouses`, `PATCH /warehouses/{id}/status`, `DELETE /warehouses/{id}` | WAREHOUSES |
-| 5 | Suppliers | `POST/PATCH /suppliers`, `PATCH /suppliers/{id}/status`, `DELETE /suppliers/{id}` | SUPPLIERS |
-| 6 | Vehicles | `POST/PATCH /vehicles`, `PATCH /vehicles/{id}/driver`, `PATCH /vehicles/{id}/status`, `DELETE /vehicles/{id}` | VEHICLES |
-| 7 | Inventory | `POST /inventory/adjustments`, `POST /inventory/transfers`, `GET /inventory` | INVENTORY, INVENTORY_MOVEMENTS |
-| 8 | Purchases | `POST/PATCH /purchases`, `POST /purchases/{id}/receive`, `POST /purchases/{id}/cancel` | PURCHASES, PURCHASE_ITEMS |
-| 9 | Tally Sync | `POST /tally/sync/invoices`, `POST /tally/sync/payments`, `POST /tally/sync/returns`, `POST /tally/retry/{entityType}/{id}` | (reads INVOICES, PAYMENTS, RETURNS) |
+| 1 | Categories & Brands | 🟡 Assumed already built (unchanged this round) | CATEGORIES, BRANDS |
+| 2 | Products | 🟡 Create/update/status/delete assumed already built; `GET` added by Ibrahim's track | PRODUCTS |
+| 3 | Price Lists | 🟡 CRUD built; item shape changed to `discount_percent` (see below) | PRICE_LISTS, PRICE_LIST_ITEMS |
+| 4 | Warehouses | ✅ **Fully built — skip** | WAREHOUSES |
+| 5 | Suppliers | ⬜ Not started | SUPPLIERS |
+| 6 | Vehicles | ⬜ Not started | VEHICLES |
+| 7 | Inventory | ⬜ Not started | INVENTORY, INVENTORY_MOVEMENTS |
+| 8 | Purchases | ⬜ Not started | PURCHASES, PURCHASE_ITEMS |
+| 9 | Tally Sync | ⬜ Not started | (reads INVOICES, PAYMENTS, RETURNS) |
+
+**APIs to build in each domain** (checked = already done in the current codebase):
+
+```
+Categories & Brands
+  [x] POST   /categories
+  [x] PATCH  /categories/{id}
+  [x] DELETE /categories/{id}
+  [x] POST   /brands
+  [x] PATCH  /brands/{id}
+  [x] DELETE /brands/{id}
+
+Products
+  [x] POST   /products
+  [x] PATCH  /products/{id}
+  [x] PATCH  /products/{id}/status
+  [x] DELETE /products/{id}
+  [x] GET    /products              -- added by Ibrahim's track (catalog, priced per caller)
+
+Price Lists
+  [x] POST   /price-lists
+  [x] PATCH  /price-lists/{id}
+  [x] DELETE /price-lists/{id}
+  [x] POST   /price-lists/{id}/items       -- body is now {product_id, discount_percent} not {product_id, price}
+  [x] PATCH  /price-lists/{id}/items/{itemId}   -- body is now {discount_percent}
+  [x] DELETE /price-lists/{id}/items/{itemId}
+  Note: a product with no item row in a list now means "0% discount, full price" -
+  there's a reusable app/services/price_list.py::get_effective_price(db, price_list_id,
+  product_id, base_price) function - reuse it anywhere else a price needs to be resolved,
+  don't recompute the discount math inline.
+
+Warehouses  -- DONE, do not rebuild
+  [x] POST   /warehouses
+  [x] PATCH  /warehouses/{id}
+  [x] PATCH  /warehouses/{id}/status
+  [x] DELETE /warehouses/{id}
+
+Suppliers
+  [ ] POST   /suppliers
+  [ ] PATCH  /suppliers/{id}
+  [ ] PATCH  /suppliers/{id}/status
+  [ ] DELETE /suppliers/{id}
+
+Vehicles
+  [ ] POST   /vehicles
+  [ ] PATCH  /vehicles/{id}
+  [ ] PATCH  /vehicles/{id}/driver
+  [ ] PATCH  /vehicles/{id}/status
+  [ ] DELETE /vehicles/{id}
+
+Inventory
+  [ ] POST   /inventory/adjustments
+  [ ] POST   /inventory/transfers
+  [ ] GET    /inventory
+
+Purchases
+  [ ] POST   /purchases
+  [ ] PATCH  /purchases/{id}
+  [ ] POST   /purchases/{id}/receive
+  [ ] POST   /purchases/{id}/cancel
+
+Tally Sync
+  [ ] POST   /tally/sync/invoices
+  [ ] POST   /tally/sync/payments
+  [ ] POST   /tally/sync/returns
+  [ ] POST   /tally/retry/{entityType}/{id}
+```
 
 **Build order for this track:**
 1. Categories & Brands → Products → Price Lists (catalog must exist before pricing)
@@ -45,17 +134,96 @@ Both tracks share one dependency: **Auth & Users must be built first**, because 
 
 ## 3. Track 2 — Ibrahim: Selling & Operations
 
-| # | Domain | APIs (from `api_reference.md`) | Tables Owned |
+| # | Domain | Status | Tables Owned |
 |---|---|---|---|
-| 1 | Auth & Users | `POST /auth/login`, `POST /auth/logout`, `POST/PATCH /users`, `PATCH /users/{id}/status`, `DELETE /users/{id}` | USERS |
-| 2 | Routes | `POST/PATCH /routes`, `PATCH /routes/{id}/salesman`, `DELETE /routes/{id}` | ROUTES |
-| 3 | Customers | `POST/PATCH /customers`, `PATCH /customers/{id}/status`, `PATCH /customers/{id}/location`, `DELETE /customers/{id}` | CUSTOMERS |
-| 4 | Sales Orders | `POST/PATCH /orders`, `POST /orders/{id}/approve`, `POST /orders/{id}/load`, `POST /orders/{id}/cancel` | SALES_ORDERS, SALES_ORDER_ITEMS |
-| 5 | Invoices | `POST /orders/{id}/invoice`, `POST /invoices/{id}/cancel` | INVOICES |
-| 6 | Delivery / Driver | `POST /deliveries`, `POST /deliveries/{id}/start`, `.../arrive`, `.../complete`, `.../fail` | DELIVERIES |
-| 7 | Payments | `POST /payments`, `POST /payments/{id}/verify`, `POST /payments/{id}/bounce` | PAYMENTS |
-| 8 | Returns | `POST /returns`, `.../approve`, `.../reject`, `.../complete` | RETURNS, RETURN_ITEMS |
-| 9 | File Uploads | `POST /files` | (object storage only, no table) |
+| 1 | Auth & Users | ✅ `/auth/login` done (unified staff+customer); `/auth/logout`, Users CRUD assumed already built | USERS |
+| 2 | Routes | 🟡 Assumed already built (unchanged this round) | ROUTES |
+| 3 | Customers | 🟡 Built; gained `password_hash`/`login_enabled` + unique `mobile` this round | CUSTOMERS |
+| 4 | Sales Orders | ✅ All 7 endpoints done, including approve/load (uses Amin's Inventory) | SALES_ORDERS, SALES_ORDER_ITEMS |
+| 5 | Invoices | ✅ Generate + cancel done | INVOICES |
+| 6 | Delivery / Driver | ✅ Full state machine done (create/start/arrive/complete/fail) | DELIVERIES |
+| 7 | Payments | ✅ Record/verify/bounce done | PAYMENTS |
+| 8 | Returns | ✅ Full lifecycle + new Credit Notes sub-domain (see note below) | RETURNS, RETURN_ITEMS, CREDIT_NOTES (new table) |
+| 9 | File Uploads | ✅ Local-disk storage, `UPLOAD_DIR` env var | (object storage only, no table) |
+
+**APIs to build in each domain** (checked = already done in the current codebase):
+
+```
+Auth & Users
+  [x] POST   /auth/login       -- unified: checks users first, then customers; returns principal_type
+  [ ] POST   /auth/logout
+  [x] POST   /users
+  [x] PATCH  /users/{id}
+  [x] PATCH  /users/{id}/status
+  [x] DELETE /users/{id}
+
+Routes
+  [x] POST   /routes
+  [x] PATCH  /routes/{id}
+  [x] PATCH  /routes/{id}/salesman
+  [x] DELETE /routes/{id}
+
+Customers
+  [x] POST   /customers        -- now requires a `password` field (customer's portal login)
+  [x] PATCH  /customers/{id}   -- can now also toggle `login_enabled`
+  [x] PATCH  /customers/{id}/status
+  [x] PATCH  /customers/{id}/location
+  [x] DELETE /customers/{id}
+
+Sales Orders
+  [x] POST   /orders                 -- shared: staff sends customer_id, customer token forces it from token
+  [x] PATCH  /orders/{id}            -- pending-only, ownership-checked
+  [x] POST   /orders/{id}/cancel     -- pending-only, ownership-checked
+  [x] GET    /orders                 -- scoped: customer sees own, salesman sees own route's customers
+  [x] GET    /orders/{id}
+  [x] POST   /orders/{id}/approve    -- staff-only, pending-only; writes a RESERVED movement per item
+                                         via Amin's record_movement(), no route-ownership restriction
+  [x] POST   /orders/{id}/load       -- staff-only, approved-only; writes a SOLD_OUT movement per item
+                                         (reduces physical_stock and reserved_stock together)
+
+Invoices
+  [x] POST   /orders/{id}/invoice   -- staff-only, requires order status approved/loaded, one invoice per order
+  [x] POST   /invoices/{id}/cancel  -- staff-only, only while payment_status is unpaid (soft delete)
+
+Delivery / Driver
+  [x] POST   /deliveries              -- one delivery per invoice
+  [x] POST   /deliveries/{id}/start   -- pending -> out_for_delivery
+  [x] POST   /deliveries/{id}/arrive  -- records GPS/timestamp only, no status change
+  [x] POST   /deliveries/{id}/complete -- creates a cleared Payment, recomputes invoice.payment_status,
+                                          sets order.status = delivered. status field in request is
+                                          restricted to "delivered" (detailed outcomes are a documented
+                                          v2 schema gap, not built - see database_schema_docs.markdown note 10)
+  [x] POST   /deliveries/{id}/fail    -- out_for_delivery -> failed only
+
+Payments
+  [x] POST   /payments             -- staff-only, records pending (needs >=1 amount > 0)
+  [x] POST   /payments/{id}/verify -- pending-only -> cleared; recomputes invoice.payment_status
+  [x] POST   /payments/{id}/bounce -- pending-only -> bounced
+
+Returns
+  [x] POST   /returns              -- each item now carries its OWN reason (damaged/expired/
+                                       wrong_item/not_needed) - not one reason for the whole return,
+                                       since customers often return mixed items for different reasons
+  [x] POST   /returns/{id}/approve
+  [x] POST   /returns/{id}/reject
+  [x] POST   /returns/{id}/complete -- writes one stock movement per item (type driven by that item's
+                                        own reason) AND auto-creates a pending Credit Note valued at
+                                        original sale price (qty * SalesOrderItem.price, summed)
+
+Credit Notes -- NEW sub-domain, not in the original 18-domain list or api_reference.md.
+  New table `credit_notes` (migration d4e9a2c7f1b3): return_id (unique FK), customer_id, amount,
+  status (pending/approved/rejected), approved_by. Auto-created by /returns/{id}/complete above.
+  Ledger only - no running balance column on customers; "how much credit does a customer have"
+  is a sum-on-demand query, not built as an endpoint yet.
+  [x] POST   /credit-notes/{id}/approve -- only the credit note's customer's route salesman, or an
+                                            admin, may approve/reject (403 otherwise) - matches the
+                                            same route-ownership check used for Sales Order creation
+  [x] POST   /credit-notes/{id}/reject
+
+File Uploads
+  [x] POST   /files   -- multipart, {file, category?}; saves under UPLOAD_DIR/<category>/<year>/<uuid>.<ext>,
+                          returns {file_url: "<category>/<year>/<uuid>.<ext>"}; any authenticated principal
+```
 
 **Build order for this track:**
 1. Auth & Users (do this first — everyone needs it)
@@ -108,27 +276,31 @@ Use this checklist format (copy into your issue tracker or update here) to track
 
 ```
 Track 1 — Amin
-[ ] Categories & Brands
-[ ] Products
-[ ] Price Lists
-[ ] Warehouses
-[ ] Suppliers
-[ ] Vehicles
-[ ] Inventory
-[ ] Purchases
+[x] Categories & Brands
+[x] Products             (GET added by Ibrahim's track)
+[x] Price Lists          (item shape changed to discount_percent)
+[x] Warehouses           (built by Ibrahim's track - do not rebuild)
+[x] Suppliers
+[x] Vehicles
+[x] Inventory            (record_movement() now also used by Sales Orders approve/load)
+[x] Purchases
 [ ] Tally Sync
 
 Track 2 — Ibrahim
-[ ] Auth & Users
-[ ] Routes
-[ ] Customers
-[ ] File Uploads
-[ ] Sales Orders
-[ ] Invoices
-[ ] Delivery / Driver
-[ ] Payments
-[ ] Returns
+[x] Auth & Users          (login done; logout still open)
+[x] Routes
+[x] Customers
+[x] File Uploads
+[x] Sales Orders          (all 7 endpoints done, including approve/load)
+[x] Invoices
+[x] Delivery / Driver
+[x] Payments
+[x] Returns               (+ new Credit Notes sub-domain, see Section 3 above)
 ```
+
+**Track 2 (Ibrahim) is now fully done**, except `/auth/logout` (small, not yet built).
+
+*Last updated: 2026-07-21, after building Returns + Credit Notes (`features/returns` branch, not yet merged to `develop`). Payments, File Uploads, Sales Orders approve/load, Invoices, Deliveries, and Amin's Suppliers/Vehicles/Inventory/Purchases already merged.*
 
 ---
 

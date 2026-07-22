@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Text, DateTime, Numeric, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 from app.db.session import Base
 from app.db.mixins import UUIDPKMixin, TimestampMixin, SoftDeleteMixin
@@ -17,6 +18,8 @@ class Return(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     # requested, approved, completed, rejected
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    items = relationship("ReturnItem", cascade="all, delete-orphan")
 
 
 class ReturnItem(Base, UUIDPKMixin, TimestampMixin):
