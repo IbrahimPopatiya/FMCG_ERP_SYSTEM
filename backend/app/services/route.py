@@ -15,6 +15,10 @@ def create_route(db: Session, data: RouteCreate) -> Route:
     return route
 
 
+def list_routes(db: Session) -> list[Route]:
+    return db.query(Route).filter(Route.deleted_at.is_(None)).all()
+
+
 def get_route(db: Session, route_id: uuid.UUID) -> Route | None:
     return db.query(Route).filter(Route.id == route_id, Route.deleted_at.is_(None)).first()
 

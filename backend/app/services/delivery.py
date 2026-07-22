@@ -58,6 +58,7 @@ def create_delivery(db: Session, data: DeliveryCreate) -> Delivery:
     return delivery
 
 
+<<<<<<< HEAD
 def list_deliveries(
     db: Session, page: int, page_size: int
 ) -> tuple[list[tuple[Delivery, str, uuid.UUID, str]], int]:
@@ -84,6 +85,10 @@ def get_delivery_with_context(
         .filter(Delivery.id == delivery_id)
         .first()
     )
+=======
+def list_deliveries(db: Session) -> list[Delivery]:
+    return db.query(Delivery).all()
+>>>>>>> phase-1
 
 
 def get_delivery(db: Session, delivery_id: uuid.UUID) -> Delivery | None:

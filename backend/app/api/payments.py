@@ -24,6 +24,7 @@ from app.services.payment import (
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
+<<<<<<< HEAD
 def _to_list_item(row: tuple) -> PaymentListItem:
     payment, invoice_number, customer_id, order_number = row
     return PaymentListItem(
@@ -64,6 +65,14 @@ def get_payment(
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
     return _to_list_item(row)
+=======
+@router.get("", response_model=list[PaymentResponse])
+def list_payments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    return payment_service.list_payments(db)
+>>>>>>> phase-1
 
 
 @router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)

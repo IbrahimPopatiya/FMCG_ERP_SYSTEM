@@ -18,6 +18,14 @@ from app.services import route as route_service
 router = APIRouter(prefix="/routes", tags=["routes"])
 
 
+@router.get("", response_model=list[RouteResponse])
+def list_routes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return route_service.list_routes(db)
+
+
 @router.post("", response_model=RouteResponse, status_code=status.HTTP_201_CREATED)
 def create_route(
     data: RouteCreate,

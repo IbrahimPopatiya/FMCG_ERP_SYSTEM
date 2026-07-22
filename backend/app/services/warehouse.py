@@ -17,12 +17,16 @@ def create_warehouse(db: Session, data: WarehouseCreate) -> Warehouse:
 
 
 def list_warehouses(db: Session) -> list[Warehouse]:
+<<<<<<< HEAD
     return (
         db.query(Warehouse)
         .filter(Warehouse.deleted_at.is_(None))
         .order_by(Warehouse.name)
         .all()
     )
+=======
+    return db.query(Warehouse).filter(Warehouse.deleted_at.is_(None)).all()
+>>>>>>> phase-1
 
 
 def get_warehouse(db: Session, warehouse_id: uuid.UUID) -> Warehouse | None:

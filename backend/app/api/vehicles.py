@@ -21,7 +21,14 @@ router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 
 @router.get("", response_model=list[VehicleResponse])
+<<<<<<< HEAD
 def list_vehicles(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+=======
+def list_vehicles(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+>>>>>>> phase-1
     return vehicle_service.list_vehicles(db)
 
 

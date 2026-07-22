@@ -67,6 +67,7 @@ def create_return(db: Session, data: ReturnCreate, created_by: uuid.UUID) -> Ret
     return ret
 
 
+<<<<<<< HEAD
 def list_returns(
     db: Session, page: int, page_size: int
 ) -> tuple[list[tuple[Return, str, uuid.UUID, str]], int]:
@@ -94,6 +95,10 @@ def get_return_with_context(
         .filter(Return.id == return_id, Return.deleted_at.is_(None))
         .first()
     )
+=======
+def list_returns(db: Session) -> list[Return]:
+    return db.query(Return).filter(Return.deleted_at.is_(None)).all()
+>>>>>>> phase-1
 
 
 def get_return(db: Session, return_id: uuid.UUID) -> Return | None:

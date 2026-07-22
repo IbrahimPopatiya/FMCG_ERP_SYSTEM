@@ -32,6 +32,7 @@ from app.services.delivery import (
 router = APIRouter(prefix="/deliveries", tags=["deliveries"])
 
 
+<<<<<<< HEAD
 def _to_list_item(row: tuple) -> DeliveryListItem:
     delivery, invoice_number, customer_id, order_number = row
     return DeliveryListItem(
@@ -74,6 +75,14 @@ def get_delivery(
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Delivery not found")
     return _to_list_item(row)
+=======
+@router.get("", response_model=list[DeliveryResponse])
+def list_deliveries(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    return delivery_service.list_deliveries(db)
+>>>>>>> phase-1
 
 
 @router.post("", response_model=DeliveryResponse, status_code=status.HTTP_201_CREATED)

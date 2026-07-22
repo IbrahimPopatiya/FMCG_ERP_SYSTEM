@@ -14,12 +14,16 @@ class DuplicateVehicleError(Exception):
 
 
 def list_vehicles(db: Session) -> list[Vehicle]:
+<<<<<<< HEAD
     return (
         db.query(Vehicle)
         .filter(Vehicle.deleted_at.is_(None))
         .order_by(Vehicle.vehicle_number)
         .all()
     )
+=======
+    return db.query(Vehicle).filter(Vehicle.deleted_at.is_(None)).all()
+>>>>>>> phase-1
 
 
 def get_vehicle(db: Session, vehicle_id: uuid.UUID) -> Vehicle | None:

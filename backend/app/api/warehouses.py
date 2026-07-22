@@ -19,7 +19,14 @@ router = APIRouter(prefix="/warehouses", tags=["warehouses"])
 
 
 @router.get("", response_model=list[WarehouseResponse])
+<<<<<<< HEAD
 def list_warehouses(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+=======
+def list_warehouses(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+>>>>>>> phase-1
     return warehouse_service.list_warehouses(db)
 
 
