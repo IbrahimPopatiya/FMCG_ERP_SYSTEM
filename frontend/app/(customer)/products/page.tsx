@@ -1,11 +1,12 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Select } from "@/components/ui/Select";
 import { CustomerProductCard } from "@/components/products/CustomerProductCard";
+import { AccountAvatar } from "@/components/customer/AccountAvatar";
+import { SearchIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useProducts } from "@/lib/hooks/useProducts";
@@ -14,8 +15,8 @@ type SortOption = "popular" | "price_low" | "price_high" | "name";
 
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 md:grid-cols-4 md:p-8">
-      {Array.from({ length: 8 }).map((_, i) => (
+    <div className="grid grid-cols-3 gap-3 p-4 md:grid-cols-4 md:p-8 lg:grid-cols-5">
+      {Array.from({ length: 9 }).map((_, i) => (
         <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
       ))}
     </div>
@@ -62,19 +63,25 @@ function ProductsPageContent() {
   return (
     <div className="flex flex-col">
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-3 md:px-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold tracking-tight text-ink">All Products</h1>
-          <Link href="/cart" className="text-sm font-medium text-primary hover:text-primary-hover md:hidden">
-            View cart
-          </Link>
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-4 py-2.5">
+            <p className="text-xs text-ink-muted">Browsing</p>
+            <p className="truncate text-sm font-semibold text-ink">All Products</p>
+          </div>
+          <AccountAvatar />
         </div>
-        <input
-          type="search"
-          placeholder="Search products…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-11 w-full rounded-lg border border-border px-3.5 text-sm text-ink placeholder:text-ink-muted/60 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary-soft md:max-w-md"
-        />
+
+        <div className="flex items-center gap-2 rounded-xl border border-border px-3.5">
+          <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
+          <input
+            type="search"
+            placeholder="Search…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-11 w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none md:max-w-md"
+          />
+        </div>
+
         {activeCategories.length > 0 && (
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
             <button
@@ -142,7 +149,7 @@ function ProductsPageContent() {
       )}
 
       {!products.isLoading && !products.isError && filtered.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 p-4 pb-6 sm:grid-cols-3 md:grid-cols-4 md:p-8">
+        <div className="grid grid-cols-3 gap-3 p-4 pb-6 md:grid-cols-4 md:p-8 lg:grid-cols-5">
           {filtered.map((product) => (
             <CustomerProductCard
               key={product.id}

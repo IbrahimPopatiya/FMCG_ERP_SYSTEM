@@ -138,6 +138,81 @@ def list_dues_for_customer(
     return results, total_due
 
 
+def get_customer_ledger(db: Session, customer_id: uuid.UUID, credit_limit: Decimal) -> dict:
+    """Combines every invoice (debit) and cleared payment (credit) for a
+    customer into one chronological running balance - there's no separate
+    ledger/transactions table, so this is assembled from the same two
+    sources the rest of billing already uses."""
+    invoice_rows = (
+        db.query(Invoice, SalesOrder.order_number, SalesOrder.order_date)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .filter(SalesOrder.customer_id == customer_id, Invoice.deleted_at.is_(None))
+        .all()
+    )
+    payment_rows = (
+        db.query(Payment, Invoice.invoice_number)
+        .join(Invoice, Invoice.id == Payment.invoice_id)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .filter(SalesOrder.customer_id == customer_id, Payment.status == "cleared")
+        .all()
+    )
+
+    events = []
+    for invoice, order_number, _order_date in invoice_rows:
+        events.append(
+            {
+                "date": invoice.invoice_date,
+                "type": "order",
+                "reference": order_number,
+                "description": f"Order {order_number}",
+                "amount": invoice.total,
+            }
+        )
+    for payment, invoice_number in payment_rows:
+        if payment.cash_amount > 0:
+            method = "Cash"
+        elif payment.upi_amount > 0:
+            method = "UPI"
+        elif payment.cheque_amount > 0:
+            method = "Cheque"
+        else:
+            method = "Payment"
+        events.append(
+            {
+                "date": payment.payment_date,
+                "type": "payment",
+                "reference": payment.reference_number or invoice_number,
+                "description": f"Payment received ({method})",
+                "amount": payment.total_amount,
+            }
+        )
+
+    events.sort(key=lambda e: e["date"])
+
+    balance = Decimal("0")
+    transactions = []
+    for event in events:
+        balance += event["amount"] if event["type"] == "order" else -event["amount"]
+        transactions.append({**event, "balance": balance})
+    transactions.reverse()  # newest first, matching the invoice/dues list convention
+
+    _dues_rows, total_due = list_dues_for_customer(db, customer_id)
+    last_order_date = max((d for _, _, d in invoice_rows), default=None)
+    total_invoiced = sum((i.total for i, _, _ in invoice_rows), start=Decimal("0"))
+    total_payments = sum((p.total_amount for p, _ in payment_rows), start=Decimal("0"))
+
+    return {
+        "credit_limit": credit_limit,
+        "available_credit": max(Decimal("0"), credit_limit - balance),
+        "current_balance": balance,
+        "total_invoiced": total_invoiced,
+        "total_payments": total_payments,
+        "outstanding_invoices": len(_dues_rows),
+        "last_order_date": last_order_date,
+        "transactions": transactions,
+    }
+
+
 def recompute_payment_status(db: Session, invoice_id: uuid.UUID) -> str:
     """Recomputes payment_status from cleared payments - the single place
     this is derived, so Deliveries and Payments both call it instead of

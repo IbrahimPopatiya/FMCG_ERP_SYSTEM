@@ -62,3 +62,23 @@ export interface CustomerDuesResponse {
   total_due: number;
   invoices: DueInvoiceItem[];
 }
+
+export interface LedgerTransaction {
+  date: string;
+  type: "order" | "payment";
+  reference: string;
+  description: string;
+  amount: number;
+  balance: number;
+}
+
+export interface CustomerLedgerResponse {
+  credit_limit: number;
+  available_credit: number;
+  current_balance: number;
+  total_invoiced: number;
+  total_payments: number;
+  outstanding_invoices: number;
+  last_order_date: string | null;
+  transactions: LedgerTransaction[];
+}

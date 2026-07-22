@@ -28,9 +28,9 @@ export function CustomerDesktopSidebar() {
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-white md:flex">
-      <div className="flex items-center gap-2 border-b border-border px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
-          DMS
+      <Link href="/account" className="flex items-center gap-2 border-b border-border px-5 py-5 hover:bg-surface">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">
+          {customer.data?.business_name.charAt(0).toUpperCase() ?? "S"}
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-ink">
@@ -40,7 +40,7 @@ export function CustomerDesktopSidebar() {
             {customer.data ? `${customer.data.city}, ${customer.data.state}` : "Wholesale ordering"}
           </p>
         </div>
-      </div>
+      </Link>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
         {CUSTOMER_NAV_ITEMS.map((item) => {

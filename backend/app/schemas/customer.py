@@ -112,3 +112,23 @@ class DueInvoiceItem(BaseModel):
 class CustomerDuesResponse(BaseModel):
     total_due: Decimal
     invoices: list[DueInvoiceItem]
+
+
+class LedgerTransaction(BaseModel):
+    date: datetime
+    type: str  # "order" | "payment"
+    reference: str
+    description: str
+    amount: Decimal
+    balance: Decimal
+
+
+class CustomerLedgerResponse(BaseModel):
+    credit_limit: Decimal
+    available_credit: Decimal
+    current_balance: Decimal
+    total_invoiced: Decimal
+    total_payments: Decimal
+    outstanding_invoices: int
+    last_order_date: Optional[datetime]
+    transactions: list[LedgerTransaction]

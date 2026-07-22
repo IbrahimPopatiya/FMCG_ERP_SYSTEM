@@ -4,6 +4,7 @@ import type {
   CustomerCreate,
   CustomerCreateResponse,
   CustomerDuesResponse,
+  CustomerLedgerResponse,
   CustomerListItem,
   CustomerMeResponse,
   CustomerStatus,
@@ -15,6 +16,10 @@ export function getCurrentCustomer() {
 
 export function getCurrentCustomerDues() {
   return api.get<CustomerDuesResponse>("/customers/me/dues").then((res) => res.data);
+}
+
+export function getCurrentCustomerLedger() {
+  return api.get<CustomerLedgerResponse>("/customers/me/ledger").then((res) => res.data);
 }
 
 export function listCustomers(page: number, pageSize: number, search?: string) {

@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user, require_role
+from app.core.deps import Principal, get_current_principal, require_role
 from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
@@ -22,8 +22,10 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 @router.get("", response_model=list[CategoryResponse])
 def list_categories(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    principal: Principal = Depends(get_current_principal),
 ):
+    # Both staff and customers browse categories (storefront catalog needs
+    # this list) - only create/update/delete stay admin-only below.
     return category_service.list_categories(db)
 
 

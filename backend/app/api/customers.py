@@ -19,6 +19,7 @@ from app.schemas.customer import (
     CustomerMeResponse,
     CustomerDeleteResponse,
     CustomerDuesResponse,
+    CustomerLedgerResponse,
     DueInvoiceItem,
 )
 from app.services import customer as customer_service
@@ -55,6 +56,14 @@ def get_current_customer_dues(
             for invoice, order_id, order_number, balance in rows
         ],
     )
+
+
+@router.get("/me/ledger", response_model=CustomerLedgerResponse)
+def get_current_customer_ledger(
+    db: Session = Depends(get_db),
+    current_customer: Customer = Depends(require_customer),
+):
+    return invoice_service.get_customer_ledger(db, current_customer.id, current_customer.credit_limit)
 
 
 @router.get("", response_model=Page[CustomerMeResponse])
