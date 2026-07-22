@@ -52,6 +52,27 @@ def update_price_list(
     return price_list
 
 
+@router.get("/{price_list_id}", response_model=PriceListResponse)
+def get_price_list(
+    price_list_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    price_list = price_list_service.get_price_list(db, price_list_id)
+    if price_list is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Price list not found")
+    return price_list
+
+
+@router.get("/{price_list_id}/items", response_model=list[PriceListItemResponse])
+def list_price_list_items(
+    price_list_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return price_list_service.list_price_list_items(db, price_list_id)
+
+
 @router.delete("/{price_list_id}", response_model=PriceListDeleteResponse)
 def delete_price_list(
     price_list_id: uuid.UUID,

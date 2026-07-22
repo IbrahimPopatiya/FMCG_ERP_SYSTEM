@@ -56,6 +56,10 @@ def soft_delete_price_list(db: Session, price_list_id: uuid.UUID) -> PriceList |
     return price_list
 
 
+def list_price_list_items(db: Session, price_list_id: uuid.UUID) -> list[PriceListItem]:
+    return db.query(PriceListItem).filter(PriceListItem.price_list_id == price_list_id).all()
+
+
 def get_price_list_item(db: Session, price_list_id: uuid.UUID, item_id: uuid.UUID) -> PriceListItem | None:
     return db.query(PriceListItem).filter(
         PriceListItem.id == item_id, PriceListItem.price_list_id == price_list_id

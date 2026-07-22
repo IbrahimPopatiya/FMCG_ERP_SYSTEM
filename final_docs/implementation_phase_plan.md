@@ -28,20 +28,22 @@ Goal: the plumbing every later phase needs, no visible feature yet.
 
 Exit criteria: logging in as any staff role stores the role and the hook correctly redirects on a test route. — **met** (role now persists after login; guard hook is unit-testable/ready, wiring deferred to Phase 3 by design).
 
-## Phase 2 — ERP: fill in missing pages (uses existing patterns, mostly independent of Phase 0/1)
+## Phase 2 — ERP: fill in missing pages ✅ DONE
 
 Goal: every domain that has a backend API has a frontend screen, before layering role gating on top.
 
-Order (simplest/least blocked first):
-1. `brands/` page — CRUD already fully exists, no backend work needed.
-2. `categories/` page — CRUD already fully exists, no backend work needed.
-3. `warehouses/` page — needs Phase 0's list endpoint.
-4. `routes/` (sales routes) page — needs Phase 0's list endpoint.
-5. `price-lists/` page — needs Phase 0's list endpoint.
-6. `credit-notes/` page (list + approve/reject) — needs Phase 0's list endpoint.
-7. Audit and fix list population on `invoices`, `returns`, `purchases`, `suppliers`, `vehicles`, `deliveries`, `payments` pages — confirm they now use the new Phase 0 list endpoints instead of any workaround.
+- ✅ `credit-notes/` page (list + detail + approve/reject) — turned out to already exist (built independently on the `phase-1` branch, absorbed during the Phase 0 merge). No work needed.
+- ✅ `brands/` page — list (grid of cards) + add + delete. Added `createBrand`/`deleteBrand` to `lib/api/brands.ts` (list-only before), a `useBrandMutations.ts` hook file, and the page.
+- ✅ `categories/` page — list + add (with parent-category picker) + delete. Same pattern as brands, plus a parent `Select` populated from the same category list.
+- ✅ `warehouses/` page — table (desktop) / card list (mobile) + add + activate/deactivate, mirroring the existing `suppliers/` page exactly. Added `createWarehouse`/`setWarehouseStatus` to `lib/api/warehouses.ts`.
+- ✅ `routes/` (sales routes) page — table + add + inline salesman reassignment (a `Select` per row, filtered from `useStaffDirectory()` to `role === "salesman"`) + delete. `lib/api/salesRoutes.ts` and `types/salesRoutes.ts` were empty TODO stubs — fully implemented (list/create/update/assign-salesman/delete).
+- ✅ `price-lists/` list page (add/delete) + a `[priceListId]/` detail page for managing per-product discounts (add product, edit discount inline, remove). `lib/api/priceLists.ts` and `types/priceLists.ts` were also empty TODO stubs — fully implemented.
+  - **Backend gap found and fixed**: the price-list-items sub-resource had create/update/delete but no way to *list* a price list's items, so the detail page had no way to render existing discounts. Added `GET /price-lists/{id}` and `GET /price-lists/{id}/items` (service function `list_price_list_items` + route) — same justified, minimal addition as Phase 0's list endpoints.
+- ✅ Audited `invoices`, `returns`, `purchases`, `suppliers`, `vehicles`, `deliveries`, `payments` pages (item 7 from the original plan): all already call the richer `Page[...]`/joined-context endpoints from the Phase 0 merge — no workaround code found, nothing to fix.
 
-Exit criteria: every ERP domain has a working list + detail/CRUD screen, still visible to all staff (role gating comes next).
+Verified: `tsc --noEmit` clean, `eslint` clean on all new/changed files, backend still imports cleanly and the full pytest suite still passes after the two new price-list routes.
+
+Exit criteria: every ERP domain has a working list + detail/CRUD screen, still visible to all staff (role gating comes next). — **met**.
 
 ## Phase 3 — ERP: role-based nav + page gating
 

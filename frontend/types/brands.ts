@@ -3,3 +3,13 @@ export interface BrandResponse {
   name: string;
   logo: string | null;
 }
+
+export interface BrandCreate {
+  name: string;
+  logo?: string | null;
+}
+
+export interface BrandDeleteResponse {
+  id: string;
+  deleted_at: string;
+}

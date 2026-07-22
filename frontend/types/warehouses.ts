@@ -7,3 +7,9 @@ export interface WarehouseResponse {
   state: string;
   status: WarehouseStatus;
 }
+
+export interface WarehouseCreate {
+  name: string;
+  address: string;
+  state: string;
+}
