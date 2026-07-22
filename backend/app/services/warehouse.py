@@ -16,6 +16,10 @@ def create_warehouse(db: Session, data: WarehouseCreate) -> Warehouse:
     return warehouse
 
 
+def list_warehouses(db: Session) -> list[Warehouse]:
+    return db.query(Warehouse).filter(Warehouse.deleted_at.is_(None)).all()
+
+
 def get_warehouse(db: Session, warehouse_id: uuid.UUID) -> Warehouse | None:
     return db.query(Warehouse).filter(
         Warehouse.id == warehouse_id, Warehouse.deleted_at.is_(None)

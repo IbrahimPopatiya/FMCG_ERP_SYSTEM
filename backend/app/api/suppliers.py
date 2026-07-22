@@ -19,6 +19,14 @@ from app.services.supplier import DuplicateSupplierError
 router = APIRouter(prefix="/suppliers", tags=["suppliers"])
 
 
+@router.get("", response_model=list[SupplierResponse])
+def list_suppliers(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return supplier_service.list_suppliers(db)
+
+
 @router.post("", response_model=SupplierResponse, status_code=status.HTTP_201_CREATED)
 def create_supplier(
     data: SupplierCreate,

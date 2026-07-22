@@ -56,6 +56,10 @@ def create_delivery(db: Session, data: DeliveryCreate) -> Delivery:
     return delivery
 
 
+def list_deliveries(db: Session) -> list[Delivery]:
+    return db.query(Delivery).all()
+
+
 def get_delivery(db: Session, delivery_id: uuid.UUID) -> Delivery | None:
     return db.query(Delivery).filter(Delivery.id == delivery_id).first()
 

@@ -87,6 +87,10 @@ def create_purchase(db: Session, data: PurchaseCreate, user_id: uuid.UUID) -> Pu
     return purchase
 
 
+def list_purchases(db: Session) -> list[Purchase]:
+    return db.query(Purchase).filter(Purchase.deleted_at.is_(None)).all()
+
+
 def get_purchase(db: Session, purchase_id: uuid.UUID) -> Purchase | None:
     return db.query(Purchase).filter(
         Purchase.id == purchase_id, Purchase.deleted_at.is_(None)

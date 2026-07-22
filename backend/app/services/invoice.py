@@ -58,6 +58,10 @@ def generate_invoice(db: Session, order_id: uuid.UUID) -> Invoice | None:
     return invoice
 
 
+def list_invoices(db: Session) -> list[Invoice]:
+    return db.query(Invoice).filter(Invoice.deleted_at.is_(None)).all()
+
+
 def get_invoice(db: Session, invoice_id: uuid.UUID) -> Invoice | None:
     return db.query(Invoice).filter(
         Invoice.id == invoice_id, Invoice.deleted_at.is_(None)

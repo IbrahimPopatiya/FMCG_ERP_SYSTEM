@@ -25,6 +25,14 @@ from app.services.return_ import (
 router = APIRouter(prefix="/returns", tags=["returns"])
 
 
+@router.get("", response_model=list[ReturnResponse])
+def list_returns(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    return return_service.list_returns(db)
+
+
 @router.post("", response_model=ReturnResponse, status_code=status.HTTP_201_CREATED)
 def create_return(
     data: ReturnCreate,

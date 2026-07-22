@@ -65,6 +65,10 @@ def create_return(db: Session, data: ReturnCreate, created_by: uuid.UUID) -> Ret
     return ret
 
 
+def list_returns(db: Session) -> list[Return]:
+    return db.query(Return).filter(Return.deleted_at.is_(None)).all()
+
+
 def get_return(db: Session, return_id: uuid.UUID) -> Return | None:
     return db.query(Return).filter(
         Return.id == return_id, Return.deleted_at.is_(None)

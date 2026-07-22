@@ -22,6 +22,14 @@ from app.services.price_list import DuplicatePriceListItemError
 router = APIRouter(prefix="/price-lists", tags=["price-lists"])
 
 
+@router.get("", response_model=list[PriceListResponse])
+def list_price_lists(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return price_list_service.list_price_lists(db)
+
+
 @router.post("", response_model=PriceListResponse, status_code=status.HTTP_201_CREATED)
 def create_price_list(
     data: PriceListCreate,

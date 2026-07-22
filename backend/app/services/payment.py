@@ -42,6 +42,10 @@ def record_payment(db: Session, data: PaymentCreate, created_by: uuid.UUID) -> P
     return payment
 
 
+def list_payments(db: Session) -> list[Payment]:
+    return db.query(Payment).all()
+
+
 def get_payment(db: Session, payment_id: uuid.UUID) -> Payment | None:
     return db.query(Payment).filter(Payment.id == payment_id).first()
 

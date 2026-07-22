@@ -30,6 +30,14 @@ from app.services.delivery import (
 router = APIRouter(prefix="/deliveries", tags=["deliveries"])
 
 
+@router.get("", response_model=list[DeliveryResponse])
+def list_deliveries(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    return delivery_service.list_deliveries(db)
+
+
 @router.post("", response_model=DeliveryResponse, status_code=status.HTTP_201_CREATED)
 def create_delivery(
     data: DeliveryCreate,

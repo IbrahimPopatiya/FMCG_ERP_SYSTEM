@@ -20,6 +20,14 @@ from app.services.vehicle import DuplicateVehicleError
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 
+@router.get("", response_model=list[VehicleResponse])
+def list_vehicles(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return vehicle_service.list_vehicles(db)
+
+
 @router.post("", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED)
 def create_vehicle(
     data: VehicleCreate,

@@ -17,6 +17,14 @@ from app.services.invoice import (
 router = APIRouter(tags=["invoices"])
 
 
+@router.get("/invoices", response_model=list[InvoiceResponse])
+def list_invoices(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    return invoice_service.list_invoices(db)
+
+
 @router.post(
     "/orders/{order_id}/invoice", response_model=InvoiceResponse, status_code=status.HTTP_201_CREATED
 )

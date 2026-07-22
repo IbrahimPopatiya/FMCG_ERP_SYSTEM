@@ -22,6 +22,14 @@ from app.services.payment import (
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
+@router.get("", response_model=list[PaymentResponse])
+def list_payments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    return payment_service.list_payments(db)
+
+
 @router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 def record_payment(
     data: PaymentCreate,

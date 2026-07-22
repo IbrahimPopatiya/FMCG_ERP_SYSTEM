@@ -6,11 +6,19 @@ from sqlalchemy.orm import Session
 from app.core.deps import require_staff
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.credit_note import CreditNoteStatusResponse
+from app.schemas.credit_note import CreditNoteResponse, CreditNoteStatusResponse
 from app.services import credit_note as credit_note_service
 from app.services.credit_note import NotAuthorizedForCreditNoteError, CreditNoteNotActionableError
 
 router = APIRouter(prefix="/credit-notes", tags=["credit-notes"])
+
+
+@router.get("", response_model=list[CreditNoteResponse])
+def list_credit_notes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    return credit_note_service.list_credit_notes(db)
 
 
 @router.post("/{credit_note_id}/approve", response_model=CreditNoteStatusResponse)

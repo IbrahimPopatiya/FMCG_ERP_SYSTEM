@@ -17,6 +17,10 @@ class CreditNoteNotActionableError(Exception):
     """Raised when approving/rejecting a credit note that isn't pending."""
 
 
+def list_credit_notes(db: Session) -> list[CreditNote]:
+    return db.query(CreditNote).all()
+
+
 def get_credit_note(db: Session, credit_note_id: uuid.UUID) -> CreditNote | None:
     return db.query(CreditNote).filter(CreditNote.id == credit_note_id).first()
 

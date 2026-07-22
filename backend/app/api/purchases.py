@@ -24,6 +24,14 @@ from app.services.purchase import (
 router = APIRouter(prefix="/purchases", tags=["purchases"])
 
 
+@router.get("", response_model=list[PurchaseResponse])
+def list_purchases(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return purchase_service.list_purchases(db)
+
+
 @router.post("", response_model=PurchaseResponse, status_code=status.HTTP_201_CREATED)
 def create_purchase(
     data: PurchaseCreate,
