@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 // request completes and redirect based on session state. This is the ONLY
 // place auth redirects happen; pages assume they're already authorized.
 
-const CUSTOMER_HOME = "/products";
+const CUSTOMER_HOME = "/home";
 const STAFF_HOME = "/admin/dashboard";
 
 export function proxy(request: NextRequest) {

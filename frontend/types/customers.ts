@@ -46,3 +46,19 @@ export interface CustomerCreate {
   payment_terms: number;
   password: string;
 }
+
+export interface DueInvoiceItem {
+  invoice_id: string;
+  invoice_number: string;
+  order_id: string;
+  order_number: string;
+  invoice_date: string;
+  total: number;
+  balance: number;
+  payment_status: string;
+}
+
+export interface CustomerDuesResponse {
+  total_due: number;
+  invoices: DueInvoiceItem[];
+}

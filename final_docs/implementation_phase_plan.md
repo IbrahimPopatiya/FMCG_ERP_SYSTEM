@@ -59,17 +59,18 @@ Verified: backend imports cleanly, full pytest suite passes (262 tests). Fronten
 
 Exit criteria: each role's screen set matches `role_based_frontend_plan.md` §5 exactly, enforced on both frontend and backend. — **met**, with the one documented, deliberate exception (`/users`) flagged above rather than silently patched over.
 
-## Phase 4 — Customer app: Blinkit-style upgrade
+## Phase 4 — Customer app: Blinkit-style upgrade ✅ DONE
 
-Goal: turn the working but plain customer flow into the Blinkit-like experience. Independent of Phases 0–3 (different route group), can run in parallel once Phase 0 is stable.
+Goal: turn the working but plain customer flow into the Blinkit-like experience.
 
-1. Home/landing screen (`(customer)/page.tsx`) — banners + category grid + reorder-last-basket.
-2. Category browsing UI using the existing `GET /categories` endpoint.
-3. Search on the product listing (confirm/add a backend search param on `GET /products` if none exists).
-4. Persistent floating cart bar across customer screens.
-5. Order-tracking stepper on order detail, driven by `OrderStatus` + `DeliveryStatus`.
-6. Dues/credit view — either on `account/page.tsx` or a new `dues/page.tsx`.
-7. Confirm product pricing already reflects the customer's assigned price list; fix if it's showing flat catalog price.
+- **Re-scoped after investigation**: items 2, 3, and 7 from the original plan turned out to already be implemented — `(customer)/products/page.tsx` already had search and category filter chips, and the backend catalog endpoint already applies the customer's `price_list_id` via `get_effective_price`. No work needed on those three; verified by reading the existing code before building anything new.
+- ✅ **Home/landing screen** — new `(customer)/home/page.tsx`: search shortcut into `/products`, a dues banner (only shown when `total_due > 0`), a "reorder your last basket" card (re-adds the most recent order's items to the cart via the existing `CartProvider`), and a category grid linking to `/products?category={id}`. Set as the new post-login landing route (`CUSTOMER_HOME` in `proxy.ts`, and the login page's redirect, both changed from `/products` to `/home`); added `Home` as the first tab in the bottom nav.
+- ✅ **Category deep-link** — `/products` now reads a `?category=` query param (via `useSearchParams`, wrapped in a `Suspense` boundary — required for `next build`'s static export, caught by running a real production build) to preselect a category when arriving from the home page's category grid.
+- ✅ **Persistent cart bar** — new `components/cart/CartBar.tsx`, mounted in `(customer)/layout.tsx` above the bottom nav. Shows item count + subtotal, hidden on `/cart` itself and whenever the cart is empty.
+- ✅ **Order-tracking stepper** — new `components/orders/OrderTrackingStepper.tsx` (pending → approved → loaded → delivered, with a distinct red state for cancelled), added to the order detail page above the existing status badge. Built from `OrderStatus` alone — checked whether `DeliveryStatus` was needed too and decided it wasn't: `OrderStatus`'s 5 states already map cleanly to the customer-facing journey, and pulling in delivery data would have required a customer-scoped deliveries endpoint that doesn't exist (out of scope for this phase).
+- ✅ **Dues view — required a real backend gap to be closed first**: there was no "dues" concept anywhere in the API. Added `GET /customers/me/dues` (customer-only), backed by a new `list_dues_for_customer` service function in `app/services/invoice.py` that recomputes each unpaid/partial invoice's remaining balance from its cleared payments (same logic `recompute_payment_status` already uses). New `(customer)/dues/page.tsx` lists outstanding invoices + total; also surfaced as a row on `account/page.tsx` and as a conditional banner on the new home page.
+
+Verified: backend imports cleanly and the full pytest suite passes (262 tests, run cleanly — an earlier run showed 233 failures from two pytest processes colliding on the shared test DB, not a real regression, confirmed by a clean solo rerun). Frontend `tsc --noEmit` clean, `eslint` clean, and a full `next build` production build succeeds with every route (including `/home`, `/dues`) present.
 
 Exit criteria: customer can land on a home feed, search/browse by category, see a running cart bar, track an order's status visually, and see their dues.
 

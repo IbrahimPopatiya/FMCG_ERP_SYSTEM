@@ -96,3 +96,19 @@ class CustomerDeleteResponse(BaseModel):
     deleted_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DueInvoiceItem(BaseModel):
+    invoice_id: uuid.UUID
+    invoice_number: str
+    order_id: uuid.UUID
+    order_number: str
+    invoice_date: datetime
+    total: Decimal
+    balance: Decimal
+    payment_status: str
+
+
+class CustomerDuesResponse(BaseModel):
+    total_due: Decimal
+    invoices: list[DueInvoiceItem]

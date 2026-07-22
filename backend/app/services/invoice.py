@@ -105,6 +105,39 @@ def cancel_invoice(db: Session, invoice_id: uuid.UUID, reason: str) -> Invoice |
     return invoice
 
 
+def list_dues_for_customer(
+    db: Session, customer_id: uuid.UUID
+) -> tuple[list[tuple[Invoice, uuid.UUID, str, Decimal]], Decimal]:
+    """Every unpaid/partial invoice for a customer, plus the total balance
+    still owed across all of them - `Invoice.payment_status` says paid or
+    not, but not how much remains, so this recomputes each invoice's balance
+    from its cleared payments (same logic as recompute_payment_status)."""
+    rows = (
+        db.query(Invoice, SalesOrder.id, SalesOrder.order_number)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .filter(
+            SalesOrder.customer_id == customer_id,
+            Invoice.payment_status != PaymentStatus.PAID,
+            Invoice.deleted_at.is_(None),
+        )
+        .order_by(Invoice.invoice_date.desc())
+        .all()
+    )
+
+    results = []
+    total_due = Decimal("0")
+    for invoice, order_id, order_number in rows:
+        cleared = db.query(Payment.total_amount).filter(
+            Payment.invoice_id == invoice.id, Payment.status == "cleared"
+        ).all()
+        cleared_sum = sum((row[0] for row in cleared), start=Decimal("0"))
+        balance = invoice.total - cleared_sum
+        total_due += balance
+        results.append((invoice, order_id, order_number, balance))
+
+    return results, total_due
+
+
 def recompute_payment_status(db: Session, invoice_id: uuid.UUID) -> str:
     """Recomputes payment_status from cleared payments - the single place
     this is derived, so Deliveries and Payments both call it instead of

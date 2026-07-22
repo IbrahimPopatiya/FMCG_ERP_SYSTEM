@@ -3,6 +3,7 @@ import type { Page } from "@/types/pagination";
 import type {
   CustomerCreate,
   CustomerCreateResponse,
+  CustomerDuesResponse,
   CustomerListItem,
   CustomerMeResponse,
   CustomerStatus,
@@ -10,6 +11,10 @@ import type {
 
 export function getCurrentCustomer() {
   return api.get<CustomerMeResponse>("/customers/me").then((res) => res.data);
+}
+
+export function getCurrentCustomerDues() {
+  return api.get<CustomerDuesResponse>("/customers/me/dues").then((res) => res.data);
 }
 
 export function listCustomers(page: number, pageSize: number, search?: string) {

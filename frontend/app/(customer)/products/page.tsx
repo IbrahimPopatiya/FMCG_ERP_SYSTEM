@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { CustomerProductCard } from "@/components/products/CustomerProductCard";
 import { useCart } from "@/components/cart/CartProvider";
@@ -19,8 +20,17 @@ function SkeletonGrid() {
 }
 
 export default function ProductsPage() {
+  return (
+    <Suspense fallback={<SkeletonGrid />}>
+      <ProductsPageContent />
+    </Suspense>
+  );
+}
+
+function ProductsPageContent() {
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
-  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [categoryId, setCategoryId] = useState<string | null>(searchParams.get("category"));
 
   const products = useProducts();
   const categories = useCategories();

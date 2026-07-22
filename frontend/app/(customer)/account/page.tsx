@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { clearSession } from "@/lib/auth/session";
 import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
+import { useCustomerDues } from "@/lib/hooks/useCustomerDues";
 import { formatCurrency } from "@/lib/utils/format";
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -21,6 +23,7 @@ export default function AccountPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const customer = useCurrentCustomer();
+  const dues = useCustomerDues();
 
   function handleLogout() {
     clearSession();
@@ -87,6 +90,16 @@ export default function AccountPage() {
             <Row label="Credit limit" value={formatCurrency(customer.data.credit_limit)} />
             <Row label="Payment terms" value={`${customer.data.payment_terms} days`} />
           </div>
+
+          <Link
+            href="/dues"
+            className="flex items-center justify-between gap-3 rounded-xl border border-border bg-white p-4"
+          >
+            <span className="text-sm font-medium text-ink">Dues</span>
+            <span className="text-sm font-semibold text-ink">
+              {dues.data ? formatCurrency(dues.data.total_due) : "—"}
+            </span>
+          </Link>
 
           <Button type="button" variant="secondary" className="w-full" onClick={handleLogout}>
             Logout

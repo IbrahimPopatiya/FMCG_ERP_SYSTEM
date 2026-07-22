@@ -18,8 +18,11 @@ from app.schemas.customer import (
     CustomerResponse,
     CustomerMeResponse,
     CustomerDeleteResponse,
+    CustomerDuesResponse,
+    DueInvoiceItem,
 )
 from app.services import customer as customer_service
+from app.services import invoice as invoice_service
 from app.services.customer import DuplicateCustomerError
 
 router = APIRouter(prefix="/customers", tags=["customers"])
@@ -28,6 +31,30 @@ router = APIRouter(prefix="/customers", tags=["customers"])
 @router.get("/me", response_model=CustomerMeResponse)
 def get_current_customer_profile(current_customer: Customer = Depends(require_customer)):
     return current_customer
+
+
+@router.get("/me/dues", response_model=CustomerDuesResponse)
+def get_current_customer_dues(
+    db: Session = Depends(get_db),
+    current_customer: Customer = Depends(require_customer),
+):
+    rows, total_due = invoice_service.list_dues_for_customer(db, current_customer.id)
+    return CustomerDuesResponse(
+        total_due=total_due,
+        invoices=[
+            DueInvoiceItem(
+                invoice_id=invoice.id,
+                invoice_number=invoice.invoice_number,
+                order_id=order_id,
+                order_number=order_number,
+                invoice_date=invoice.invoice_date,
+                total=invoice.total,
+                balance=balance,
+                payment_status=invoice.payment_status,
+            )
+            for invoice, order_id, order_number, balance in rows
+        ],
+    )
 
 
 @router.get("", response_model=Page[CustomerMeResponse])

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
+import { OrderTrackingStepper } from "@/components/orders/OrderTrackingStepper";
 import { useOrder } from "@/lib/hooks/useOrders";
 import { useCancelOrder } from "@/lib/hooks/useOrderMutations";
 import { useProducts } from "@/lib/hooks/useProducts";
@@ -63,6 +64,8 @@ export default function OrderDetailPage() {
             </div>
             <OrderStatusBadge status={order.data.status} />
           </div>
+
+          <OrderTrackingStepper status={order.data.status} />
 
           {order.data.remarks && (
             <div className="rounded-xl border border-border bg-white p-4">
