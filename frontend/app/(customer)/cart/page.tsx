@@ -7,6 +7,7 @@ import { isAxiosError } from "axios";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { QtyStepper } from "@/components/ui/QtyStepper";
+import { FreeDeliveryProgress } from "@/components/customer/FreeDeliveryProgress";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCreateOrder } from "@/lib/hooks/useOrderMutations";
 import { formatCurrency } from "@/lib/utils/format";
@@ -46,8 +47,10 @@ export default function CartPage() {
 
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3">
-        <h1 className="text-lg font-semibold tracking-tight text-ink">Your order</h1>
+      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3 md:px-8">
+        <h1 className="text-lg font-semibold tracking-tight text-ink">
+          Your Cart {items.length > 0 && `(${items.length})`}
+        </h1>
       </header>
 
       {items.length === 0 ? (
@@ -72,7 +75,9 @@ export default function CartPage() {
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 p-4 pb-6">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-6 md:p-8">
+          <FreeDeliveryProgress subtotal={subtotal} />
+
           <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-white">
             {items.map((item) => (
               <div key={item.productId} className="flex items-center gap-3 p-3">
@@ -120,7 +125,7 @@ export default function CartPage() {
           </div>
 
           {error && (
-            <div className="rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">{error}</div>
+            <div className="rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger">{error}</div>
           )}
 
           <Button

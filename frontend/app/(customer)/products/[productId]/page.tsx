@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { DiscountBadge } from "@/components/customer/DiscountBadge";
 import { useCart } from "@/components/cart/CartProvider";
 import { useProducts } from "@/lib/hooks/useProducts";
 import { formatCurrency } from "@/lib/utils/format";
@@ -52,14 +53,17 @@ export default function ProductDetailPage() {
       )}
 
       {product && (
-        <div className="flex flex-col gap-5 p-4 pb-6">
-          <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-primary-soft">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4 pb-6 md:p-8">
+          <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-primary-soft md:aspect-[16/9]">
             {product.image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
             ) : (
               <span className="text-sm font-medium text-primary/60">{product.unit}</span>
             )}
+            <div className="absolute left-3 top-3">
+              <DiscountBadge mrp={product.mrp} effectivePrice={product.effective_price} />
+            </div>
           </div>
 
           <div>

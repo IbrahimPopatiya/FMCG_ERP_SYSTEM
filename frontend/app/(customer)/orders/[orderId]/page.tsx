@@ -49,14 +49,14 @@ export default function OrderDetailPage() {
 
       {order.isError && (
         <div className="p-4">
-          <div className="rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+          <div className="rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger">
             Couldn&apos;t load this order.
           </div>
         </div>
       )}
 
       {order.data && (
-        <div className="flex flex-col gap-4 p-4 pb-6">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-6 md:p-8">
           <div className="flex items-center justify-between rounded-xl border border-border bg-white p-4">
             <div>
               <p className="font-mono text-xs font-medium text-ink-muted">{order.data.order_number}</p>

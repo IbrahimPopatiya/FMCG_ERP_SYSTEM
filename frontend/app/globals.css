@@ -55,3 +55,34 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/*
+ * Customer storefront theme. Scoped to the .customer-theme wrapper so the
+ * staff/admin blue theme is untouched. Because every shared UI primitive
+ * (Button, Badge, Card, ...) is built on the same `--color-*` custom
+ * properties via Tailwind's `@theme inline`, overriding the properties here
+ * re-skins every existing component automatically — no component rewrites
+ * needed. Green ramp sampled from the wholesale-FMCG mockups
+ * (final_docs/images/): #1F8A3D primary, #146C2E hover, #E7F5EA soft tint.
+ */
+.customer-theme {
+  --background: #f6f8f6;
+  --foreground: #14231a;
+
+  --color-ink: #14231a;
+  --color-ink-muted: #5c6b60;
+
+  --color-primary: #1f8a3d;
+  --color-primary-hover: #146c2e;
+  --color-primary-soft: #e7f5ea;
+
+  --color-accent: #d9a441;
+  --color-accent-soft: #fdf1d8;
+
+  --color-danger: #c23b3b;
+  --color-danger-hover: #a12f2f;
+  --color-danger-soft: #fbeaea;
+
+  --color-surface: #f6f8f6;
+  --color-border: #e0e6e0;
+}
