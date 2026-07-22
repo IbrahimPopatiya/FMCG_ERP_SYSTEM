@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.core.enums import DeliveryStatus, OrderStatus
 from app.models.delivery import Delivery
+from app.models.invoice import Invoice
 from app.models.payment import Payment
+from app.models.sales_order import SalesOrder
 from app.schemas.delivery import DeliveryCompleteRequest, DeliveryCreate
 from app.services.invoice import get_invoice, recompute_payment_status
 from app.services.sales_order import get_sales_order
@@ -54,6 +56,34 @@ def create_delivery(db: Session, data: DeliveryCreate) -> Delivery:
     db.commit()
     db.refresh(delivery)
     return delivery
+
+
+def list_deliveries(
+    db: Session, page: int, page_size: int
+) -> tuple[list[tuple[Delivery, str, uuid.UUID, str]], int]:
+    """Joins Invoice + SalesOrder in so callers get invoice_number/customer_id/
+    order_number alongside each delivery - a bare Delivery row only carries ids."""
+    query = (
+        db.query(Delivery, Invoice.invoice_number, SalesOrder.customer_id, SalesOrder.order_number)
+        .join(Invoice, Invoice.id == Delivery.invoice_id)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .order_by(Delivery.created_at.desc())
+    )
+    total = query.count()
+    rows = query.offset((page - 1) * page_size).limit(page_size).all()
+    return rows, total
+
+
+def get_delivery_with_context(
+    db: Session, delivery_id: uuid.UUID
+) -> tuple[Delivery, str, uuid.UUID, str] | None:
+    return (
+        db.query(Delivery, Invoice.invoice_number, SalesOrder.customer_id, SalesOrder.order_number)
+        .join(Invoice, Invoice.id == Delivery.invoice_id)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .filter(Delivery.id == delivery_id)
+        .first()
+    )
 
 
 def get_delivery(db: Session, delivery_id: uuid.UUID) -> Delivery | None:

@@ -15,8 +15,8 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3">
-        <h1 className="text-lg font-semibold tracking-tight text-ink">Your orders</h1>
+      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3 md:px-8">
+        <h1 className="text-lg font-semibold tracking-tight text-ink">Your Orders</h1>
       </header>
 
       {orders.isLoading && (
@@ -29,7 +29,7 @@ export default function OrdersPage() {
 
       {orders.isError && (
         <div className="p-4">
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger">
             Couldn&apos;t load your orders.
             <Button type="button" variant="secondary" onClick={() => orders.refetch()}>
               Retry
@@ -53,12 +53,12 @@ export default function OrdersPage() {
       )}
 
       {!orders.isLoading && !orders.isError && sorted.length > 0 && (
-        <div className="flex flex-col gap-3 p-4">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 p-4 pb-6 md:p-8">
           {sorted.map((order) => (
             <Link
               key={order.id}
               href={`/orders/${order.id}`}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-white p-4 shadow-sm"
+              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
             >
               <div>
                 <p className="font-mono text-xs font-medium text-ink-muted">{order.order_number}</p>

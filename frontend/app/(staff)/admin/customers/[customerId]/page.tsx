@@ -9,6 +9,7 @@ import { CustomerStatusBadge } from "@/components/customers/CustomerStatusBadge"
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useSetCustomerStatus } from "@/lib/hooks/useCustomerMutations";
 import { formatCurrency } from "@/lib/utils/format";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -20,6 +21,8 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export default function CustomerDetailPage() {
+  useRoleGuard(["admin", "salesman", "manager", "cashier"]);
+
   const { customerId } = useParams<{ customerId: string }>();
   const customer = useCustomer(customerId);
   const setStatus = useSetCustomerStatus(customerId);

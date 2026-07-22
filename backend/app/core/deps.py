@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.core.enums import UserRole
 from app.core.security import decode_access_token, decode_token
 from app.db.session import get_db
 from app.models.customer import Customer
@@ -105,3 +106,19 @@ def require_customer(principal: Principal = Depends(get_current_principal)) -> C
             status_code=status.HTTP_403_FORBIDDEN, detail="Customer access required"
         )
     return principal.customer
+
+
+def require_role(*roles: UserRole):
+    """Use on routes only specific staff roles may call, e.g.
+    `current_user: User = Depends(require_role(UserRole.ADMIN))`.
+    Rejects a customer token, then rejects a staff token whose role isn't listed.
+    """
+
+    def dependency(current_user: User = Depends(require_staff)) -> User:
+        if current_user.role not in {role.value for role in roles}:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="You do not have access to this resource"
+            )
+        return current_user
+
+    return dependency

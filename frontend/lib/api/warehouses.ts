@@ -1,7 +1,16 @@
 import { api } from "@/lib/api/client";
-// import type { ... } from "@/types/warehouses";
+import type { WarehouseCreate, WarehouseResponse, WarehouseStatus } from "@/types/warehouses";
 
-// TODO: implement once this domain's screens are built. Base path matches
-// backend/app/api/warehouses.py (prefix "/warehouses").
-// Follow the pattern in lib/api/products.ts: one exported function per
-// backend endpoint, typed request/response from types/warehouses.ts.
+export function listWarehouses() {
+  return api.get<WarehouseResponse[]>("/warehouses").then((res) => res.data);
+}
+
+export function createWarehouse(data: WarehouseCreate) {
+  return api.post<WarehouseResponse>("/warehouses", data).then((res) => res.data);
+}
+
+export function setWarehouseStatus(warehouseId: string, status: WarehouseStatus) {
+  return api
+    .patch<WarehouseResponse>(`/warehouses/${warehouseId}/status`, { status })
+    .then((res) => res.data);
+}

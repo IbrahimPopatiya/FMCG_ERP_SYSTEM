@@ -8,6 +8,7 @@ import { ProductForm, type ProductFormValues } from "@/components/products/Produ
 import { ProductStatusBadge } from "@/components/products/ProductStatusBadge";
 import { useProduct } from "@/lib/hooks/useProduct";
 import { useSetProductStatus, useUpdateProduct } from "@/lib/hooks/useProductMutations";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 import type { ProductResponse } from "@/types/product";
 
 function toFormValues(product: ProductResponse): ProductFormValues {
@@ -27,6 +28,8 @@ function toFormValues(product: ProductResponse): ProductFormValues {
 }
 
 export function EditProductClient({ productId }: { productId: string }) {
+  useRoleGuard(["admin", "salesman", "manager"]);
+
   const router = useRouter();
   const { data: product, isLoading, isError } = useProduct(productId);
   const updateProduct = useUpdateProduct(productId);

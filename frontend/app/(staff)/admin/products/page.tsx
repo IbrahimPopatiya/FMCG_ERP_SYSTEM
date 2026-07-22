@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -9,10 +10,12 @@ import { Table } from "@/components/ui/Table";
 import { ProductStatusBadge } from "@/components/products/ProductStatusBadge";
 import { useBrands } from "@/lib/hooks/useBrands";
 import { useCategories } from "@/lib/hooks/useCategories";
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useProductsManage } from "@/lib/hooks/useProductsManage";
 import { formatCurrency } from "@/lib/utils/format";
 import type { ProductResponse } from "@/types/product";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function SkeletonRows() {
   return (
@@ -24,7 +27,16 @@ function SkeletonRows() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ hasSearch }: { hasSearch: boolean }) {
+  if (hasSearch) {
+    return (
+      <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
+        <p className="text-sm font-medium text-ink">No products match your search</p>
+        <p className="text-sm text-ink-muted">Try a different name, SKU, or brand.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">
@@ -46,6 +58,11 @@ function EmptyState() {
 }
 
 export default function AdminProductsPage() {
+  useRoleGuard(["admin", "salesman", "manager"]);
+
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+
   const {
     data,
     isLoading,
@@ -54,7 +71,7 @@ export default function AdminProductsPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useProductsManage();
+  } = useProductsManage(debouncedSearch);
   const categories = useCategories();
   const brands = useBrands();
 
@@ -69,20 +86,29 @@ export default function AdminProductsPage() {
 
   return (
     <div>
-      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight text-ink">Products</h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            {total > 0
-              ? `${total} product${total === 1 ? "" : "s"} in the catalog`
-              : "Manage what customers can order"}
-          </p>
+      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight text-ink">Products</h1>
+            <p className="mt-0.5 text-sm text-ink-muted">
+              {total > 0
+                ? `${total} product${total === 1 ? "" : "s"} in the catalog`
+                : "Manage what customers can order"}
+            </p>
+          </div>
+          <Link href="/admin/products/new">
+            <Button type="button" className="w-full sm:w-auto">
+              Add product
+            </Button>
+          </Link>
         </div>
-        <Link href="/admin/products/new">
-          <Button type="button" className="w-full sm:w-auto">
-            Add product
-          </Button>
-        </Link>
+        <input
+          type="search"
+          placeholder="Search by name, brand, or SKU…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-11 w-full max-w-sm rounded-lg border border-border px-3.5 text-sm text-ink placeholder:text-ink-muted/60 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary-soft"
+        />
       </header>
 
       {isLoading && <SkeletonRows />}
@@ -98,7 +124,7 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && total === 0 && <EmptyState />}
+      {!isLoading && !isError && total === 0 && <EmptyState hasSearch={!!debouncedSearch} />}
 
       {!isLoading && !isError && total > 0 && (
         <div className="p-4 sm:p-6">

@@ -1,39 +1,27 @@
+"use client";
+
+import { useState } from "react";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { getStaffRole } from "@/lib/auth/session";
+import { getRoleNav, ROLE_NAV } from "@/lib/nav/roleNav";
 
-// Sidebar on desktop (full nav across every staff domain), simplified bottom
-// nav on mobile (just the most frequent actions — dashboard is hidden here,
-// per the UI/UX brief).
-const DESKTOP_NAV_ITEMS = [
-  { href: "/admin/dashboard", label: "Dashboard" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/customers", label: "Customers" },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/deliveries", label: "Deliveries" },
-  { href: "/admin/invoices", label: "Invoices" },
-  { href: "/admin/payments", label: "Payments" },
-  { href: "/admin/returns", label: "Returns" },
-  { href: "/admin/purchases", label: "Purchases" },
-  { href: "/admin/suppliers", label: "Suppliers" },
-  { href: "/admin/inventory", label: "Inventory" },
-  { href: "/admin/vehicles", label: "Vehicles" },
-  { href: "/admin/users", label: "Users" },
-];
-
-const MOBILE_NAV_ITEMS = [
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/deliveries", label: "Deliveries" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/customers", label: "Customers" },
-];
-
+// Nav items are role-scoped (see lib/nav/roleNav.ts) - each role sees only
+// the domains listed for them in final_docs/role_based_frontend_plan.md §5.
+// Falls back to the admin's full nav only until the role cookie is readable
+// (server render / first paint before hydration) - useRoleGuard on each page
+// is the real gate, this is just what's shown while that resolves.
 export default function StaffLayout({ children }: { children: React.ReactNode }) {
+  const [role] = useState(() => getStaffRole());
+
+  const nav = role ? getRoleNav(role) : ROLE_NAV.admin;
+
   return (
     <div className="flex flex-1 overflow-hidden">
-      <DesktopSidebar items={DESKTOP_NAV_ITEMS} />
+      <DesktopSidebar items={nav.desktop} />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
-        <MobileBottomNav items={MOBILE_NAV_ITEMS} />
+        <MobileBottomNav items={nav.mobile} />
       </div>
     </div>
   );

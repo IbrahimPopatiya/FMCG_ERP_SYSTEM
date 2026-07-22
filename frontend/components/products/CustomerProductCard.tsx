@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { QtyStepper } from "@/components/ui/QtyStepper";
+import { DiscountBadge } from "@/components/customer/DiscountBadge";
 import { formatCurrency } from "@/lib/utils/format";
 import type { ProductCatalogResponse } from "@/types/product";
 
@@ -11,8 +12,8 @@ interface CustomerProductCardProps {
 
 export function CustomerProductCard({ product, qty, onQtyChange }: CustomerProductCardProps) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm">
-      <Link href={`/products/${product.id}`} className="block">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md">
+      <Link href={`/products/${product.id}`} className="relative block">
         <div className="flex aspect-square items-center justify-center bg-primary-soft">
           {product.image ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -20,6 +21,9 @@ export function CustomerProductCard({ product, qty, onQtyChange }: CustomerProdu
           ) : (
             <span className="text-xs font-medium text-primary/60">{product.unit}</span>
           )}
+        </div>
+        <div className="absolute left-2 top-2">
+          <DiscountBadge mrp={product.mrp} effectivePrice={product.effective_price} />
         </div>
       </Link>
       <div className="flex flex-1 flex-col gap-2 p-3">

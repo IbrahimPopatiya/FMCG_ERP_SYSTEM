@@ -12,5 +12,6 @@ export function useOrder(orderId: string) {
   return useQuery({
     queryKey: ["orders", orderId],
     queryFn: () => getOrder(orderId),
+    enabled: !!orderId,
   });
 }

@@ -17,7 +17,7 @@ export default function LoginPage() {
       { identifier: identifier.trim(), password },
       {
         onSuccess: (data) => {
-          const destination = data.principal_type === "customer" ? "/products" : "/admin/dashboard";
+          const destination = data.principal_type === "customer" ? "/home" : "/admin/dashboard";
           window.location.assign(destination);
         },
       }

@@ -1,7 +1,25 @@
 import { api } from "@/lib/api/client";
-// import type { ... } from "@/types/creditNotes";
+import type { Page } from "@/types/pagination";
+import type { CreditNoteResponse, CreditNoteStatusResponse } from "@/types/creditNotes";
 
-// TODO: implement once this domain's screens are built. Base path matches
-// backend/app/api/credit_notes.py (prefix "/credit-notes").
-// Follow the pattern in lib/api/products.ts: one exported function per
-// backend endpoint, typed request/response from types/creditNotes.ts.
+export function listCreditNotes(page: number, pageSize: number) {
+  return api
+    .get<Page<CreditNoteResponse>>("/credit-notes", { params: { page, page_size: pageSize } })
+    .then((res) => res.data);
+}
+
+export function getCreditNote(creditNoteId: string) {
+  return api.get<CreditNoteResponse>(`/credit-notes/${creditNoteId}`).then((res) => res.data);
+}
+
+export function approveCreditNote(creditNoteId: string) {
+  return api
+    .post<CreditNoteStatusResponse>(`/credit-notes/${creditNoteId}/approve`, {})
+    .then((res) => res.data);
+}
+
+export function rejectCreditNote(creditNoteId: string) {
+  return api
+    .post<CreditNoteStatusResponse>(`/credit-notes/${creditNoteId}/reject`, {})
+    .then((res) => res.data);
+}

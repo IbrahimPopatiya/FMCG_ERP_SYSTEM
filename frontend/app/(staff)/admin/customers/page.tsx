@@ -16,6 +16,7 @@ import { useCustomersManage } from "@/lib/hooks/useCustomersManage";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency } from "@/lib/utils/format";
 import type { CustomerListItem } from "@/types/customers";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function SkeletonRows() {
   return (
@@ -57,6 +58,8 @@ function EmptyState({ onAdd, hasSearch }: { onAdd: () => void; hasSearch: boolea
 }
 
 export default function AdminCustomersPage() {
+  useRoleGuard(["admin", "salesman", "manager", "cashier"]);
+
   const [search, setSearch] = useState("");
   const [isFormOpen, setFormOpen] = useState(false);
   const {

@@ -1,7 +1,31 @@
 import { api } from "@/lib/api/client";
-// import type { ... } from "@/types/vehicles";
+import type {
+  VehicleCreate,
+  VehicleDeleteResponse,
+  VehicleResponse,
+  VehicleStatus,
+} from "@/types/vehicles";
 
-// TODO: implement once this domain's screens are built. Base path matches
-// backend/app/api/vehicles.py (prefix "/vehicles").
-// Follow the pattern in lib/api/products.ts: one exported function per
-// backend endpoint, typed request/response from types/vehicles.ts.
+export function listVehicles() {
+  return api.get<VehicleResponse[]>("/vehicles").then((res) => res.data);
+}
+
+export function createVehicle(data: VehicleCreate) {
+  return api.post<VehicleResponse>("/vehicles", data).then((res) => res.data);
+}
+
+export function assignVehicleDriver(vehicleId: string, driverId: string) {
+  return api
+    .patch<VehicleResponse>(`/vehicles/${vehicleId}/driver`, { driver_id: driverId })
+    .then((res) => res.data);
+}
+
+export function setVehicleStatus(vehicleId: string, status: VehicleStatus) {
+  return api
+    .patch<VehicleResponse>(`/vehicles/${vehicleId}/status`, { status })
+    .then((res) => res.data);
+}
+
+export function deleteVehicle(vehicleId: string) {
+  return api.delete<VehicleDeleteResponse>(`/vehicles/${vehicleId}`).then((res) => res.data);
+}
