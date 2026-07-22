@@ -20,14 +20,10 @@ router = APIRouter(prefix="/suppliers", tags=["suppliers"])
 
 
 @router.get("", response_model=list[SupplierResponse])
-<<<<<<< HEAD
-def list_suppliers(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-=======
 def list_suppliers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
->>>>>>> phase-1
     return supplier_service.list_suppliers(db)
 
 

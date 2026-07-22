@@ -17,16 +17,11 @@ class CreditNoteNotActionableError(Exception):
     """Raised when approving/rejecting a credit note that isn't pending."""
 
 
-<<<<<<< HEAD
 def list_credit_notes(db: Session, page: int, page_size: int) -> tuple[list[CreditNote], int]:
     query = db.query(CreditNote).order_by(CreditNote.created_at.desc())
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
     return items, total
-=======
-def list_credit_notes(db: Session) -> list[CreditNote]:
-    return db.query(CreditNote).all()
->>>>>>> phase-1
 
 
 def get_credit_note(db: Session, credit_note_id: uuid.UUID) -> CreditNote | None:

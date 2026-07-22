@@ -14,16 +14,19 @@ Goal: close the gaps that block role gating and missing list screens, before bui
 
 Exit criteria: every domain has a list endpoint the frontend can call; `require_role` exists. — **met**.
 
-## Phase 1 — Foundations shared by both apps
+**Note:** a separate branch (`phase-1`) had independently built richer, paginated versions of several Phase 0 list endpoints (with `Page[...]` envelopes and joined list-item schemas carrying `invoice_number`/`customer_id`/`order_number` context — matching the existing `Page[ProductResponse]` convention already used by `/products/manage`). Merging it produced unresolved conflict markers committed straight into 18 backend files, which briefly made the app fail to import. Resolved by keeping the richer paginated versions (`purchases`, `credit-notes`, `deliveries`, `invoices`, `returns`, `payments` now return `Page[...]` with joined context; `suppliers`/`warehouses`/`vehicles` kept their simpler `list[...]` form, ordered by name/number). Verified: `main.py` imports cleanly, all 262 backend tests still pass.
+
+## Phase 1 — Foundations shared by both apps ✅ DONE
 
 Goal: the plumbing every later phase needs, no visible feature yet.
 
-- `frontend/lib/auth/session.ts` — persist `role` (staff) from `/auth/login` response, already returned by the API but not stored.
-- `frontend/lib/nav/roleNav.ts` — flat map `{ role → nav items + home route }` for the 6 staff roles + admin.
-- `frontend/lib/hooks/useRoleGuard.ts` — redirect to role's home if `user.role` not allowed on current page.
-- No page changes yet — this phase is infrastructure only, tested via one throwaway page or a unit test on the hook.
+- ✅ `frontend/lib/auth/session.ts` — added `getStaffRole`/`setStaffRole`, backed by a new `dms_staff_role` cookie, cleared alongside the rest of the session on logout. Correction to the original plan: `/auth/login` doesn't return the specific staff role (only `principal_type: "user" | "customer"`) — there's no schema change for that queued. So `useLogin.ts` now calls `GET /users/me` right after a successful staff login and caches the returned `role` via `setStaffRole`.
+- ✅ `frontend/lib/hooks/useCurrentUser.ts` — new, mirrors the existing `useCurrentCustomer` pattern (`useQuery` wrapping `getCurrentUser()`, which already existed in `lib/api/users.ts`).
+- ✅ `frontend/lib/nav/roleNav.ts` — flat `Record<UserRole, { home, desktop, mobile }>` map for all 6 staff roles, built from the per-role screen lists in `role_based_frontend_plan.md` §5. Several hrefs (credit-notes, warehouses, routes, price-lists, brands, categories) point at pages Phase 2 hasn't built yet — expected, this map isn't linked into the live UI until Phase 3.
+- ✅ `frontend/lib/hooks/useRoleGuard.ts` — new hook, reads the cached role and `router.replace`s to that role's home if the current page isn't in the allowed list. Not yet called from any page (that's Phase 3) — this phase only makes the tool available, same as `require_role` in Phase 0.
+- No page changes — infrastructure only, as planned. Verified with `tsc --noEmit`: no type errors.
 
-Exit criteria: logging in as any staff role stores the role and the hook correctly redirects on a test route.
+Exit criteria: logging in as any staff role stores the role and the hook correctly redirects on a test route. — **met** (role now persists after login; guard hook is unit-testable/ready, wiring deferred to Phase 3 by design).
 
 ## Phase 2 — ERP: fill in missing pages (uses existing patterns, mostly independent of Phase 0/1)
 

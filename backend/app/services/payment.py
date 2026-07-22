@@ -44,7 +44,6 @@ def record_payment(db: Session, data: PaymentCreate, created_by: uuid.UUID) -> P
     return payment
 
 
-<<<<<<< HEAD
 def list_payments(
     db: Session, page: int, page_size: int
 ) -> tuple[list[tuple[Payment, str, uuid.UUID, str]], int]:
@@ -71,10 +70,6 @@ def get_payment_with_context(
         .filter(Payment.id == payment_id)
         .first()
     )
-=======
-def list_payments(db: Session) -> list[Payment]:
-    return db.query(Payment).all()
->>>>>>> phase-1
 
 
 def get_payment(db: Session, payment_id: uuid.UUID) -> Payment | None:

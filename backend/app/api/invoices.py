@@ -23,7 +23,6 @@ from app.services.invoice import (
 router = APIRouter(tags=["invoices"])
 
 
-<<<<<<< HEAD
 def _to_list_item(row: tuple) -> InvoiceListItem:
     invoice, customer_id, order_number = row
     return InvoiceListItem(
@@ -67,14 +66,6 @@ def get_invoice(
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found")
     return _to_list_item(row)
-=======
-@router.get("/invoices", response_model=list[InvoiceResponse])
-def list_invoices(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
-):
-    return invoice_service.list_invoices(db)
->>>>>>> phase-1
 
 
 @router.post(

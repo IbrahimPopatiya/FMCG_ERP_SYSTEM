@@ -59,7 +59,6 @@ def generate_invoice(db: Session, order_id: uuid.UUID) -> Invoice | None:
     return invoice
 
 
-<<<<<<< HEAD
 def list_invoices(
     db: Session, page: int, page_size: int
 ) -> tuple[list[tuple[Invoice, uuid.UUID, str]], int]:
@@ -84,10 +83,6 @@ def get_invoice_with_order(db: Session, invoice_id: uuid.UUID) -> tuple[Invoice,
         .first()
     )
     return row
-=======
-def list_invoices(db: Session) -> list[Invoice]:
-    return db.query(Invoice).filter(Invoice.deleted_at.is_(None)).all()
->>>>>>> phase-1
 
 
 def get_invoice(db: Session, invoice_id: uuid.UUID) -> Invoice | None:

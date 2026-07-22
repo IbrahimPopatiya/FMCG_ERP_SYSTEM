@@ -14,16 +14,12 @@ class DuplicateSupplierError(Exception):
 
 
 def list_suppliers(db: Session) -> list[Supplier]:
-<<<<<<< HEAD
     return (
         db.query(Supplier)
         .filter(Supplier.deleted_at.is_(None))
         .order_by(Supplier.name)
         .all()
     )
-=======
-    return db.query(Supplier).filter(Supplier.deleted_at.is_(None)).all()
->>>>>>> phase-1
 
 
 def get_supplier(db: Session, supplier_id: uuid.UUID) -> Supplier | None:

@@ -27,7 +27,6 @@ from app.services.return_ import (
 router = APIRouter(prefix="/returns", tags=["returns"])
 
 
-<<<<<<< HEAD
 def _to_list_item(row: tuple) -> ReturnListItem:
     ret, invoice_number, customer_id, order_number = row
     return ReturnListItem(
@@ -66,14 +65,6 @@ def get_return(
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Return not found")
     return _to_list_item(row)
-=======
-@router.get("", response_model=list[ReturnResponse])
-def list_returns(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
-):
-    return return_service.list_returns(db)
->>>>>>> phase-1
 
 
 @router.post("", response_model=ReturnResponse, status_code=status.HTTP_201_CREATED)

@@ -25,7 +25,6 @@ from app.services.purchase import (
 router = APIRouter(prefix="/purchases", tags=["purchases"])
 
 
-<<<<<<< HEAD
 @router.get("", response_model=Page[PurchaseResponse])
 def list_purchases(
     page: int = Query(1, ge=1),
@@ -47,14 +46,6 @@ def get_purchase(
     if purchase is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Purchase not found")
     return purchase
-=======
-@router.get("", response_model=list[PurchaseResponse])
-def list_purchases(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    return purchase_service.list_purchases(db)
->>>>>>> phase-1
 
 
 @router.post("", response_model=PurchaseResponse, status_code=status.HTTP_201_CREATED)
