@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_staff
+from app.core.deps import require_staff, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.common import Page
@@ -71,7 +72,7 @@ def get_return(
 def create_return(
     data: ReturnCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         return return_service.create_return(db, data, current_user.id)
@@ -83,7 +84,7 @@ def create_return(
 def approve_return(
     return_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         ret = return_service.approve_return(db, return_id)
@@ -100,7 +101,7 @@ def reject_return(
     return_id: uuid.UUID,
     data: ReturnRejectRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         ret = return_service.reject_return(db, return_id, data.reason)
@@ -116,7 +117,7 @@ def reject_return(
 def complete_return(
     return_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         result = return_service.complete_return(db, return_id, current_user.id)

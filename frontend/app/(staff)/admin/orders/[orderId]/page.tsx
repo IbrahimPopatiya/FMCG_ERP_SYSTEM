@@ -18,6 +18,7 @@ import { useApproveOrder, useCancelOrder, useLoadOrder } from "@/lib/hooks/useOr
 import { useProducts } from "@/lib/hooks/useProducts";
 import { formatCurrency, formatDate, toTitleCase } from "@/lib/utils/format";
 import type { SalesOrderItemResponse } from "@/types/salesOrder";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function actionErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === 409) {
@@ -27,6 +28,8 @@ function actionErrorMessage(error: unknown): string {
 }
 
 export default function AdminOrderDetailPage() {
+  useRoleGuard(["admin", "salesman", "manager", "dispatcher"]);
+
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
   const order = useOrder(orderId);

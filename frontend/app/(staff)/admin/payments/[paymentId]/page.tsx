@@ -15,6 +15,7 @@ import { useCustomer } from "@/lib/hooks/useCustomer";
 import { usePayment } from "@/lib/hooks/usePayments";
 import { useBouncePayment, useVerifyPayment } from "@/lib/hooks/usePaymentMutations";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function actionErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === 409) {
@@ -24,6 +25,8 @@ function actionErrorMessage(error: unknown): string {
 }
 
 export default function PaymentDetailPage() {
+  useRoleGuard(["admin", "driver", "manager", "cashier"]);
+
   const { paymentId } = useParams<{ paymentId: string }>();
   const payment = usePayment(paymentId);
   const customer = useCustomer(payment.data?.customer_id ?? "");

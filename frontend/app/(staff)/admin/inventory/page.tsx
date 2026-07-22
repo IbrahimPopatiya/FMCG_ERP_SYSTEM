@@ -16,6 +16,7 @@ import { useInventory } from "@/lib/hooks/useInventory";
 import { useProductStockList } from "@/lib/hooks/useProductStockList";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
 import type { InventoryResponse } from "@/types/inventory";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 interface InventoryRow extends InventoryResponse {
   productName: string;
@@ -35,6 +36,8 @@ function SkeletonRows() {
 }
 
 export default function InventoryPage() {
+  useRoleGuard(["admin", "manager"]);
+
   const [search, setSearch] = useState("");
   const [warehouseFilter, setWarehouseFilter] = useState<string>("all");
   const [showAdjust, setShowAdjust] = useState(false);

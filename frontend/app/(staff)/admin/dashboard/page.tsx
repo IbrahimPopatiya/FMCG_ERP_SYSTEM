@@ -12,6 +12,7 @@ import { useInventory } from "@/lib/hooks/useInventory";
 import { useProductStockList } from "@/lib/hooks/useProductStockList";
 import { formatCurrency } from "@/lib/utils/format";
 import type { SalesOrderResponse } from "@/types/salesOrder";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const TODAY = new Date();
 
@@ -61,6 +62,8 @@ function StatCard({
 }
 
 export default function DashboardPage() {
+  useRoleGuard(["admin", "salesman", "driver", "manager", "dispatcher", "cashier"]);
+
   const orders = useOrders();
   const inventory = useInventory();
   const stock = useProductStockList();

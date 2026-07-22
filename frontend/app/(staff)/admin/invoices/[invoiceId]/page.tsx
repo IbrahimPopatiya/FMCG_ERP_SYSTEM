@@ -14,6 +14,7 @@ import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useInvoice } from "@/lib/hooks/useInvoices";
 import { useCancelInvoice } from "@/lib/hooks/useInvoiceMutations";
 import { formatCurrency, formatDate, toTitleCase } from "@/lib/utils/format";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function actionErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === 409) {
@@ -23,6 +24,8 @@ function actionErrorMessage(error: unknown): string {
 }
 
 export default function InvoiceDetailPage() {
+  useRoleGuard(["admin", "manager", "cashier"]);
+
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const invoice = useInvoice(invoiceId);
   const customer = useCustomer(invoice.data?.customer_id ?? "");

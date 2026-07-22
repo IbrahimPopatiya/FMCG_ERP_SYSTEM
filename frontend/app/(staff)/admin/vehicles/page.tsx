@@ -20,6 +20,7 @@ import {
   useSetVehicleStatus,
 } from "@/lib/hooks/useVehicleMutations";
 import type { VehicleResponse, VehicleStatus } from "@/types/vehicles";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const STATUS_OPTIONS: { value: VehicleStatus; label: string }[] = [
   { value: "available", label: "Available" },
@@ -51,6 +52,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 export default function VehiclesPage() {
+  useRoleGuard(["admin", "driver", "manager", "dispatcher"]);
+
   const [isFormOpen, setFormOpen] = useState(false);
   const [pendingRemoval, setPendingRemoval] = useState<VehicleResponse | null>(null);
 

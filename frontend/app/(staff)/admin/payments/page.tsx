@@ -17,6 +17,7 @@ import { useRecordPayment } from "@/lib/hooks/usePaymentMutations";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { PaymentListItem, PaymentRecordStatus } from "@/types/payments";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const STATUS_FILTERS: { value: PaymentRecordStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -36,6 +37,8 @@ function SkeletonRows() {
 }
 
 export default function PaymentsPage() {
+  useRoleGuard(["admin", "driver", "manager", "cashier"]);
+
   const [statusFilter, setStatusFilter] = useState<PaymentRecordStatus | "all">("all");
   const [isFormOpen, setFormOpen] = useState(false);
 

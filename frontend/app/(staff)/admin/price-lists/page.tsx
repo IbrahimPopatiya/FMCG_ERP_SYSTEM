@@ -10,6 +10,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { PriceListForm } from "@/components/priceLists/PriceListForm";
 import { useCreatePriceList, useDeletePriceList } from "@/lib/hooks/usePriceListMutations";
 import { usePriceLists } from "@/lib/hooks/usePriceLists";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
@@ -26,6 +27,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 export default function PriceListsPage() {
+  useRoleGuard(["admin"]);
+
   const [isFormOpen, setFormOpen] = useState(false);
   const priceLists = usePriceLists();
   const createPriceList = useCreatePriceList();

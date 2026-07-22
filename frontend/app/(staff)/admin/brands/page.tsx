@@ -9,6 +9,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { BrandForm } from "@/components/brands/BrandForm";
 import { useBrands } from "@/lib/hooks/useBrands";
 import { useCreateBrand, useDeleteBrand } from "@/lib/hooks/useBrandMutations";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
@@ -25,6 +26,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 export default function BrandsPage() {
+  useRoleGuard(["admin"]);
+
   const [isFormOpen, setFormOpen] = useState(false);
   const brands = useBrands();
   const createBrand = useCreateBrand();

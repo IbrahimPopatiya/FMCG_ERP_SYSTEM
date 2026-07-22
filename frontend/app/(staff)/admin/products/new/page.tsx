@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ProductForm } from "@/components/products/ProductForm";
 import { useCreateProduct } from "@/lib/hooks/useProductMutations";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 export default function NewProductPage() {
+  useRoleGuard(["admin", "salesman", "manager"]);
+
   const router = useRouter();
   const createProduct = useCreateProduct();
 

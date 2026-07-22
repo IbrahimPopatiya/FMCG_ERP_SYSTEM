@@ -16,6 +16,7 @@ import { useCompleteDelivery, useFailDelivery, useStartDelivery } from "@/lib/ho
 import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useVehicles } from "@/lib/hooks/useVehicles";
 import { formatDate } from "@/lib/utils/format";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function actionErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === 409) {
@@ -152,6 +153,8 @@ function FailDeliveryModal({
 }
 
 export default function DeliveryDetailPage() {
+  useRoleGuard(["admin", "driver", "manager", "dispatcher"]);
+
   const { deliveryId } = useParams<{ deliveryId: string }>();
   const delivery = useDelivery(deliveryId);
   const customer = useCustomer(delivery.data?.customer_id ?? "");

@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_staff
+from app.core.deps import require_staff, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.common import Page
@@ -80,7 +81,7 @@ def get_delivery(
 def create_delivery(
     data: DeliveryCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     try:
         return delivery_service.create_delivery(db, data)
@@ -95,7 +96,7 @@ def start_delivery(
     delivery_id: uuid.UUID,
     data: DeliveryStartRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     try:
         delivery = delivery_service.start_delivery(db, delivery_id, data.departure_time)
@@ -112,7 +113,7 @@ def mark_arrived(
     delivery_id: uuid.UUID,
     data: DeliveryArriveRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     try:
         delivery = delivery_service.mark_arrived(db, delivery_id, data.latitude, data.longitude)
@@ -129,7 +130,7 @@ def complete_delivery(
     delivery_id: uuid.UUID,
     data: DeliveryCompleteRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     try:
         result = delivery_service.complete_delivery(db, delivery_id, data)
@@ -153,7 +154,7 @@ def fail_delivery(
     delivery_id: uuid.UUID,
     data: DeliveryFailRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     try:
         delivery = delivery_service.fail_delivery(db, delivery_id, data.reason)

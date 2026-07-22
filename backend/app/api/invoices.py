@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_staff
+from app.core.deps import require_staff, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.common import Page
@@ -74,7 +75,7 @@ def get_invoice(
 def generate_invoice(
     order_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         invoice = invoice_service.generate_invoice(db, order_id)
@@ -93,7 +94,7 @@ def cancel_invoice(
     invoice_id: uuid.UUID,
     data: InvoiceCancelRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         invoice = invoice_service.cancel_invoice(db, invoice_id, data.reason)

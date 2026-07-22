@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_staff
+from app.core.deps import require_staff, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.common import Page
@@ -70,7 +71,7 @@ def get_payment(
 def record_payment(
     data: PaymentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.CASHIER)),
 ):
     try:
         return payment_service.record_payment(db, data, current_user.id)
@@ -82,7 +83,7 @@ def record_payment(
 def verify_payment(
     payment_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.CASHIER)),
 ):
     try:
         payment = payment_service.verify_payment(db, payment_id)
@@ -99,7 +100,7 @@ def bounce_payment(
     payment_id: uuid.UUID,
     data: PaymentBounceRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.CASHIER)),
 ):
     try:
         payment = payment_service.bounce_payment(db, payment_id, data.reason)

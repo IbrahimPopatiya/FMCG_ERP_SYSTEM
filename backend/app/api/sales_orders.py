@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import Principal, get_current_principal, require_staff
+from app.core.deps import Principal, get_current_principal, require_role, require_staff
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.sales_order import (
@@ -93,7 +94,7 @@ def approve_order(
     order_id: uuid.UUID,
     data: SalesOrderApproveRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     try:
         order = sales_order_service.approve_sales_order(db, order_id, data.items, current_user.id)
@@ -112,7 +113,7 @@ def load_order(
     order_id: uuid.UUID,
     data: SalesOrderLoadRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     try:
         order = sales_order_service.load_sales_order(db, order_id, data.items, current_user.id)

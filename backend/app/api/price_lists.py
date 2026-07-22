@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.price_list import (
@@ -34,7 +35,7 @@ def list_price_lists(
 def create_price_list(
     data: PriceListCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     return price_list_service.create_price_list(db, data)
 
@@ -44,7 +45,7 @@ def update_price_list(
     price_list_id: uuid.UUID,
     data: PriceListUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     price_list = price_list_service.update_price_list(db, price_list_id, data)
     if price_list is None:
@@ -77,7 +78,7 @@ def list_price_list_items(
 def delete_price_list(
     price_list_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     price_list = price_list_service.soft_delete_price_list(db, price_list_id)
     if price_list is None:
@@ -94,7 +95,7 @@ def create_price_list_item(
     price_list_id: uuid.UUID,
     data: PriceListItemCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     try:
         item = price_list_service.create_price_list_item(db, price_list_id, data)
@@ -112,7 +113,7 @@ def update_price_list_item(
     item_id: uuid.UUID,
     data: PriceListItemUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     item = price_list_service.update_price_list_item(db, price_list_id, item_id, data.discount_percent)
     if item is None:
@@ -125,7 +126,7 @@ def delete_price_list_item(
     price_list_id: uuid.UUID,
     item_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     removed = price_list_service.remove_price_list_item(db, price_list_id, item_id)
     if not removed:

@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.vehicle import (
@@ -32,7 +33,7 @@ def list_vehicles(
 def create_vehicle(
     data: VehicleCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     try:
         return vehicle_service.create_vehicle(db, data)
@@ -45,7 +46,7 @@ def update_vehicle(
     vehicle_id: uuid.UUID,
     data: VehicleUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     try:
         vehicle = vehicle_service.update_vehicle(db, vehicle_id, data)
@@ -62,7 +63,7 @@ def assign_driver(
     vehicle_id: uuid.UUID,
     data: VehicleDriverUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     vehicle = vehicle_service.assign_driver(db, vehicle_id, data.driver_id)
     if vehicle is None:
@@ -75,7 +76,7 @@ def update_vehicle_status(
     vehicle_id: uuid.UUID,
     data: VehicleStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     vehicle = vehicle_service.set_vehicle_status(db, vehicle_id, data.status)
     if vehicle is None:
@@ -87,7 +88,7 @@ def update_vehicle_status(
 def delete_vehicle(
     vehicle_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER, UserRole.DISPATCHER)),
 ):
     vehicle = vehicle_service.soft_delete_vehicle(db, vehicle_id)
     if vehicle is None:

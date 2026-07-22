@@ -14,6 +14,7 @@ import { useCreditNotesManage } from "@/lib/hooks/useCreditNotes";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { CreditNoteResponse, CreditNoteStatus } from "@/types/creditNotes";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const STATUS_FILTERS: { value: CreditNoteStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -33,6 +34,8 @@ function SkeletonRows() {
 }
 
 export default function CreditNotesPage() {
+  useRoleGuard(["admin", "salesman"]);
+
   const [statusFilter, setStatusFilter] = useState<CreditNoteStatus | "all">("all");
 
   const {

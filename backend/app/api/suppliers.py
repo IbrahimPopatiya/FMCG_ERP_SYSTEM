@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.supplier import (
@@ -31,7 +32,7 @@ def list_suppliers(
 def create_supplier(
     data: SupplierCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         return supplier_service.create_supplier(db, data)
@@ -44,7 +45,7 @@ def update_supplier(
     supplier_id: uuid.UUID,
     data: SupplierUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         supplier = supplier_service.update_supplier(db, supplier_id, data)
@@ -61,7 +62,7 @@ def update_supplier_status(
     supplier_id: uuid.UUID,
     data: SupplierStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     supplier = supplier_service.set_supplier_status(db, supplier_id, data.status)
     if supplier is None:
@@ -73,7 +74,7 @@ def update_supplier_status(
 def delete_supplier(
     supplier_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     supplier = supplier_service.soft_delete_supplier(db, supplier_id)
     if supplier is None:

@@ -9,6 +9,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { CategoryForm } from "@/components/categories/CategoryForm";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useCreateCategory, useDeleteCategory } from "@/lib/hooks/useCategoryMutations";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
@@ -25,6 +26,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 export default function CategoriesPage() {
+  useRoleGuard(["admin"]);
+
   const [isFormOpen, setFormOpen] = useState(false);
   const categories = useCategories();
   const createCategory = useCreateCategory();

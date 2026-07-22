@@ -16,6 +16,7 @@ import { useSuppliers } from "@/lib/hooks/useSuppliers";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { PurchaseItemResponse } from "@/types/purchases";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function actionErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === 409) {
@@ -25,6 +26,8 @@ function actionErrorMessage(error: unknown): string {
 }
 
 export default function PurchaseDetailPage() {
+  useRoleGuard(["admin", "manager"]);
+
   const { purchaseId } = useParams<{ purchaseId: string }>();
   const purchase = usePurchase(purchaseId);
   const products = useProducts();

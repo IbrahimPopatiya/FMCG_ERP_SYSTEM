@@ -14,6 +14,7 @@ import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useCreditNote } from "@/lib/hooks/useCreditNotes";
 import { useApproveCreditNote, useRejectCreditNote } from "@/lib/hooks/useCreditNoteMutations";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function actionErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === 403) {
@@ -26,6 +27,8 @@ function actionErrorMessage(error: unknown): string {
 }
 
 export default function CreditNoteDetailPage() {
+  useRoleGuard(["admin", "salesman"]);
+
   const { creditNoteId } = useParams<{ creditNoteId: string }>();
   const creditNote = useCreditNote(creditNoteId);
   const customer = useCustomer(creditNote.data?.customer_id ?? "");

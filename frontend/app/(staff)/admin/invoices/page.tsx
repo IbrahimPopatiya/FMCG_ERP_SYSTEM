@@ -14,6 +14,7 @@ import { useInvoicesManage } from "@/lib/hooks/useInvoices";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { InvoiceListItem, PaymentStatus } from "@/types/invoices";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const STATUS_FILTERS: { value: PaymentStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -33,6 +34,8 @@ function SkeletonRows() {
 }
 
 export default function InvoicesPage() {
+  useRoleGuard(["admin", "manager", "cashier"]);
+
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | "all">("all");
 
   const {

@@ -12,6 +12,7 @@ import { WarehouseStatusBadge } from "@/components/warehouses/WarehouseStatusBad
 import { useSetWarehouseStatus, useCreateWarehouse } from "@/lib/hooks/useWarehouseMutations";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
 import type { WarehouseResponse } from "@/types/warehouses";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
@@ -28,6 +29,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 export default function WarehousesPage() {
+  useRoleGuard(["admin"]);
+
   const [isFormOpen, setFormOpen] = useState(false);
   const warehouses = useWarehouses();
   const createWarehouse = useCreateWarehouse();

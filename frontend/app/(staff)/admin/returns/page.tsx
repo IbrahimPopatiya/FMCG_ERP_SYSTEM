@@ -17,6 +17,7 @@ import { useCreateReturn } from "@/lib/hooks/useReturnMutations";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatDate, toTitleCase } from "@/lib/utils/format";
 import type { ReturnListItem, ReturnStatus } from "@/types/returns";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const STATUS_FILTERS: { value: ReturnStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -37,6 +38,8 @@ function SkeletonRows() {
 }
 
 export default function ReturnsPage() {
+  useRoleGuard(["admin", "manager"]);
+
   const [statusFilter, setStatusFilter] = useState<ReturnStatus | "all">("all");
   const [isFormOpen, setFormOpen] = useState(false);
 

@@ -19,6 +19,7 @@ import { useReturn } from "@/lib/hooks/useReturns";
 import { useApproveReturn, useCompleteReturn, useRejectReturn } from "@/lib/hooks/useReturnMutations";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
 import { formatCurrency, formatDate, toTitleCase } from "@/lib/utils/format";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function actionErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === 409) {
@@ -28,6 +29,8 @@ function actionErrorMessage(error: unknown): string {
 }
 
 export default function ReturnDetailPage() {
+  useRoleGuard(["admin", "manager"]);
+
   const { returnId } = useParams<{ returnId: string }>();
   const ret = useReturn(returnId);
   const customer = useCustomer(ret.data?.customer_id ?? "");

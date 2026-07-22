@@ -14,6 +14,7 @@ import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useAssignRouteSalesman, useCreateRoute, useDeleteRoute } from "@/lib/hooks/useRouteMutations";
 import { useRoutes } from "@/lib/hooks/useRoutes";
 import type { RouteResponse } from "@/types/salesRoutes";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
@@ -30,6 +31,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 export default function RoutesPage() {
+  useRoleGuard(["admin", "manager", "dispatcher"]);
+
   const [isFormOpen, setFormOpen] = useState(false);
   const routes = useRoutes();
   const staff = useStaffDirectory();

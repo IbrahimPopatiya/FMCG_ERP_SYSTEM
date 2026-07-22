@@ -17,6 +17,7 @@ import { useSuppliers } from "@/lib/hooks/useSuppliers";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { PurchaseResponse, PurchaseStatus } from "@/types/purchases";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const STATUS_FILTERS: { value: PurchaseStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -36,6 +37,8 @@ function SkeletonRows() {
 }
 
 export default function PurchasesPage() {
+  useRoleGuard(["admin", "manager"]);
+
   const [statusFilter, setStatusFilter] = useState<PurchaseStatus | "all">("all");
   const [isFormOpen, setFormOpen] = useState(false);
 

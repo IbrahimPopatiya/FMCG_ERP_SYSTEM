@@ -12,6 +12,7 @@ import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySamp
 import { useOrders } from "@/lib/hooks/useOrders";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { OrderStatus, SalesOrderResponse } from "@/types/salesOrder";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const STATUS_FILTERS: { value: OrderStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -33,6 +34,8 @@ function SkeletonRows() {
 }
 
 export default function AdminOrdersPage() {
+  useRoleGuard(["admin", "salesman", "manager", "dispatcher"]);
+
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const orders = useOrders();
   const customers = useCustomerDirectorySample();

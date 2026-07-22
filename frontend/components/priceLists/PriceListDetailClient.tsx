@@ -15,9 +15,12 @@ import {
   useUpdatePriceListItem,
 } from "@/lib/hooks/usePriceListMutations";
 import { usePriceList, usePriceListItems } from "@/lib/hooks/usePriceLists";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 import type { PriceListItemResponse } from "@/types/priceLists";
 
 export function PriceListDetailClient({ priceListId }: { priceListId: string }) {
+  useRoleGuard(["admin"]);
+
   const [isFormOpen, setFormOpen] = useState(false);
   const [draftDiscount, setDraftDiscount] = useState<Record<string, string>>({});
 

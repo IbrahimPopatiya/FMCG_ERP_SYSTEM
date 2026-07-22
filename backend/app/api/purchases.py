@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.common import Page
@@ -52,7 +53,7 @@ def get_purchase(
 def create_purchase(
     data: PurchaseCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         return purchase_service.create_purchase(db, data, current_user.id)
@@ -65,7 +66,7 @@ def update_purchase(
     purchase_id: uuid.UUID,
     data: PurchaseUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         purchase = purchase_service.update_purchase(db, purchase_id, data, current_user.id)
@@ -84,7 +85,7 @@ def receive_purchase(
     purchase_id: uuid.UUID,
     data: PurchaseReceive,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         purchase = purchase_service.receive_purchase(db, purchase_id, data, current_user.id)
@@ -108,7 +109,7 @@ def receive_purchase(
 def cancel_purchase(
     purchase_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         purchase = purchase_service.cancel_purchase(db, purchase_id, current_user.id)

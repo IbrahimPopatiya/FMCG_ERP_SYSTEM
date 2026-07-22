@@ -12,6 +12,7 @@ import { SupplierStatusBadge } from "@/components/suppliers/SupplierStatusBadge"
 import { useCreateSupplier, useSetSupplierStatus } from "@/lib/hooks/useSupplierMutations";
 import { useSuppliers } from "@/lib/hooks/useSuppliers";
 import type { SupplierResponse } from "@/types/suppliers";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
@@ -37,6 +38,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 export default function SuppliersPage() {
+  useRoleGuard(["admin", "manager"]);
+
   const [isFormOpen, setFormOpen] = useState(false);
   const suppliers = useSuppliers();
   const createSupplier = useCreateSupplier();

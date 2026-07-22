@@ -15,6 +15,7 @@ import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel
 import { useProductsManage } from "@/lib/hooks/useProductsManage";
 import { formatCurrency } from "@/lib/utils/format";
 import type { ProductResponse } from "@/types/product";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function SkeletonRows() {
   return (
@@ -57,6 +58,8 @@ function EmptyState({ hasSearch }: { hasSearch: boolean }) {
 }
 
 export default function AdminProductsPage() {
+  useRoleGuard(["admin", "salesman", "manager"]);
+
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
 

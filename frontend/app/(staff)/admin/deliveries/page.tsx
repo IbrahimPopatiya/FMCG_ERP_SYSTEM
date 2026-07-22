@@ -17,6 +17,7 @@ import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySamp
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatDate } from "@/lib/utils/format";
 import type { DeliveryListItem, DeliveryStatus } from "@/types/deliveries";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const STATUS_FILTERS: { value: DeliveryStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -37,6 +38,8 @@ function SkeletonRows() {
 }
 
 export default function DeliveriesPage() {
+  useRoleGuard(["admin", "driver", "manager", "dispatcher"]);
+
   const [statusFilter, setStatusFilter] = useState<DeliveryStatus | "all">("all");
   const [isFormOpen, setFormOpen] = useState(false);
 

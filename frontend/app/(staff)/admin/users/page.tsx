@@ -19,6 +19,7 @@ import {
 } from "@/lib/hooks/useUsers";
 import { toTitleCase } from "@/lib/utils/format";
 import type { UserResponse } from "@/types/users";
+import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
@@ -44,6 +45,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 export default function UsersPage() {
+  useRoleGuard(["admin"]);
+
   const [isFormOpen, setFormOpen] = useState(false);
   const [pendingRemoval, setPendingRemoval] = useState<UserResponse | null>(null);
   const directory = useStaffDirectory();
