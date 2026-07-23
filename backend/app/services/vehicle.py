@@ -13,6 +13,15 @@ class DuplicateVehicleError(Exception):
     """Raised when vehicle_number is already used by another vehicle."""
 
 
+def list_vehicles(db: Session) -> list[Vehicle]:
+    return (
+        db.query(Vehicle)
+        .filter(Vehicle.deleted_at.is_(None))
+        .order_by(Vehicle.vehicle_number)
+        .all()
+    )
+
+
 def get_vehicle(db: Session, vehicle_id: uuid.UUID) -> Vehicle | None:
     return db.query(Vehicle).filter(
         Vehicle.id == vehicle_id, Vehicle.deleted_at.is_(None)

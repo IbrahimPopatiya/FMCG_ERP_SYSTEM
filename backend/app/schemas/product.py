@@ -66,6 +66,8 @@ class ProductCatalogResponse(BaseModel):
     id: uuid.UUID
     sku: str
     name: str
+    category_id: Optional[uuid.UUID]
+    brand_id: Optional[uuid.UUID]
     unit: str
     packing: str
     mrp: Decimal

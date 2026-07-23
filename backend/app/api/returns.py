@@ -1,15 +1,18 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_staff
+from app.core.deps import require_staff, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.common import Page
 from app.schemas.return_ import (
     ReturnCreate,
     ReturnRejectRequest,
     ReturnResponse,
+    ReturnListItem,
     ReturnStatusResponse,
     ReturnCompleteResponse,
 )
@@ -25,11 +28,51 @@ from app.services.return_ import (
 router = APIRouter(prefix="/returns", tags=["returns"])
 
 
+def _to_list_item(row: tuple) -> ReturnListItem:
+    ret, invoice_number, customer_id, order_number = row
+    return ReturnListItem(
+        id=ret.id,
+        invoice_id=ret.invoice_id,
+        invoice_number=invoice_number,
+        order_number=order_number,
+        customer_id=customer_id,
+        warehouse_id=ret.warehouse_id,
+        reason=ret.reason,
+        remarks=ret.remarks,
+        status=ret.status,
+        items=ret.items,
+        created_at=ret.created_at,
+    )
+
+
+@router.get("", response_model=Page[ReturnListItem])
+def list_returns(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    rows, total = return_service.list_returns(db, page, page_size)
+    return Page(items=[_to_list_item(row) for row in rows], total=total, page=page, page_size=page_size)
+
+
+@router.get("/{return_id}", response_model=ReturnListItem)
+def get_return(
+    return_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    row = return_service.get_return_with_context(db, return_id)
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Return not found")
+    return _to_list_item(row)
+
+
 @router.post("", response_model=ReturnResponse, status_code=status.HTTP_201_CREATED)
 def create_return(
     data: ReturnCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         return return_service.create_return(db, data, current_user.id)
@@ -41,7 +84,7 @@ def create_return(
 def approve_return(
     return_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         ret = return_service.approve_return(db, return_id)
@@ -58,7 +101,7 @@ def reject_return(
     return_id: uuid.UUID,
     data: ReturnRejectRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         ret = return_service.reject_return(db, return_id, data.reason)
@@ -74,7 +117,7 @@ def reject_return(
 def complete_return(
     return_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     try:
         result = return_service.complete_return(db, return_id, current_user.id)

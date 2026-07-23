@@ -43,6 +43,24 @@ def create_customer(db: Session, data: CustomerCreate) -> Customer:
     return customer
 
 
+def list_customers(
+    db: Session, page: int, page_size: int, search: str | None = None
+) -> tuple[list[Customer], int]:
+    query = db.query(Customer).filter(Customer.deleted_at.is_(None))
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            (Customer.business_name.ilike(like))
+            | (Customer.owner_name.ilike(like))
+            | (Customer.mobile.ilike(like))
+            | (Customer.customer_code.ilike(like))
+        )
+    query = query.order_by(Customer.business_name)
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return items, total
+
+
 def get_customer(db: Session, customer_id: uuid.UUID) -> Customer | None:
     return (
         db.query(Customer)

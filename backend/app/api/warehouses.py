@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.warehouse import (
@@ -18,11 +19,19 @@ from app.services import warehouse as warehouse_service
 router = APIRouter(prefix="/warehouses", tags=["warehouses"])
 
 
+@router.get("", response_model=list[WarehouseResponse])
+def list_warehouses(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return warehouse_service.list_warehouses(db)
+
+
 @router.post("", response_model=WarehouseResponse, status_code=status.HTTP_201_CREATED)
 def create_warehouse(
     data: WarehouseCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     return warehouse_service.create_warehouse(db, data)
 
@@ -32,7 +41,7 @@ def update_warehouse(
     warehouse_id: uuid.UUID,
     data: WarehouseUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     warehouse = warehouse_service.update_warehouse(db, warehouse_id, data)
     if warehouse is None:
@@ -45,7 +54,7 @@ def update_warehouse_status(
     warehouse_id: uuid.UUID,
     data: WarehouseStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     warehouse = warehouse_service.set_warehouse_status(db, warehouse_id, data.status)
     if warehouse is None:
@@ -57,7 +66,7 @@ def update_warehouse_status(
 def delete_warehouse(
     warehouse_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     warehouse = warehouse_service.soft_delete_warehouse(db, warehouse_id)
     if warehouse is None:

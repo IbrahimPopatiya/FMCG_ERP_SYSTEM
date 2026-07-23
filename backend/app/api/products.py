@@ -1,11 +1,13 @@
 import uuid
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import Principal, get_current_principal, get_current_user
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.common import Page
 from app.schemas.product import (
     ProductCreate,
     ProductUpdate,
@@ -36,6 +38,8 @@ def list_products(
             id=p.id,
             sku=p.sku,
             name=p.name,
+            category_id=p.category_id,
+            brand_id=p.brand_id,
             unit=p.unit,
             packing=p.packing,
             mrp=p.mrp,
@@ -49,6 +53,20 @@ def list_products(
     ]
 
 
+@router.get("/manage", response_model=Page[ProductResponse])
+def list_products_for_management(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Staff catalog management view - every product, any status, full fields, paginated.
+    `search` matches product name, SKU, or brand name."""
+    items, total = product_service.list_all_products(db, page, page_size, search)
+    return Page(items=items, total=total, page=page, page_size=page_size)
+
+
 @router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 def create_product(
     data: ProductCreate,
@@ -59,6 +77,18 @@ def create_product(
         return product_service.create_product(db, data)
     except DuplicateProductError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+
+@router.get("/{product_id}", response_model=ProductResponse)
+def get_product(
+    product_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    product = product_service.get_product(db, product_id)
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    return product
 
 
 @router.patch("/{product_id}", response_model=ProductResponse)

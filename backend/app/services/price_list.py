@@ -13,6 +13,10 @@ class DuplicatePriceListItemError(Exception):
     """Raised when a product already has a price in this price list."""
 
 
+def list_price_lists(db: Session) -> list[PriceList]:
+    return db.query(PriceList).filter(PriceList.deleted_at.is_(None)).all()
+
+
 def get_price_list(db: Session, price_list_id: uuid.UUID) -> PriceList | None:
     return db.query(PriceList).filter(
         PriceList.id == price_list_id, PriceList.deleted_at.is_(None)
@@ -50,6 +54,10 @@ def soft_delete_price_list(db: Session, price_list_id: uuid.UUID) -> PriceList |
     db.commit()
     db.refresh(price_list)
     return price_list
+
+
+def list_price_list_items(db: Session, price_list_id: uuid.UUID) -> list[PriceListItem]:
+    return db.query(PriceListItem).filter(PriceListItem.price_list_id == price_list_id).all()
 
 
 def get_price_list_item(db: Session, price_list_id: uuid.UUID, item_id: uuid.UUID) -> PriceListItem | None:

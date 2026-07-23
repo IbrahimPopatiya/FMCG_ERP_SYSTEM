@@ -24,6 +24,38 @@ def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 
 
+# ---------- GET /brands ----------
+
+def test_list_brands_returns_all_non_deleted_brands(client):
+    headers = auth_headers(client)
+    client.post("/api/v1/brands", json={"name": "Brand A"}, headers=headers)
+    client.post("/api/v1/brands", json={"name": "Brand B"}, headers=headers)
+
+    response = client.get("/api/v1/brands", headers=headers)
+
+    assert response.status_code == 200
+    names = [b["name"] for b in response.json()]
+    assert "Brand A" in names
+    assert "Brand B" in names
+
+
+def test_list_brands_excludes_deleted_brands(client):
+    headers = auth_headers(client)
+    brand = client.post("/api/v1/brands", json={"name": "Deleted Brand"}, headers=headers).json()
+    client.delete(f"/api/v1/brands/{brand['id']}", headers=headers)
+
+    response = client.get("/api/v1/brands", headers=headers)
+
+    names = [b["name"] for b in response.json()]
+    assert "Deleted Brand" not in names
+
+
+def test_list_brands_without_token_returns_401_or_403(client):
+    response = client.get("/api/v1/brands")
+
+    assert response.status_code in (401, 403)
+
+
 # ---------- POST /brands ----------
 
 def test_create_brand_returns_201(client):

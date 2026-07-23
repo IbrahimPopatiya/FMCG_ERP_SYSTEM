@@ -11,6 +11,10 @@ def get_brand(db: Session, brand_id: uuid.UUID) -> Brand | None:
     return db.query(Brand).filter(Brand.id == brand_id, Brand.deleted_at.is_(None)).first()
 
 
+def list_brands(db: Session) -> list[Brand]:
+    return db.query(Brand).filter(Brand.deleted_at.is_(None)).order_by(Brand.name).all()
+
+
 def create_brand(db: Session, data: BrandCreate) -> Brand:
     brand = Brand(name=data.name, logo=data.logo)
     db.add(brand)

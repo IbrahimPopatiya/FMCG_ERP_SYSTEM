@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.enums import ProductStatus
+from app.models.brand import Brand
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductUpdate
 
@@ -23,6 +24,26 @@ def list_active_products(db: Session) -> list[Product]:
     return db.query(Product).filter(
         Product.deleted_at.is_(None), Product.status == ProductStatus.ACTIVE
     ).all()
+
+
+def list_all_products(
+    db: Session, page: int, page_size: int, search: str | None = None
+) -> tuple[list[Product], int]:
+    """Staff catalog management view - every non-deleted product, any status, paginated.
+    `search` matches product name, SKU, or brand name (outer-joined so
+    brandless products still show up when there's no search term)."""
+    query = db.query(Product).outerjoin(Brand, Brand.id == Product.brand_id).filter(
+        Product.deleted_at.is_(None)
+    )
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            (Product.name.ilike(like)) | (Product.sku.ilike(like)) | (Brand.name.ilike(like))
+        )
+    query = query.order_by(Product.name)
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return items, total
 
 
 def create_product(db: Session, data: ProductCreate) -> Product:
