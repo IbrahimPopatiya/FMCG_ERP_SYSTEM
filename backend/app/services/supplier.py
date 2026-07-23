@@ -13,6 +13,15 @@ class DuplicateSupplierError(Exception):
     """Raised when supplier_code is already used by another supplier."""
 
 
+def list_suppliers(db: Session) -> list[Supplier]:
+    return (
+        db.query(Supplier)
+        .filter(Supplier.deleted_at.is_(None))
+        .order_by(Supplier.name)
+        .all()
+    )
+
+
 def get_supplier(db: Session, supplier_id: uuid.UUID) -> Supplier | None:
     return db.query(Supplier).filter(
         Supplier.id == supplier_id, Supplier.deleted_at.is_(None)

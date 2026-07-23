@@ -29,6 +29,8 @@ class SalesOrderItemResponse(BaseModel):
     id: uuid.UUID
     product_id: uuid.UUID
     ordered_qty: Decimal
+    approved_qty: Decimal
+    loaded_qty: Decimal
     price: Decimal
     gst_rate: Decimal
     cgst: Decimal

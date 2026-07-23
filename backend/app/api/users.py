@@ -3,12 +3,24 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.deps import require_staff
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserStatusUpdate, UserResponse, UserDeleteResponse
 from app.services import user as user_service
 from app.services.user import DuplicateUserError
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("", response_model=list[UserResponse])
+def list_users(db: Session = Depends(get_db), current_user: User = Depends(require_staff)):
+    return user_service.list_users(db)
+
+
+@router.get("/me", response_model=UserResponse)
+def get_current_user_profile(current_user: User = Depends(require_staff)):
+    return current_user
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

@@ -4,7 +4,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.inventory import (
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/inventory", tags=["inventory"])
 def create_adjustment(
     data: InventoryAdjustmentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     movement = inventory_service.create_adjustment(db, data, user_id=current_user.id)
     return InventoryAdjustmentResponse(
@@ -41,7 +42,7 @@ def create_adjustment(
 def create_transfer(
     data: InventoryTransferCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER)),
 ):
     transfer_out, transfer_in = inventory_service.create_transfer(db, data, user_id=current_user.id)
     return InventoryTransferResponse(

@@ -72,8 +72,63 @@ class CustomerResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CustomerMeResponse(BaseModel):
+    id: uuid.UUID
+    customer_code: str
+    business_name: str
+    owner_name: str
+    mobile: str
+    alternate_mobile: Optional[str]
+    gst_number: Optional[str]
+    address: str
+    city: str
+    state: str
+    pincode: str
+    credit_limit: Decimal
+    payment_terms: int
+    status: CustomerStatus
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CustomerDeleteResponse(BaseModel):
     id: uuid.UUID
     deleted_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DueInvoiceItem(BaseModel):
+    invoice_id: uuid.UUID
+    invoice_number: str
+    order_id: uuid.UUID
+    order_number: str
+    invoice_date: datetime
+    total: Decimal
+    balance: Decimal
+    payment_status: str
+
+
+class CustomerDuesResponse(BaseModel):
+    total_due: Decimal
+    invoices: list[DueInvoiceItem]
+
+
+class LedgerTransaction(BaseModel):
+    date: datetime
+    type: str  # "order" | "payment"
+    reference: str
+    description: str
+    amount: Decimal
+    balance: Decimal
+
+
+class CustomerLedgerResponse(BaseModel):
+    credit_limit: Decimal
+    available_credit: Decimal
+    current_balance: Decimal
+    total_invoiced: Decimal
+    total_payments: Decimal
+    outstanding_invoices: int
+    last_order_date: Optional[datetime]
+    transactions: list[LedgerTransaction]

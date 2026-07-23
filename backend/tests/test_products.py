@@ -165,6 +165,104 @@ def test_delete_product_not_found_returns_404(client):
     assert response.status_code == 404
 
 
+# ---------- GET /products/{id} ----------
+
+def test_get_product_returns_full_product(client):
+    headers = auth_headers(client)
+    product = client.post("/api/v1/products", json=product_payload(), headers=headers).json()
+
+    response = client.get(f"/api/v1/products/{product['id']}", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["sku"] == "SKU-1001"
+
+
+def test_get_product_not_found_returns_404(client):
+    headers = auth_headers(client)
+    fake_id = uuid.uuid4()
+
+    response = client.get(f"/api/v1/products/{fake_id}", headers=headers)
+
+    assert response.status_code == 404
+
+
+def test_get_product_without_token_returns_401_or_403(client):
+    headers = auth_headers(client)
+    product = client.post("/api/v1/products", json=product_payload(), headers=headers).json()
+
+    response = client.get(f"/api/v1/products/{product['id']}")
+
+    assert response.status_code in (401, 403)
+
+
+# ---------- GET /products/manage (staff, paginated, all statuses) ----------
+
+def test_list_products_for_management_returns_paginated_envelope(client):
+    headers = auth_headers(client)
+    client.post("/api/v1/products", json=product_payload(), headers=headers)
+
+    response = client.get("/api/v1/products/manage", headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 1
+    assert body["page"] == 1
+    assert body["page_size"] == 20
+    assert len(body["items"]) == 1
+    assert body["items"][0]["sku"] == "SKU-1001"
+
+
+def test_list_products_for_management_includes_inactive_products(client):
+    headers = auth_headers(client)
+    product = client.post("/api/v1/products", json=product_payload(), headers=headers).json()
+    client.patch(
+        f"/api/v1/products/{product['id']}/status", json={"status": "inactive"}, headers=headers
+    )
+
+    response = client.get("/api/v1/products/manage", headers=headers)
+
+    assert response.json()["total"] == 1
+
+
+def test_list_products_for_management_respects_page_size(client):
+    headers = auth_headers(client)
+    for i in range(3):
+        client.post(
+            "/api/v1/products",
+            json=product_payload(sku=f"SKU-PAGE-{i}", barcode=f"890123456789{i}"),
+            headers=headers,
+        )
+
+    response = client.get("/api/v1/products/manage?page=1&page_size=2", headers=headers)
+
+    body = response.json()
+    assert body["total"] == 3
+    assert len(body["items"]) == 2
+    assert body["page_size"] == 2
+
+
+def test_list_products_for_management_second_page_returns_remaining_items(client):
+    headers = auth_headers(client)
+    for i in range(3):
+        client.post(
+            "/api/v1/products",
+            json=product_payload(sku=f"SKU-PAGE2-{i}", barcode=f"890123457789{i}"),
+            headers=headers,
+        )
+
+    response = client.get("/api/v1/products/manage?page=2&page_size=2", headers=headers)
+
+    body = response.json()
+    assert body["page"] == 2
+    assert len(body["items"]) == 1
+
+
+def test_list_products_for_management_without_token_returns_401_or_403(client):
+    response = client.get("/api/v1/products/manage")
+
+    assert response.status_code in (401, 403)
+
+
 # ---------- GET /products (catalog) ----------
 
 def test_list_products_staff_sees_base_price(client):

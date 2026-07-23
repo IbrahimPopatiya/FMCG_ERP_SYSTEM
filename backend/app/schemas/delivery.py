@@ -54,6 +54,27 @@ class DeliveryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class DeliveryListItem(BaseModel):
+    """List/detail view - adds invoice_number/customer_id/order_number
+    (joined from Invoice + SalesOrder) since a bare Delivery row only carries ids."""
+
+    id: uuid.UUID
+    invoice_id: uuid.UUID
+    invoice_number: str
+    order_number: str
+    customer_id: uuid.UUID
+    vehicle_id: Optional[uuid.UUID]
+    driver_id: Optional[uuid.UUID]
+    status: DeliveryStatus
+    departure_time: Optional[datetime]
+    arrival_time: Optional[datetime]
+    completion_time: Optional[datetime]
+    latitude: Optional[Decimal]
+    longitude: Optional[Decimal]
+    customer_signature: Optional[str]
+    remarks: Optional[str]
+
+
 class DeliveryArriveResponse(BaseModel):
     id: uuid.UUID
     arrival_time: datetime

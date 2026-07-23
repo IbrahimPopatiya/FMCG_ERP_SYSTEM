@@ -33,6 +33,25 @@ class PaymentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PaymentListItem(BaseModel):
+    """List/detail view - adds invoice_number/customer_id/order_number
+    (joined from Invoice + SalesOrder) since a bare Payment row only carries ids."""
+
+    id: uuid.UUID
+    invoice_id: uuid.UUID
+    invoice_number: str
+    order_number: str
+    customer_id: uuid.UUID
+    driver_id: Optional[uuid.UUID]
+    payment_date: datetime
+    cash_amount: Decimal
+    upi_amount: Decimal
+    cheque_amount: Decimal
+    total_amount: Decimal
+    reference_number: Optional[str]
+    status: PaymentRecordStatus
+
+
 class PaymentBounceRequest(BaseModel):
     reason: str
 

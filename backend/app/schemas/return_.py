@@ -46,6 +46,23 @@ class ReturnResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ReturnListItem(BaseModel):
+    """List/detail view - adds invoice_number/customer_id/order_number
+    (joined from Invoice + SalesOrder) since a bare Return row only carries ids."""
+
+    id: uuid.UUID
+    invoice_id: uuid.UUID
+    invoice_number: str
+    order_number: str
+    customer_id: uuid.UUID
+    warehouse_id: uuid.UUID
+    reason: ReturnReason
+    remarks: Optional[str]
+    status: ReturnStatus
+    items: list[ReturnItemResponse]
+    created_at: datetime
+
+
 class ReturnStatusResponse(BaseModel):
     id: uuid.UUID
     status: ReturnStatus

@@ -87,6 +87,17 @@ def create_purchase(db: Session, data: PurchaseCreate, user_id: uuid.UUID) -> Pu
     return purchase
 
 
+def list_purchases(db: Session, page: int, page_size: int) -> tuple[list[Purchase], int]:
+    query = (
+        db.query(Purchase)
+        .filter(Purchase.deleted_at.is_(None))
+        .order_by(Purchase.purchase_date.desc())
+    )
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return items, total
+
+
 def get_purchase(db: Session, purchase_id: uuid.UUID) -> Purchase | None:
     return db.query(Purchase).filter(
         Purchase.id == purchase_id, Purchase.deleted_at.is_(None)
