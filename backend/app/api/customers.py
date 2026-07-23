@@ -90,6 +90,35 @@ def get_customer(
     return customer
 
 
+@router.get("/{customer_id}/dues", response_model=CustomerDuesResponse)
+def get_customer_dues(
+    customer_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    customer = customer_service.get_customer(db, customer_id)
+    if customer is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+
+    rows, total_due = invoice_service.list_dues_for_customer(db, customer_id)
+    return CustomerDuesResponse(
+        total_due=total_due,
+        invoices=[
+            DueInvoiceItem(
+                invoice_id=invoice.id,
+                invoice_number=invoice.invoice_number,
+                order_id=order_id,
+                order_number=order_number,
+                invoice_date=invoice.invoice_date,
+                total=invoice.total,
+                balance=balance,
+                payment_status=invoice.payment_status,
+            )
+            for invoice, order_id, order_number, balance in rows
+        ],
+    )
+
+
 @router.post("", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
 def create_customer(
     data: CustomerCreate,

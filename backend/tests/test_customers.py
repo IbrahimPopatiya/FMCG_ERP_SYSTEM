@@ -323,3 +323,36 @@ def test_delete_customer_twice_returns_404_on_second_call(client):
 
     assert first.status_code == 200
     assert second.status_code == 404
+
+
+def test_get_customer_dues_returns_zero_for_customer_with_no_invoices(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-DUES-1"), headers=headers
+    ).json()
+
+    response = client.get(f"/api/v1/customers/{created['id']}/dues", headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert float(body["total_due"]) == 0
+    assert body["invoices"] == []
+
+
+def test_get_customer_dues_without_token_returns_401_or_403(client):
+    headers = auth_headers(client)
+    created = client.post(
+        "/api/v1/customers", json=make_customer_payload(customer_code="CUST-DUES-2"), headers=headers
+    ).json()
+
+    response = client.get(f"/api/v1/customers/{created['id']}/dues")
+
+    assert response.status_code in (401, 403)
+
+
+def test_get_customer_dues_not_found_returns_404(client):
+    headers = auth_headers(client)
+
+    response = client.get(f"/api/v1/customers/{uuid.uuid4()}/dues", headers=headers)
+
+    assert response.status_code == 404

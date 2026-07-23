@@ -87,8 +87,10 @@ Dashboard (orders pending dispatch), Orders (approve → load), Deliveries (crea
 Hidden: Users, Suppliers, Purchases, Payment verification, Product edits.
 
 ### Cashier
-Dashboard (pending verifications), Payments (list, verify, bounce), Invoices (read-only, payment status), Customers (read-only, dues).
-Hidden: Order creation, Products, Users, Inventory, Purchases, Deliveries, Vehicles.
+Dashboard (`/admin/cashier/dashboard` — today's cash/UPI/cheque collection, pending verification, returns count), Driver Collections (`/admin/cashier/driver-collections` — today's payments grouped by driver, + detail), Payments (list, verify, bounce), Party Balance (`/admin/cashier/party-balance` — per-customer outstanding dues, backed by new `GET /customers/{id}/dues`), Invoices (read-only, payment status), Customers (read-only, dues), Reports (`/admin/cashier/reports` — date-range collection summary + CSV export).
+Hidden: Order creation, Products, Users, Inventory, Purchases, Deliveries, Vehicles, Returns approve/reject (backend restricts that to admin/manager).
+
+Note: the richer mobile-app-style cashier workflow in `final_docs/design-prompt/cashier_workflow_prompt.md` (Expense Entry, Alerts/Follow-ups, driver-linked returns, PDF/Excel export) goes beyond what the backend supports today — those pieces were intentionally left out of this pass (no Expense domain exists; Return has no driver_id to link to a driver's collection run). Build them as their own backend+frontend PR when needed.
 
 ## 6. Implementation approach (minimal, no overengineering)
 

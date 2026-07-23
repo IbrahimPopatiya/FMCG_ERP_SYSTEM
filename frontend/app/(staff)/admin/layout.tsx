@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { CashierMobileNav } from "@/components/cashier/CashierMobileNav";
+import { CASHIER_DESKTOP_NAV_ITEMS } from "@/components/cashier/navItems";
 import { getStaffRole } from "@/lib/auth/session";
 import { getRoleNav, ROLE_NAV } from "@/lib/nav/roleNav";
 
@@ -11,17 +13,23 @@ import { getRoleNav, ROLE_NAV } from "@/lib/nav/roleNav";
 // Falls back to the admin's full nav only until the role cookie is readable
 // (server render / first paint before hydration) - useRoleGuard on each page
 // is the real gate, this is just what's shown while that resolves.
+//
+// Cashier gets its own green Material 3 look (see .cashier-theme in
+// globals.css) and a FAB-style bottom nav, matching
+// final_docs/images/cashier design workflow.png - every other role stays on
+// the shared indigo shell.
 export default function StaffLayout({ children }: { children: React.ReactNode }) {
   const [role] = useState(() => getStaffRole());
 
+  const isCashier = role === "cashier";
   const nav = role ? getRoleNav(role) : ROLE_NAV.admin;
 
   return (
-    <div className="flex flex-1 overflow-hidden">
-      <DesktopSidebar items={nav.desktop} />
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+    <div className={`flex flex-1 overflow-hidden ${isCashier ? "cashier-theme" : ""}`}>
+      <DesktopSidebar items={isCashier ? CASHIER_DESKTOP_NAV_ITEMS : nav.desktop} />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
-        <MobileBottomNav items={nav.mobile} />
+        {isCashier ? <CashierMobileNav /> : <MobileBottomNav items={nav.mobile} />}
       </div>
     </div>
   );

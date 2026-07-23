@@ -86,3 +86,33 @@ body {
   --color-surface: #f6f8f6;
   --color-border: #e0e6e0;
 }
+
+/*
+ * Cashier app theme. Scoped to .cashier-theme (applied only to the
+ * (staff)/admin/cashier/* route group) so the rest of the ERP stays on the
+ * indigo system — same re-skin-via-CSS-vars trick as .customer-theme above.
+ * Material 3 green ramp from final_docs/design-prompt/cashier_workflow_prompt.md
+ * and final_docs/images/cashier design workflow.png: #0B6B3A primary,
+ * #FF9800 accent, #F6F8FA background.
+ */
+.cashier-theme {
+  --background: #f6f8fa;
+  --foreground: #10241a;
+
+  --color-ink: #10241a;
+  --color-ink-muted: #5b6a63;
+
+  --color-primary: #0b6b3a;
+  --color-primary-hover: #08512c;
+  --color-primary-soft: #e3f2e8;
+
+  --color-accent: #ff9800;
+  --color-accent-soft: #fff1db;
+
+  --color-danger: #d32f2f;
+  --color-danger-hover: #ad2424;
+  --color-danger-soft: #fbe9e9;
+
+  --color-surface: #f6f8fa;
+  --color-border: #dde5e0;
+}

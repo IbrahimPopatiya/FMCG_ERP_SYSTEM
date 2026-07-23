@@ -32,6 +32,10 @@ export function getCustomer(customerId: string) {
   return api.get<CustomerListItem>(`/customers/${customerId}`).then((res) => res.data);
 }
 
+export function getCustomerDues(customerId: string) {
+  return api.get<CustomerDuesResponse>(`/customers/${customerId}/dues`).then((res) => res.data);
+}
+
 export function createCustomer(data: CustomerCreate) {
   return api.post<CustomerCreateResponse>("/customers", data).then((res) => res.data);
 }
