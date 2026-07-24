@@ -22,6 +22,10 @@ export function getCurrentCustomerLedger() {
   return api.get<CustomerLedgerResponse>("/customers/me/ledger").then((res) => res.data);
 }
 
+export function getCustomerDues(customerId: string) {
+  return api.get<CustomerDuesResponse>(`/customers/${customerId}/dues`).then((res) => res.data);
+}
+
 export function listCustomers(page: number, pageSize: number, search?: string) {
   return api
     .get<Page<CustomerListItem>>("/customers", { params: { page, page_size: pageSize, search } })

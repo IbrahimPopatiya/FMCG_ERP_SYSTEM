@@ -71,7 +71,9 @@ def get_payment(
 def record_payment(
     data: PaymentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.CASHIER)),
+    current_user: User = Depends(
+        require_role(UserRole.ADMIN, UserRole.DRIVER, UserRole.MANAGER, UserRole.CASHIER, UserRole.SALESMAN)
+    ),
 ):
     try:
         return payment_service.record_payment(db, data, current_user.id)

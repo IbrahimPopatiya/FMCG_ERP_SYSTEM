@@ -74,7 +74,7 @@ def list_customers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    items, total = customer_service.list_customers(db, page, page_size, search)
+    items, total = customer_service.list_customers(db, page, page_size, search, current_user)
     return Page(items=items, total=total, page=page, page_size=page_size)
 
 
@@ -87,7 +87,40 @@ def get_customer(
     customer = customer_service.get_customer(db, customer_id)
     if customer is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+    if not customer_service.can_view_customer(db, customer, current_user):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
     return customer
+
+
+@router.get("/{customer_id}/dues", response_model=CustomerDuesResponse)
+def get_customer_dues(
+    customer_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    customer = customer_service.get_customer(db, customer_id)
+    if customer is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+    if not customer_service.can_view_customer(db, customer, current_user):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+
+    rows, total_due = invoice_service.list_dues_for_customer(db, customer_id)
+    return CustomerDuesResponse(
+        total_due=total_due,
+        invoices=[
+            DueInvoiceItem(
+                invoice_id=invoice.id,
+                invoice_number=invoice.invoice_number,
+                order_id=order_id,
+                order_number=order_number,
+                invoice_date=invoice.invoice_date,
+                total=invoice.total,
+                balance=balance,
+                payment_status=invoice.payment_status,
+            )
+            for invoice, order_id, order_number, balance in rows
+        ],
+    )
 
 
 @router.post("", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
@@ -97,7 +130,7 @@ def create_customer(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        return customer_service.create_customer(db, data)
+        return customer_service.create_customer(db, data, current_user)
     except DuplicateCustomerError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 

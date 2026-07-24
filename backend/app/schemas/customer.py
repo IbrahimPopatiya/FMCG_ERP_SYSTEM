@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from app.core.enums import CustomerStatus
+from app.core.enums import CustomerCategory, CustomerStatus
 
 
 class CustomerCreate(BaseModel):
@@ -15,6 +15,7 @@ class CustomerCreate(BaseModel):
     mobile: str
     alternate_mobile: Optional[str] = None
     gst_number: Optional[str] = None
+    pan_number: Optional[str] = None
     address: str
     city: str
     state: str
@@ -23,7 +24,16 @@ class CustomerCreate(BaseModel):
     payment_terms: int
     route_id: Optional[uuid.UUID] = None
     price_list_id: Optional[uuid.UUID] = None
-    password: str
+    category: CustomerCategory = CustomerCategory.RETAIL
+    shop_photo_url: Optional[str] = None
+    gst_document_url: Optional[str] = None
+    pan_document_url: Optional[str] = None
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+    # Optional: a salesman adding a customer in the field has no login-password
+    # field in the UI. Left unset, the customer is just created without portal
+    # login (login_enabled=False) until an admin sets one later.
+    password: Optional[str] = None
 
 
 class CustomerUpdate(BaseModel):
@@ -32,6 +42,7 @@ class CustomerUpdate(BaseModel):
     mobile: Optional[str] = None
     alternate_mobile: Optional[str] = None
     gst_number: Optional[str] = None
+    pan_number: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
@@ -40,6 +51,10 @@ class CustomerUpdate(BaseModel):
     payment_terms: Optional[int] = None
     route_id: Optional[uuid.UUID] = None
     price_list_id: Optional[uuid.UUID] = None
+    category: Optional[CustomerCategory] = None
+    shop_photo_url: Optional[str] = None
+    gst_document_url: Optional[str] = None
+    pan_document_url: Optional[str] = None
     login_enabled: Optional[bool] = None
 
 
@@ -80,6 +95,7 @@ class CustomerMeResponse(BaseModel):
     mobile: str
     alternate_mobile: Optional[str]
     gst_number: Optional[str]
+    pan_number: Optional[str] = None
     address: str
     city: str
     state: str
@@ -87,6 +103,16 @@ class CustomerMeResponse(BaseModel):
     credit_limit: Decimal
     payment_terms: int
     status: CustomerStatus
+    category: CustomerCategory = CustomerCategory.RETAIL
+    route_id: Optional[uuid.UUID] = None
+    shop_photo_url: Optional[str] = None
+    gst_document_url: Optional[str] = None
+    pan_document_url: Optional[str] = None
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+    is_private: bool = False
+    created_by_user_id: Optional[uuid.UUID] = None
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

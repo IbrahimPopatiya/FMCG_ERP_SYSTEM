@@ -49,18 +49,19 @@ export const ROLE_NAV: Record<UserRole, RoleNav> = {
     ],
   },
   salesman: {
-    home: "/admin/dashboard",
+    home: "/admin/salesman/dashboard",
     desktop: [
-      { href: "/admin/dashboard", label: "Dashboard" },
-      { href: "/admin/customers", label: "Customers" },
-      { href: "/admin/products", label: "Products" },
-      { href: "/admin/orders", label: "Orders" },
-      { href: "/admin/credit-notes", label: "Credit Notes" },
+      { href: "/admin/salesman/dashboard", label: "Dashboard" },
+      { href: "/admin/salesman/customers", label: "Customers" },
+      { href: "/admin/salesman/take-order", label: "Take Order" },
+      { href: "/admin/salesman/orders", label: "Orders" },
+      { href: "/admin/salesman/reports", label: "Reports" },
     ],
     mobile: [
-      { href: "/admin/orders", label: "Orders" },
-      { href: "/admin/customers", label: "Customers" },
-      { href: "/admin/products", label: "Products" },
+      { href: "/admin/salesman/dashboard", label: "Home" },
+      { href: "/admin/salesman/customers", label: "Customers" },
+      { href: "/admin/salesman/orders", label: "Orders" },
+      { href: "/admin/salesman/more", label: "More" },
     ],
   },
   driver: {

@@ -27,3 +27,15 @@ class Customer(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     longitude = Column(Numeric(10, 7), nullable=True)
     password_hash = Column(String(255), nullable=True)
     login_enabled = Column(Boolean, nullable=False, default=True)
+
+    # Ownership, for the salesman "private customer" rule (final_docs/design-prompt/salesman_workflow.md):
+    # a salesman-created customer is only visible to its creator + admin/manager,
+    # never to other salesmen. Admin-created customers keep is_private=False.
+    created_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    is_private = Column(Boolean, nullable=False, default=False)
+
+    category = Column(String(20), nullable=False, default="retail")  # retail, wholesale, distributor
+    pan_number = Column(String(20), nullable=True)
+    shop_photo_url = Column(String(500), nullable=True)
+    gst_document_url = Column(String(500), nullable=True)
+    pan_document_url = Column(String(500), nullable=True)

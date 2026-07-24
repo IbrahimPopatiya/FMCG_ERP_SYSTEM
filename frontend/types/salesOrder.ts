@@ -7,7 +7,9 @@ export interface SalesOrderItemCreate {
 }
 
 export interface SalesOrderCreate {
+  customer_id?: string;
   remarks?: string;
+  expected_delivery?: string;
   items: SalesOrderItemCreate[];
 }
 

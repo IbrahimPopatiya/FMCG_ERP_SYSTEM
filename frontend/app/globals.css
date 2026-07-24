@@ -86,3 +86,33 @@ body {
   --color-surface: #f6f8f6;
   --color-border: #e0e6e0;
 }
+
+/*
+ * Salesman app theme. Scoped to .salesman-theme (applied only to the
+ * (staff)/admin/salesman/* route group) — same re-skin-via-CSS-vars trick as
+ * .customer-theme/.cashier-theme above. Material 3 green ramp exactly as
+ * specified in final_docs/design-prompt/salesman_workflow.md: #0B6B3A
+ * primary, #2E7D32 secondary, #FF9800 accent, #D32F2F danger, #F5F7FA
+ * background.
+ */
+.salesman-theme {
+  --background: #f5f7fa;
+  --foreground: #10241a;
+
+  --color-ink: #10241a;
+  --color-ink-muted: #5b6a63;
+
+  --color-primary: #0b6b3a;
+  --color-primary-hover: #2e7d32;
+  --color-primary-soft: #e3f2e8;
+
+  --color-accent: #ff9800;
+  --color-accent-soft: #fff1db;
+
+  --color-danger: #d32f2f;
+  --color-danger-hover: #ad2424;
+  --color-danger-soft: #fbe9e9;
+
+  --color-surface: #f5f7fa;
+  --color-border: #dde5e0;
+}

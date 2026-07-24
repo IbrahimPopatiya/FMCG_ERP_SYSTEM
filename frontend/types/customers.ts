@@ -1,4 +1,5 @@
 export type CustomerStatus = "active" | "inactive" | "blocked";
+export type CustomerCategory = "retail" | "wholesale" | "distributor";
 
 export interface CustomerMeResponse {
   id: string;
@@ -8,6 +9,7 @@ export interface CustomerMeResponse {
   mobile: string;
   alternate_mobile: string | null;
   gst_number: string | null;
+  pan_number: string | null;
   address: string;
   city: string;
   state: string;
@@ -15,6 +17,16 @@ export interface CustomerMeResponse {
   credit_limit: number;
   payment_terms: number;
   status: CustomerStatus;
+  category: CustomerCategory;
+  route_id: string | null;
+  shop_photo_url: string | null;
+  gst_document_url: string | null;
+  pan_document_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  is_private: boolean;
+  created_by_user_id: string | null;
+  created_at: string;
 }
 
 // GET /customers (list) and GET /customers/{id} (detail) return the same
@@ -38,13 +50,22 @@ export interface CustomerCreate {
   mobile: string;
   alternate_mobile?: string | null;
   gst_number?: string | null;
+  pan_number?: string | null;
   address: string;
   city: string;
   state: string;
   pincode: string;
   credit_limit: number;
   payment_terms: number;
-  password: string;
+  route_id?: string | null;
+  price_list_id?: string | null;
+  category?: CustomerCategory;
+  shop_photo_url?: string | null;
+  gst_document_url?: string | null;
+  pan_document_url?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  password?: string | null;
 }
 
 export interface DueInvoiceItem {
