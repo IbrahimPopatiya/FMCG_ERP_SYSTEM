@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { CategoryForm } from "@/components/categories/CategoryForm";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useCreateCategory, useDeleteCategory } from "@/lib/hooks/useCategoryMutations";
@@ -38,7 +38,7 @@ export default function CategoriesPage() {
 
   return (
     <div>
-      <TopBar title="Categories" />
+      <AdminTopBar title="Categories" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
         <div>

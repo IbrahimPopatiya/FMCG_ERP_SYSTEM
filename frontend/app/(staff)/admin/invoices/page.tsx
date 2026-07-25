@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { PaymentStatusBadge } from "@/components/invoices/PaymentStatusBadge";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
 import { useInvoicesManage } from "@/lib/hooks/useInvoices";
@@ -62,7 +62,7 @@ export default function InvoicesPage() {
 
   return (
     <div>
-      <TopBar title="Invoices" />
+      <AdminTopBar title="Invoices" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
         <div>

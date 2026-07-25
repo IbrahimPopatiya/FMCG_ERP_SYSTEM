@@ -6,6 +6,8 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SalesmanMobileNav } from "@/components/salesman/SalesmanMobileNav";
 import { SALESMAN_DESKTOP_NAV_ITEMS } from "@/components/salesman/navItems";
 import { CartProvider } from "@/components/salesman/CartContext";
+import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
+import { ADMIN_DESKTOP_NAV_ITEMS } from "@/components/admin/navItems";
 import { getStaffRole } from "@/lib/auth/session";
 import { getRoleNav, ROLE_NAV } from "@/lib/nav/roleNav";
 
@@ -15,22 +17,35 @@ import { getRoleNav, ROLE_NAV } from "@/lib/nav/roleNav";
 // (server render / first paint before hydration) - useRoleGuard on each page
 // is the real gate, this is just what's shown while that resolves.
 //
-// Salesman gets its own green Material 3 look (see .salesman-theme in
-// globals.css) and a FAB-style bottom nav (Take Order), matching
-// final_docs/design-prompt/salesman_workflow.md — every other role stays on
-// the shared theme.
+// Salesman and admin each get their own green Material 3 look (see
+// .salesman-theme/.admin-theme in globals.css). Salesman also gets a
+// FAB-style bottom nav (Take Order); admin gets a FAB-style bottom nav too
+// (Quick Actions) plus a numbered-workflow icon sidebar — see
+// components/admin/navItems.tsx and final_docs/design-prompt/
+// FMCG_Admin_Dashboard_Prompt.md. Every other role stays on the shared
+// (legacy blue) theme.
 export default function StaffLayout({ children }: { children: React.ReactNode }) {
   const [role] = useState(() => getStaffRole());
 
   const isSalesman = role === "salesman";
+  const isAdmin = role === "admin";
   const nav = role ? getRoleNav(role) : ROLE_NAV.admin;
+  const themeClass = isSalesman ? "salesman-theme" : isAdmin ? "admin-theme" : "";
 
   const body = (
-    <div className={`flex flex-1 overflow-hidden ${isSalesman ? "salesman-theme" : ""}`}>
-      <DesktopSidebar items={isSalesman ? SALESMAN_DESKTOP_NAV_ITEMS : nav.desktop} />
+    <div className={`flex flex-1 overflow-hidden ${themeClass}`}>
+      <DesktopSidebar
+        items={isSalesman ? SALESMAN_DESKTOP_NAV_ITEMS : isAdmin ? ADMIN_DESKTOP_NAV_ITEMS : nav.desktop}
+      />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
-        {isSalesman ? <SalesmanMobileNav /> : <MobileBottomNav items={nav.mobile} />}
+        {isSalesman ? (
+          <SalesmanMobileNav />
+        ) : isAdmin ? (
+          <AdminMobileNav />
+        ) : (
+          <MobileBottomNav items={nav.mobile} />
+        )}
       </div>
     </div>
   );

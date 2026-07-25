@@ -8,7 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { RouteForm } from "@/components/routes/RouteForm";
 import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useAssignRouteSalesman, useCreateRoute, useDeleteRoute } from "@/lib/hooks/useRouteMutations";
@@ -46,7 +46,7 @@ export default function RoutesPage() {
 
   return (
     <div>
-      <TopBar title="Routes" />
+      <AdminTopBar title="Routes" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
         <div>

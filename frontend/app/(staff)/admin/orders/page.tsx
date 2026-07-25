@@ -2,13 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { Button } from "@/components/ui/Button";
+import { AdminTopBar, AdminIconButton } from "@/components/admin/AdminTopBar";
+import { SearchIcon, FilterIcon } from "@/components/admin/icons";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
+import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useOrders } from "@/lib/hooks/useOrders";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { OrderStatus, SalesOrderResponse } from "@/types/salesOrder";
@@ -37,85 +39,139 @@ export default function AdminOrdersPage() {
   useRoleGuard(["admin", "salesman", "manager", "dispatcher"]);
 
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  const [view, setView] = useState<"date" | "salesman">("date");
+  const [showSearch, setShowSearch] = useState(false);
+  const [search, setSearch] = useState("");
+
   const orders = useOrders();
   const customers = useCustomerDirectorySample();
+  const staff = useStaffDirectory();
 
   const customerName = (customerId: string) =>
     customers.data?.items.find((c) => c.id === customerId)?.business_name ?? "Customer";
+  const salesmanName = (salesmanId: string | null) =>
+    salesmanId ? staff.data?.find((u) => u.id === salesmanId)?.full_name ?? "Unassigned" : "Unassigned";
 
-  const sorted = useMemo(
-    () =>
-      [...(orders.data ?? [])]
-        .filter((o) => statusFilter === "all" || o.status === statusFilter)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [orders.data, statusFilter]
-  );
+  const filtered = useMemo(() => {
+    let items = [...(orders.data ?? [])].filter(
+      (o) => statusFilter === "all" || o.status === statusFilter
+    );
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      items = items.filter(
+        (o) => o.order_number.toLowerCase().includes(q) || customerName(o.customer_id).toLowerCase().includes(q)
+      );
+    }
+    return items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders.data, statusFilter, search, customers.data]);
+
+  const groupedByDate = useMemo(() => {
+    const map = new Map<string, SalesOrderResponse[]>();
+    for (const o of filtered) {
+      const key = formatDate(o.created_at);
+      map.set(key, [...(map.get(key) ?? []), o]);
+    }
+    return Array.from(map.entries());
+  }, [filtered]);
+
+  const groupedBySalesman = useMemo(() => {
+    const map = new Map<string, { name: string; orders: SalesOrderResponse[] }>();
+    for (const o of filtered) {
+      const key = o.salesman_id ?? "unassigned";
+      const entry = map.get(key) ?? { name: salesmanName(o.salesman_id), orders: [] };
+      entry.orders.push(o);
+      map.set(key, entry);
+    }
+    return Array.from(map.entries()).sort(
+      (a, b) => b[1].orders.reduce((s, o) => s + o.total, 0) - a[1].orders.reduce((s, o) => s + o.total, 0)
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, staff.data]);
 
   const pendingCount = (orders.data ?? []).filter((o) => o.status === "pending").length;
 
   return (
     <div>
-      <TopBar title="Orders" />
+      <AdminTopBar
+        title="Sales Orders"
+        subtitle={pendingCount > 0 ? `${pendingCount} waiting on approval` : "Every order across the business"}
+        back
+        right={
+          <>
+            <AdminIconButton label="Search" onClick={() => setShowSearch((v) => !v)}>
+              <SearchIcon className="h-5 w-5" />
+            </AdminIconButton>
+            <AdminIconButton label="Filter" onClick={() => setView((v) => (v === "date" ? "salesman" : "date"))}>
+              <FilterIcon className="h-5 w-5" />
+            </AdminIconButton>
+          </>
+        }
+      />
 
-      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-ink">Orders</h1>
-            <p className="mt-0.5 text-sm text-ink-muted">
-              {pendingCount > 0
-                ? `${pendingCount} order${pendingCount === 1 ? "" : "s"} waiting on approval`
-                : "Every order across the business"}
-            </p>
+      <div className="sticky top-[68px] z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-3 sm:px-6">
+        {showSearch && (
+          <input
+            autoFocus
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by order # or customer…"
+            className="h-10 w-full rounded-lg border border-border px-3 text-sm text-ink placeholder:text-ink-muted/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-soft"
+          />
+        )}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex gap-2 overflow-x-auto">
+            {STATUS_FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setStatusFilter(filter.value)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  statusFilter === filter.value
+                    ? "border-primary bg-primary text-white"
+                    : "border-border text-ink-muted hover:bg-surface"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-8 shrink-0 px-3 text-xs"
+            onClick={() => setView((v) => (v === "date" ? "salesman" : "date"))}
+          >
+            {view === "date" ? "Salesman Wise" : "Date Wise"}
+          </Button>
         </div>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-          {STATUS_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => setStatusFilter(filter.value)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                statusFilter === filter.value
-                  ? "border-primary bg-primary text-white"
-                  : "border-border text-ink-muted hover:bg-surface"
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
-      </header>
+      </div>
 
       {orders.isLoading && <SkeletonRows />}
 
       {orders.isError && (
         <div className="p-4 sm:p-6">
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+          <div className="rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
             Couldn&apos;t load orders.
-            <Button type="button" variant="secondary" onClick={() => orders.refetch()}>
-              Retry
-            </Button>
           </div>
         </div>
       )}
 
-      {!orders.isLoading && !orders.isError && sorted.length === 0 && (
+      {!orders.isLoading && !orders.isError && filtered.length === 0 && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No orders here</p>
-          <p className="text-sm text-ink-muted">
-            {statusFilter === "all" ? "No orders have been placed yet." : "Try a different status filter."}
-          </p>
+          <p className="text-sm text-ink-muted">Try a different status filter or search term.</p>
         </div>
       )}
 
-      {!orders.isLoading && !orders.isError && sorted.length > 0 && (
+      {!orders.isLoading && !orders.isError && filtered.length > 0 && view === "date" && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<SalesOrderResponse>
                 rowKey={(o) => o.id}
-                rows={sorted}
+                rows={filtered}
                 columns={[
                   {
                     header: "Order",
@@ -137,19 +193,52 @@ export default function AdminOrdersPage() {
             </div>
           </div>
 
-          {/* Mobile: simplified card list */}
-          <div className="flex flex-col gap-3 sm:hidden">
-            {sorted.map((o) => (
-              <Link key={o.id} href={`/admin/orders/${o.id}`}>
-                <Card className="flex items-center justify-between gap-3">
+          {/* Mobile: date-grouped card list, matching the design mock */}
+          <div className="flex flex-col gap-4 sm:hidden">
+            {groupedByDate.map(([date, dayOrders]) => (
+              <div key={date}>
+                <h2 className="mb-2 text-sm font-semibold text-ink-muted">{date}</h2>
+                <div className="flex flex-col gap-2">
+                  {dayOrders.map((o) => (
+                    <Link key={o.id} href={`/admin/orders/${o.id}`}>
+                      <Card className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-ink">{customerName(o.customer_id)}</p>
+                          <p className="font-mono text-xs text-ink-muted">{o.order_number}</p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          <p className="text-sm font-semibold text-ink">{formatCurrency(o.total)}</p>
+                          <OrderStatusBadge status={o.status} />
+                        </div>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!orders.isLoading && !orders.isError && filtered.length > 0 && view === "salesman" && (
+        <div className="p-4 sm:p-6">
+          <h2 className="mb-3 text-sm font-semibold text-ink">Salesman Wise</h2>
+          <div className="flex flex-col gap-2">
+            {groupedBySalesman.map(([id, entry]) => (
+              <Card key={id} className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+                    {entry.name.charAt(0).toUpperCase()}
+                  </span>
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{customerName(o.customer_id)}</p>
-                    <p className="font-mono text-xs text-ink-muted">{o.order_number}</p>
-                    <p className="mt-1 text-sm text-ink-muted">{formatCurrency(o.total)}</p>
+                    <p className="truncate text-sm font-semibold text-ink">{entry.name}</p>
+                    <p className="text-xs text-ink-muted">{entry.orders.length} orders</p>
                   </div>
-                  <OrderStatusBadge status={o.status} />
-                </Card>
-              </Link>
+                </div>
+                <p className="shrink-0 text-sm font-semibold text-primary">
+                  {formatCurrency(entry.orders.reduce((s, o) => s + o.total, 0))}
+                </p>
+              </Card>
             ))}
           </div>
         </div>

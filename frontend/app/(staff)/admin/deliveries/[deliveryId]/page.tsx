@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { DeliveryStatusBadge } from "@/components/deliveries/DeliveryStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useDelivery } from "@/lib/hooks/useDeliveries";
@@ -184,7 +184,7 @@ export default function DeliveryDetailPage() {
 
   return (
     <div>
-      <TopBar title="Delivery" />
+      <AdminTopBar title="Delivery" back />
 
       {delivery.isLoading && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">

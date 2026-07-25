@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { PaymentRecordStatusBadge } from "@/components/payments/PaymentRecordStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { usePayment } from "@/lib/hooks/usePayments";
@@ -64,7 +64,7 @@ export default function PaymentDetailPage() {
 
   return (
     <div>
-      <TopBar title="Payment" />
+      <AdminTopBar title="Payment" back />
 
       {payment.isLoading && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">

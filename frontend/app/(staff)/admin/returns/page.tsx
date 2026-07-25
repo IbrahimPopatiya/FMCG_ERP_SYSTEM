@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { ReturnForm } from "@/components/returns/ReturnForm";
 import { ReturnStatusBadge } from "@/components/returns/ReturnStatusBadge";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
@@ -68,7 +68,7 @@ export default function ReturnsPage() {
 
   return (
     <div>
-      <TopBar title="Returns" />
+      <AdminTopBar title="Returns" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

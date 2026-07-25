@@ -8,7 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Select } from "@/components/ui/Select";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { AdjustStockForm } from "@/components/inventory/AdjustStockForm";
 import { TransferStockForm } from "@/components/inventory/TransferStockForm";
 import { useCreateInventoryAdjustment, useCreateInventoryTransfer } from "@/lib/hooks/useInventoryMutations";
@@ -80,7 +80,7 @@ export default function InventoryPage() {
 
   return (
     <div>
-      <TopBar title="Inventory" />
+      <AdminTopBar title="Inventory" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

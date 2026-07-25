@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { PurchaseForm } from "@/components/purchases/PurchaseForm";
 import { PurchaseStatusBadge } from "@/components/purchases/PurchaseStatusBadge";
 import { useCreatePurchase } from "@/lib/hooks/usePurchaseMutations";
@@ -67,18 +67,16 @@ export default function PurchasesPage() {
 
   return (
     <div>
-      <TopBar title="Purchases" />
+      <AdminTopBar
+        title="Purchase Orders"
+        subtitle={total > 0 ? `${total} purchase${total === 1 ? "" : "s"}` : "Stock ordered in from suppliers"}
+        back
+      />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-ink">Purchases</h1>
-            <p className="mt-0.5 text-sm text-ink-muted">
-              {total > 0 ? `${total} purchase${total === 1 ? "" : "s"}` : "Stock ordered in from suppliers"}
-            </p>
-          </div>
           <Button type="button" className="w-full sm:w-auto" onClick={() => setFormOpen(true)}>
-            Create purchase
+            + New Purchase Order
           </Button>
         </div>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">

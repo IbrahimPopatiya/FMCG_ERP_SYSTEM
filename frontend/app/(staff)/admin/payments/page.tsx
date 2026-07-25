@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { PaymentForm } from "@/components/payments/PaymentForm";
 import { PaymentRecordStatusBadge } from "@/components/payments/PaymentRecordStatusBadge";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
@@ -41,6 +41,7 @@ export default function PaymentsPage() {
 
   const [statusFilter, setStatusFilter] = useState<PaymentRecordStatus | "all">("all");
   const [isFormOpen, setFormOpen] = useState(false);
+  const [direction, setDirection] = useState<"customers" | "suppliers">("customers");
 
   const {
     data,
@@ -67,41 +68,73 @@ export default function PaymentsPage() {
 
   return (
     <div>
-      <TopBar title="Payments" />
+      <AdminTopBar
+        title="Payments"
+        subtitle={total > 0 ? `${total} payment${total === 1 ? "" : "s"}` : "Cash, UPI and cheque collections"}
+        back
+      />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-ink">Payments</h1>
-            <p className="mt-0.5 text-sm text-ink-muted">
-              {total > 0 ? `${total} payment${total === 1 ? "" : "s"}` : "Cash, UPI and cheque collections"}
-            </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setDirection("customers")}
+            className={`flex-1 rounded-lg py-2 text-sm font-medium ${
+              direction === "customers" ? "bg-primary text-white" : "bg-surface text-ink-muted"
+            }`}
+          >
+            From Customers
+          </button>
+          <button
+            type="button"
+            onClick={() => setDirection("suppliers")}
+            className={`flex-1 rounded-lg py-2 text-sm font-medium ${
+              direction === "suppliers" ? "bg-primary text-white" : "bg-surface text-ink-muted"
+            }`}
+          >
+            To Suppliers
+          </button>
+        </div>
+        {direction === "customers" && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Button type="button" className="w-full sm:w-auto" onClick={() => setFormOpen(true)}>
+              Record payment
+            </Button>
           </div>
-          <Button type="button" className="w-full sm:w-auto" onClick={() => setFormOpen(true)}>
-            Record payment
-          </Button>
-        </div>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-          {STATUS_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => setStatusFilter(filter.value)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                statusFilter === filter.value
-                  ? "border-primary bg-primary text-white"
-                  : "border-border text-ink-muted hover:bg-surface"
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+        )}
+        {direction === "customers" && (
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            {STATUS_FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setStatusFilter(filter.value)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  statusFilter === filter.value
+                    ? "border-primary bg-primary text-white"
+                    : "border-border text-ink-muted hover:bg-surface"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
-      {isLoading && <SkeletonRows />}
+      {direction === "suppliers" && (
+        <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
+          <p className="text-sm font-medium text-ink">Supplier payments aren&apos;t tracked yet</p>
+          <p className="max-w-sm text-sm text-ink-muted">
+            Purchases record what&apos;s owed to each supplier, but there&apos;s no payments-out ledger built yet —
+            see the Suppliers screen for purchase totals per vendor.
+          </p>
+        </div>
+      )}
 
-      {isError && (
+      {direction === "customers" && isLoading && <SkeletonRows />}
+
+      {direction === "customers" && isError && (
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between gap-3 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
             Couldn&apos;t load payments.
@@ -112,7 +145,7 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length === 0 && (
+      {direction === "customers" && !isLoading && !isError && filtered.length === 0 && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No payments here</p>
           <p className="text-sm text-ink-muted">
@@ -121,7 +154,7 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length > 0 && (
+      {direction === "customers" && !isLoading && !isError && filtered.length > 0 && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
           <div className="hidden sm:block">

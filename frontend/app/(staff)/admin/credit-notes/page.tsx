@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { CreditNoteStatusBadge } from "@/components/creditNotes/CreditNoteStatusBadge";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
 import { useCreditNotesManage } from "@/lib/hooks/useCreditNotes";
@@ -62,7 +62,7 @@ export default function CreditNotesPage() {
 
   return (
     <div>
-      <TopBar title="Credit Notes" />
+      <AdminTopBar title="Credit Notes" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
         <div>

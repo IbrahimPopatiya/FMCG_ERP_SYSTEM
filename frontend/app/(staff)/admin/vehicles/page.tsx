@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -8,7 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { VehicleForm } from "@/components/vehicles/VehicleForm";
 import { VehicleStatusBadge } from "@/components/vehicles/VehicleStatusBadge";
 import { useStaffDirectory } from "@/lib/hooks/useUsers";
@@ -77,7 +78,7 @@ export default function VehiclesPage() {
 
   return (
     <div>
-      <TopBar title="Vehicles" />
+      <AdminTopBar title="Vehicles" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
         <div>
@@ -166,7 +167,12 @@ export default function VehiclesPage() {
                   {
                     header: "",
                     render: (v) => (
-                      <div className="flex justify-end">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/admin/vehicles/${v.id}/trips`}>
+                          <Button type="button" variant="secondary" className="h-9 px-3 text-xs">
+                            Trips
+                          </Button>
+                        </Link>
                         <Button
                           type="button"
                           variant="danger"
@@ -194,7 +200,12 @@ export default function VehiclesPage() {
                   </div>
                   <VehicleStatusBadge status={v.status} />
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  <Link href={`/admin/vehicles/${v.id}/trips`}>
+                    <Button type="button" variant="secondary" className="h-9 px-3 text-xs">
+                      Trips
+                    </Button>
+                  </Link>
                   <Button
                     type="button"
                     variant="danger"

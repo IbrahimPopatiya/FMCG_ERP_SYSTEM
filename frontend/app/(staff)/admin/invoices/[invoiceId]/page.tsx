@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { PaymentStatusBadge } from "@/components/invoices/PaymentStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useInvoice } from "@/lib/hooks/useInvoices";
@@ -52,7 +52,7 @@ export default function InvoiceDetailPage() {
 
   return (
     <div>
-      <TopBar title="Invoice" />
+      <AdminTopBar title="Invoice" back />
 
       {invoice.isLoading && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">

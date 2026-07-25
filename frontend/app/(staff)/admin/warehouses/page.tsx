@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { WarehouseForm } from "@/components/warehouses/WarehouseForm";
 import { WarehouseStatusBadge } from "@/components/warehouses/WarehouseStatusBadge";
 import { useSetWarehouseStatus, useCreateWarehouse } from "@/lib/hooks/useWarehouseMutations";
@@ -40,7 +40,7 @@ export default function WarehousesPage() {
 
   return (
     <div>
-      <TopBar title="Warehouses" />
+      <AdminTopBar title="Warehouses" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
         <div>

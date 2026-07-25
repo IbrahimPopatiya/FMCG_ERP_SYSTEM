@@ -8,14 +8,16 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
+import { PhoneIcon } from "@/components/admin/icons";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useGenerateInvoice } from "@/lib/hooks/useInvoiceMutations";
 import { useInvoiceSample } from "@/lib/hooks/useInvoices";
 import { useOrder } from "@/lib/hooks/useOrders";
-import { useApproveOrder, useCancelOrder, useLoadOrder } from "@/lib/hooks/useOrderMutations";
+import { useApproveOrder, useCancelOrder, useLoadOrder, useCreateOrder } from "@/lib/hooks/useOrderMutations";
 import { useProducts } from "@/lib/hooks/useProducts";
+import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { formatCurrency, formatDate, toTitleCase } from "@/lib/utils/format";
 import type { SalesOrderItemResponse } from "@/types/salesOrder";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -36,10 +38,27 @@ export default function AdminOrderDetailPage() {
   const customer = useCustomer(order.data?.customer_id ?? "");
   const products = useProducts();
   const invoices = useInvoiceSample();
+  const staff = useStaffDirectory();
   const approveOrder = useApproveOrder(orderId);
   const loadOrder = useLoadOrder(orderId);
   const cancelOrder = useCancelOrder();
   const generateInvoice = useGenerateInvoice(orderId);
+  const duplicateOrder = useCreateOrder();
+
+  const salesman = order.data?.salesman_id
+    ? staff.data?.find((u) => u.id === order.data!.salesman_id)
+    : undefined;
+
+  async function handleDuplicate() {
+    const data = order.data;
+    if (!data) return;
+    const created = await duplicateOrder.mutateAsync({
+      customer_id: data.customer_id,
+      remarks: data.remarks ?? undefined,
+      items: data.items.map((item) => ({ product_id: item.product_id, ordered_qty: item.ordered_qty })),
+    });
+    router.push(`/admin/orders/${created.id}`);
+  }
 
   const [qtyByItem, setQtyByItem] = useState<Record<string, string>>({});
   const [actionError, setActionError] = useState<string | null>(null);
@@ -114,7 +133,7 @@ export default function AdminOrderDetailPage() {
 
   return (
     <div>
-      <TopBar title="Order" />
+      <AdminTopBar title="Order Details" subtitle={order.data?.order_number} back />
 
       {order.isLoading && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">
@@ -147,6 +166,62 @@ export default function AdminOrderDetailPage() {
                 </p>
               </div>
               <OrderStatusBadge status={data.status} />
+            </Card>
+
+            <Card className="flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-ink-muted">Customer</p>
+                  <p className="text-sm font-semibold text-ink">{customer.data?.business_name ?? "—"}</p>
+                  <p className="text-xs text-ink-muted">
+                    {customer.data?.city}, {customer.data?.state}
+                  </p>
+                </div>
+                {customer.data?.mobile && (
+                  <a
+                    href={`tel:${customer.data.mobile}`}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
+                    aria-label="Call customer"
+                  >
+                    <PhoneIcon className="h-4 w-4" />
+                  </a>
+                )}
+              </div>
+
+              {salesman && (
+                <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-ink-muted">Salesman</p>
+                    <p className="text-sm font-semibold text-ink">{salesman.full_name}</p>
+                  </div>
+                  <a
+                    href={`tel:${salesman.mobile}`}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
+                    aria-label="Call salesman"
+                  >
+                    <PhoneIcon className="h-4 w-4" />
+                  </a>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-sm">
+                <div>
+                  <p className="text-xs font-medium text-ink-muted">Order Date</p>
+                  <p className="text-ink">{formatDate(data.created_at)}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-ink-muted">Delivery Date</p>
+                  <p className="text-ink">{data.expected_delivery ? formatDate(data.expected_delivery) : "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-ink-muted">Total Items</p>
+                  <p className="text-ink">{data.items.length} items</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-ink-muted">Total Amount</p>
+                  <p className="font-semibold text-ink">{formatCurrency(data.total)}</p>
+                </div>
+              </div>
             </Card>
 
             {data.remarks && (
@@ -236,6 +311,10 @@ export default function AdminOrderDetailPage() {
                 {actionError}
               </div>
             )}
+
+            <Button type="button" variant="secondary" isLoading={duplicateOrder.isPending} onClick={handleDuplicate}>
+              Duplicate Order
+            </Button>
 
             {(data.status === "pending" || data.status === "approved") && (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">

@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { CustomerForm } from "@/components/customers/CustomerForm";
 import { CustomerStatusBadge } from "@/components/customers/CustomerStatusBadge";
 import { useCreateCustomer } from "@/lib/hooks/useCustomerMutations";
@@ -80,7 +80,7 @@ export default function AdminCustomersPage() {
 
   return (
     <div>
-      <TopBar title="Customers" />
+      <AdminTopBar title="Customers" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
         <div>

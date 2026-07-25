@@ -10,7 +10,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { ReturnStatusBadge } from "@/components/returns/ReturnStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useCreditNoteSample } from "@/lib/hooks/useCreditNotes";
@@ -93,7 +93,7 @@ export default function ReturnDetailPage() {
 
   return (
     <div>
-      <TopBar title="Return" />
+      <AdminTopBar title="Return" back />
 
       {ret.isLoading && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { BrandForm } from "@/components/brands/BrandForm";
 import { useBrands } from "@/lib/hooks/useBrands";
 import { useCreateBrand, useDeleteBrand } from "@/lib/hooks/useBrandMutations";
@@ -37,7 +37,7 @@ export default function BrandsPage() {
 
   return (
     <div>
-      <TopBar title="Brands" />
+      <AdminTopBar title="Brands" back />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
         <div>

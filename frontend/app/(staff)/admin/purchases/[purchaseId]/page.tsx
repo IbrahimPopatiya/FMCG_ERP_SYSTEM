@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { PurchaseStatusBadge } from "@/components/purchases/PurchaseStatusBadge";
 import { usePurchase } from "@/lib/hooks/usePurchases";
 import { useCancelPurchase, useReceivePurchase } from "@/lib/hooks/usePurchaseMutations";
@@ -80,7 +80,7 @@ export default function PurchaseDetailPage() {
 
   return (
     <div>
-      <TopBar title="Purchase" />
+      <AdminTopBar title="Purchase Order Details" subtitle={purchase.data?.purchase_number} back />
 
       {purchase.isLoading && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">

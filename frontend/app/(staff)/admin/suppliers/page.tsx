@@ -6,11 +6,14 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar, AdminIconButton } from "@/components/admin/AdminTopBar";
+import { SearchIcon, FilterIcon } from "@/components/admin/icons";
 import { SupplierForm } from "@/components/suppliers/SupplierForm";
 import { SupplierStatusBadge } from "@/components/suppliers/SupplierStatusBadge";
 import { useCreateSupplier, useSetSupplierStatus } from "@/lib/hooks/useSupplierMutations";
 import { useSuppliers } from "@/lib/hooks/useSuppliers";
+import { usePurchasesManage } from "@/lib/hooks/usePurchases";
+import { formatCurrency } from "@/lib/utils/format";
 import type { SupplierResponse } from "@/types/suppliers";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
@@ -42,26 +45,28 @@ export default function SuppliersPage() {
 
   const [isFormOpen, setFormOpen] = useState(false);
   const suppliers = useSuppliers();
+  const purchases = usePurchasesManage();
   const createSupplier = useCreateSupplier();
   const setStatus = useSetSupplierStatus();
 
   const rows = suppliers.data ?? [];
+  const allPurchases = purchases.data?.pages.flatMap((p) => p.items) ?? [];
+  const totalPurchasedBySupplier = (supplierId: string) =>
+    allPurchases.filter((p) => p.supplier_id === supplierId).reduce((sum, p) => sum + p.total, 0);
 
   return (
-    <div>
-      <TopBar title="Suppliers" />
-
-      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight text-ink">Suppliers</h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            {rows.length > 0 ? `${rows.length} supplier${rows.length === 1 ? "" : "s"}` : "Vendors you buy stock from"}
-          </p>
-        </div>
-        <Button type="button" className="w-full sm:w-auto" onClick={() => setFormOpen(true)}>
-          Add supplier
-        </Button>
-      </header>
+    <div className="pb-24">
+      <AdminTopBar
+        title="Suppliers"
+        subtitle={rows.length > 0 ? `${rows.length} supplier${rows.length === 1 ? "" : "s"}` : "Vendors you buy stock from"}
+        back
+        right={
+          <>
+            <AdminIconButton label="Search"><SearchIcon className="h-5 w-5" /></AdminIconButton>
+            <AdminIconButton label="Filter"><FilterIcon className="h-5 w-5" /></AdminIconButton>
+          </>
+        }
+      />
 
       {suppliers.isLoading && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">
@@ -140,8 +145,10 @@ export default function SuppliersPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-medium text-ink">{s.name}</p>
-                    <p className="font-mono text-xs text-ink-muted">{s.supplier_code}</p>
-                    <p className="text-xs text-ink-muted">{s.mobile}</p>
+                    <p className="text-xs text-ink-muted">{s.address}</p>
+                    <p className="mt-1 text-xs text-ink-muted">
+                      Total Purchases: {formatCurrency(totalPurchasedBySupplier(s.id))}
+                    </p>
                   </div>
                   <SupplierStatusBadge status={s.status} />
                 </div>
@@ -165,6 +172,12 @@ export default function SuppliersPage() {
           </div>
         </div>
       )}
+
+      <div className="fixed inset-x-4 bottom-20 sm:absolute sm:inset-x-6 sm:bottom-6">
+        <Button type="button" className="w-full" onClick={() => setFormOpen(true)}>
+          + Add Supplier
+        </Button>
+      </div>
 
       <Modal open={isFormOpen} onClose={() => setFormOpen(false)} title="Add supplier">
         <SupplierForm

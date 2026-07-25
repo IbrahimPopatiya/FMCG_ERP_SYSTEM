@@ -3,6 +3,7 @@ import type { UserRole } from "@/types/users";
 export interface NavItem {
   href: string;
   label: string;
+  icon?: (props: { className?: string }) => React.ReactElement;
 }
 
 interface RoleNav {
@@ -16,25 +17,19 @@ interface RoleNav {
 // categories) point at pages that don't exist in the frontend yet - Phase 2
 // builds them. This map isn't wired into the staff layout/nav yet - that's
 // Phase 3, once every referenced page actually exists.
+// Admin's real nav lives in components/admin/navItems.tsx (workflow-ordered,
+// with icons + a mobile FAB) and is wired directly in the staff layout, same
+// as salesman. This entry is kept as the pre-hydration/fallback nav only.
 const ADMIN_DESKTOP: NavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/categories", label: "Categories" },
-  { href: "/admin/brands", label: "Brands" },
-  { href: "/admin/price-lists", label: "Price Lists" },
-  { href: "/admin/customers", label: "Customers" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/routes", label: "Routes" },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/invoices", label: "Invoices" },
-  { href: "/admin/deliveries", label: "Deliveries" },
+  { href: "/admin/orders", label: "Sales Orders" },
+  { href: "/admin/suppliers", label: "Purchases" },
+  { href: "/admin/payments", label: "Payments" },
+  { href: "/admin/cash-bank", label: "Cash & Bank" },
   { href: "/admin/vehicles", label: "Vehicles" },
   { href: "/admin/inventory", label: "Inventory" },
-  { href: "/admin/purchases", label: "Purchases" },
-  { href: "/admin/suppliers", label: "Suppliers" },
-  { href: "/admin/payments", label: "Payments" },
-  { href: "/admin/returns", label: "Returns" },
-  { href: "/admin/credit-notes", label: "Credit Notes" },
+  { href: "/admin/users", label: "Users" },
+  { href: "/admin/ledger", label: "Ledger" },
 ];
 
 export const ROLE_NAV: Record<UserRole, RoleNav> = {
@@ -42,10 +37,10 @@ export const ROLE_NAV: Record<UserRole, RoleNav> = {
     home: "/admin/dashboard",
     desktop: ADMIN_DESKTOP,
     mobile: [
+      { href: "/admin/dashboard", label: "Home" },
       { href: "/admin/orders", label: "Orders" },
-      { href: "/admin/deliveries", label: "Deliveries" },
-      { href: "/admin/products", label: "Products" },
-      { href: "/admin/customers", label: "Customers" },
+      { href: "/admin/payments", label: "Payments" },
+      { href: "/admin/more", label: "More" },
     ],
   },
   salesman: {

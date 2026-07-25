@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TopBar } from "@/components/layout/TopBar";
+import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { CreditNoteStatusBadge } from "@/components/creditNotes/CreditNoteStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useCreditNote } from "@/lib/hooks/useCreditNotes";
@@ -63,7 +63,7 @@ export default function CreditNoteDetailPage() {
 
   return (
     <div>
-      <TopBar title="Credit Note" />
+      <AdminTopBar title="Credit Note" back />
 
       {creditNote.isLoading && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">
