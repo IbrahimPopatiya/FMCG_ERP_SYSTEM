@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SalesmanMobileNav } from "@/components/salesman/SalesmanMobileNav";
@@ -8,7 +7,10 @@ import { SALESMAN_DESKTOP_NAV_ITEMS } from "@/components/salesman/navItems";
 import { CartProvider } from "@/components/salesman/CartContext";
 import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 import { ADMIN_DESKTOP_NAV_ITEMS } from "@/components/admin/navItems";
-import { getStaffRole } from "@/lib/auth/session";
+import { LoadingMobileNav } from "@/components/loading/LoadingMobileNav";
+import { LOADING_DESKTOP_NAV_ITEMS } from "@/components/loading/navItems";
+import { TripDraftProvider } from "@/components/loading/TripDraftContext";
+import { useStaffRole } from "@/lib/hooks/useStaffRole";
 import { getRoleNav, ROLE_NAV } from "@/lib/nav/roleNav";
 
 // Nav items are role-scoped (see lib/nav/roleNav.ts) - each role sees only
@@ -25,17 +27,26 @@ import { getRoleNav, ROLE_NAV } from "@/lib/nav/roleNav";
 // FMCG_Admin_Dashboard_Prompt.md. Every other role stays on the shared
 // (legacy blue) theme.
 export default function StaffLayout({ children }: { children: React.ReactNode }) {
-  const [role] = useState(() => getStaffRole());
+  const role = useStaffRole();
 
   const isSalesman = role === "salesman";
   const isAdmin = role === "admin";
+  const isDispatcher = role === "dispatcher";
   const nav = role ? getRoleNav(role) : ROLE_NAV.admin;
-  const themeClass = isSalesman ? "salesman-theme" : isAdmin ? "admin-theme" : "";
+  const themeClass = isSalesman ? "salesman-theme" : isAdmin || isDispatcher ? "admin-theme" : "";
 
   const body = (
     <div className={`flex flex-1 overflow-hidden ${themeClass}`}>
       <DesktopSidebar
-        items={isSalesman ? SALESMAN_DESKTOP_NAV_ITEMS : isAdmin ? ADMIN_DESKTOP_NAV_ITEMS : nav.desktop}
+        items={
+          isSalesman
+            ? SALESMAN_DESKTOP_NAV_ITEMS
+            : isAdmin
+              ? ADMIN_DESKTOP_NAV_ITEMS
+              : isDispatcher
+                ? LOADING_DESKTOP_NAV_ITEMS
+                : nav.desktop
+        }
       />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
@@ -43,6 +54,8 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
           <SalesmanMobileNav />
         ) : isAdmin ? (
           <AdminMobileNav />
+        ) : isDispatcher ? (
+          <LoadingMobileNav />
         ) : (
           <MobileBottomNav items={nav.mobile} />
         )}
@@ -50,5 +63,14 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
     </div>
   );
 
-  return isSalesman ? <CartProvider>{body}</CartProvider> : body;
+  // Always wrapped (not gated on role) - the role cookie can't be read
+  // during the server render pass, so a role-conditional wrap here would
+  // make the server and client disagree about whether CartProvider/
+  // TripDraftProvider are present, throwing "must be used within Provider"
+  // on any direct/hard navigation to a page that calls useCart/useTripDraft.
+  return (
+    <CartProvider>
+      <TripDraftProvider>{body}</TripDraftProvider>
+    </CartProvider>
+  );
 }

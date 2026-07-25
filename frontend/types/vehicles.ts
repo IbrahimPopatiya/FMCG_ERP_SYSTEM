@@ -16,6 +16,12 @@ export interface VehicleCreate {
   capacity: number;
 }
 
+export interface VehicleUpdate {
+  vehicle_number?: string;
+  warehouse_id?: string | null;
+  capacity?: number;
+}
+
 export interface VehicleDeleteResponse {
   id: string;
   deleted_at: string;

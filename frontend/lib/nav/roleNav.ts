@@ -60,14 +60,16 @@ export const ROLE_NAV: Record<UserRole, RoleNav> = {
     ],
   },
   driver: {
-    home: "/admin/deliveries",
+    home: "/admin/loading/trips",
     desktop: [
       { href: "/admin/dashboard", label: "Dashboard" },
+      { href: "/admin/loading/trips", label: "My Trips" },
       { href: "/admin/deliveries", label: "Deliveries" },
       { href: "/admin/payments", label: "Payments" },
       { href: "/admin/vehicles", label: "Vehicle" },
     ],
     mobile: [
+      { href: "/admin/loading/trips", label: "Trips" },
       { href: "/admin/deliveries", label: "Deliveries" },
       { href: "/admin/payments", label: "Payments" },
     ],
@@ -97,18 +99,19 @@ export const ROLE_NAV: Record<UserRole, RoleNav> = {
     ],
   },
   dispatcher: {
-    home: "/admin/orders",
+    home: "/admin/loading/dashboard",
     desktop: [
-      { href: "/admin/dashboard", label: "Dashboard" },
-      { href: "/admin/orders", label: "Orders" },
-      { href: "/admin/deliveries", label: "Deliveries" },
+      { href: "/admin/loading/dashboard", label: "Dashboard" },
+      { href: "/admin/loading/orders", label: "Orders (LC)" },
+      { href: "/admin/loading/trips", label: "Trips" },
       { href: "/admin/vehicles", label: "Vehicles" },
+      { href: "/admin/deliveries", label: "Deliveries" },
       { href: "/admin/routes", label: "Routes" },
     ],
     mobile: [
-      { href: "/admin/orders", label: "Orders" },
-      { href: "/admin/deliveries", label: "Deliveries" },
-      { href: "/admin/vehicles", label: "Vehicles" },
+      { href: "/admin/loading/dashboard", label: "Home" },
+      { href: "/admin/loading/orders", label: "Orders" },
+      { href: "/admin/loading/trips", label: "Trips" },
     ],
   },
   cashier: {

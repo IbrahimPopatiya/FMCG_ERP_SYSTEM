@@ -19,6 +19,7 @@ import {
   useCreateVehicle,
   useDeleteVehicle,
   useSetVehicleStatus,
+  useUpdateVehicle,
 } from "@/lib/hooks/useVehicleMutations";
 import type { VehicleResponse, VehicleStatus } from "@/types/vehicles";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -56,11 +57,13 @@ export default function VehiclesPage() {
   useRoleGuard(["admin", "driver", "manager", "dispatcher"]);
 
   const [isFormOpen, setFormOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<VehicleResponse | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<VehicleResponse | null>(null);
 
   const vehicles = useVehicles();
   const drivers = useStaffDirectory();
   const createVehicle = useCreateVehicle();
+  const updateVehicle = useUpdateVehicle();
   const assignDriver = useAssignVehicleDriver();
   const setStatus = useSetVehicleStatus();
   const removeVehicle = useDeleteVehicle();
@@ -168,6 +171,14 @@ export default function VehiclesPage() {
                     header: "",
                     render: (v) => (
                       <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="h-9 px-3 text-xs"
+                          onClick={() => setEditingVehicle(v)}
+                        >
+                          Edit
+                        </Button>
                         <Link href={`/admin/vehicles/${v.id}/trips`}>
                           <Button type="button" variant="secondary" className="h-9 px-3 text-xs">
                             Trips
@@ -201,6 +212,14 @@ export default function VehiclesPage() {
                   <VehicleStatusBadge status={v.status} />
                 </div>
                 <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-9 px-3 text-xs"
+                    onClick={() => setEditingVehicle(v)}
+                  >
+                    Edit
+                  </Button>
                   <Link href={`/admin/vehicles/${v.id}/trips`}>
                     <Button type="button" variant="secondary" className="h-9 px-3 text-xs">
                       Trips
@@ -226,6 +245,16 @@ export default function VehiclesPage() {
           onSubmit={(payload) => createVehicle.mutateAsync(payload)}
           onSuccess={() => setFormOpen(false)}
         />
+      </Modal>
+
+      <Modal open={editingVehicle !== null} onClose={() => setEditingVehicle(null)} title="Edit vehicle">
+        {editingVehicle && (
+          <VehicleForm
+            vehicle={editingVehicle}
+            onSubmit={(payload) => updateVehicle.mutateAsync({ vehicleId: editingVehicle.id, data: payload })}
+            onSuccess={() => setEditingVehicle(null)}
+          />
+        )}
       </Modal>
 
       <ConfirmDialog

@@ -4,13 +4,25 @@ import {
   createVehicle,
   deleteVehicle,
   setVehicleStatus,
+  updateVehicle,
 } from "@/lib/api/vehicles";
-import type { VehicleCreate, VehicleStatus } from "@/types/vehicles";
+import type { VehicleCreate, VehicleStatus, VehicleUpdate } from "@/types/vehicles";
 
 export function useCreateVehicle() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: VehicleCreate) => createVehicle(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+    },
+  });
+}
+
+export function useUpdateVehicle() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ vehicleId, data }: { vehicleId: string; data: VehicleUpdate }) =>
+      updateVehicle(vehicleId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
     },

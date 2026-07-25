@@ -6,26 +6,28 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
-import type { VehicleCreate } from "@/types/vehicles";
+import type { VehicleCreate, VehicleResponse } from "@/types/vehicles";
 
 function submitErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === 409) {
     return "A vehicle with this number already exists.";
   }
-  return "Something went wrong adding this vehicle. Please try again.";
+  return "Something went wrong saving this vehicle. Please try again.";
 }
 
 interface VehicleFormProps {
+  vehicle?: VehicleResponse;
   onSubmit: (payload: VehicleCreate) => Promise<unknown>;
   onSuccess: () => void;
 }
 
-export function VehicleForm({ onSubmit, onSuccess }: VehicleFormProps) {
+export function VehicleForm({ vehicle, onSubmit, onSuccess }: VehicleFormProps) {
+  const isEditing = !!vehicle;
   const warehouses = useWarehouses();
 
-  const [vehicleNumber, setVehicleNumber] = useState("");
-  const [capacity, setCapacity] = useState("");
-  const [warehouseId, setWarehouseId] = useState("");
+  const [vehicleNumber, setVehicleNumber] = useState(vehicle?.vehicle_number ?? "");
+  const [capacity, setCapacity] = useState(vehicle ? String(vehicle.capacity) : "");
+  const [warehouseId, setWarehouseId] = useState(vehicle?.warehouse_id ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,9 +41,11 @@ export function VehicleForm({ onSubmit, onSuccess }: VehicleFormProps) {
         capacity: Number(capacity || 0),
         warehouse_id: warehouseId || null,
       });
-      setVehicleNumber("");
-      setCapacity("");
-      setWarehouseId("");
+      if (!isEditing) {
+        setVehicleNumber("");
+        setCapacity("");
+        setWarehouseId("");
+      }
       onSuccess();
     } catch (err) {
       setError(submitErrorMessage(err));
@@ -87,7 +91,7 @@ export function VehicleForm({ onSubmit, onSuccess }: VehicleFormProps) {
 
       <div className="flex justify-end pt-1">
         <Button type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
-          Add vehicle
+          {isEditing ? "Save changes" : "Add vehicle"}
         </Button>
       </div>
     </form>

@@ -24,6 +24,7 @@ from app.models.purchase import Purchase, PurchaseItem
 from app.models.return_ import Return, ReturnItem
 from app.models.credit_note import CreditNote
 from app.models.audit_log import AuditLog
+from app.models.trip import LoadingTrip, LoadingTripOrder
 
 __all__ = [
     "User",
@@ -50,4 +51,6 @@ __all__ = [
     "ReturnItem",
     "CreditNote",
     "AuditLog",
+    "LoadingTrip",
+    "LoadingTripOrder",
 ]

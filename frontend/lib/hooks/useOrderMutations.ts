@@ -38,6 +38,9 @@ export function useLoadOrder(orderId: string) {
     mutationFn: (items: SalesOrderLoadItem[]) => loadOrder(orderId, items),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      // A trip's "Done Loading" button is gated on every order's status - see
+      // app/(staff)/admin/loading/trips/[tripId]/page.tsx.
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
     },
   });
 }

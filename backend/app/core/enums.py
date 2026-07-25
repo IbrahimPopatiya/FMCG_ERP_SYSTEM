@@ -133,3 +133,11 @@ class CreditNoteStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+
+
+class TripStatus(str, Enum):
+    PENDING = "pending"
+    LOADING = "loading"
+    OUT_FOR_DELIVERY = "out_for_delivery"
+    DELIVERED = "delivered"
+    CANCELLED = "cancelled"
