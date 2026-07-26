@@ -167,6 +167,66 @@ export function BackArrowIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+export function MenuIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function HeartIcon({ className = "h-5 w-5", filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+      <path
+        d="M12 20.5s-7.5-4.6-10-9.3C.4 8 1.7 4.5 5 3.6c2.2-.6 4.3.4 5.6 2.2l1.4 1.9 1.4-1.9c1.3-1.8 3.4-2.8 5.6-2.2 3.3.9 4.6 4.4 3 7.6-2.5 4.7-10 9.3-10 9.3z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function CommentIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path
+        d="M21 12a8 8 0 01-11.6 7.1L4 20l1.1-4.2A8 8 0 1121 12z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function ShareIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path
+        d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7M16 6l-4-4-4 4M12 2v14"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function CartFilledIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M6 6h15l-1.7 9.3a2 2 0 01-2 1.7H8.4a2 2 0 01-2-1.6L4 3H1a1 1 0 100 2h2l.4 2M9 21a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4zm9 0a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4z" />
+    </svg>
+  );
+}
+
+export function BookmarkIcon({ className = "h-5 w-5", filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+      <path d="M6 4a1 1 0 00-1 1v15l7-4.5 7 4.5V5a1 1 0 00-1-1H6z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function BoxIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
