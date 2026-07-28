@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/lib/providers/query-provider";
+import { ServiceWorkerProvider } from "@/lib/providers/service-worker-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,6 +17,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DMS",
   description: "Distribution Management System",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "DMS",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#192bc2",
 };
 
 export default function RootLayout({
@@ -29,7 +39,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex h-dvh flex-col overflow-hidden">
-        <QueryProvider>{children}</QueryProvider>
+        <ServiceWorkerProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </ServiceWorkerProvider>
       </body>
     </html>
   );
