@@ -90,7 +90,7 @@ export default function CustomerLedgerPage() {
   const isLoading = customer.isLoading || ledger.isLoading;
 
   return (
-    <div className="flex flex-col">
+    <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-white px-4 py-3 md:px-8">
         <div className="flex items-center gap-3">
           <button
@@ -152,69 +152,6 @@ export default function CustomerLedgerPage() {
 
       {customer.data && ledger.data && (
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4 pb-28 md:p-8">
-          <div className="rounded-xl border border-primary/20 bg-primary-soft p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
-                {customer.data.business_name.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-semibold text-ink">{customer.data.business_name}</p>
-                <p className="mt-0.5 truncate text-xs text-ink-muted">
-                  {customer.data.city}, {customer.data.state}
-                </p>
-                {customer.data.gst_number && (
-                  <p className="mt-0.5 text-xs text-ink-muted">GSTIN: {customer.data.gst_number}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-primary/20 pt-3 text-center">
-              <div>
-                <p className="text-xs text-ink-muted">Credit Limit</p>
-                <p className="mt-1 text-sm font-semibold text-ink">{formatCurrency(ledger.data.credit_limit)}</p>
-              </div>
-              <div className="border-x border-primary/20">
-                <p className="text-xs text-ink-muted">Available Credit</p>
-                <p className="mt-1 text-sm font-semibold text-primary">
-                  {formatCurrency(ledger.data.available_credit)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-ink-muted">Current Balance</p>
-                <p className="mt-1 text-sm font-semibold text-danger">
-                  {formatCurrency(ledger.data.current_balance)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile
-              icon={<OrdersIcon className="h-5 w-5 text-primary" />}
-              tone="bg-primary-soft"
-              label="Total Orders"
-              value={formatCurrency(ledger.data.total_invoiced)}
-            />
-            <StatTile
-              icon={<DownloadArrowIcon className="h-5 w-5 text-primary" />}
-              tone="bg-primary-soft"
-              label="Total Payments"
-              value={formatCurrency(ledger.data.total_payments)}
-            />
-            <StatTile
-              icon={<WalletIcon className="h-5 w-5 text-accent" />}
-              tone="bg-accent-soft"
-              label="Outstanding Invoices"
-              value={String(ledger.data.outstanding_invoices)}
-            />
-            <StatTile
-              icon={<CalendarIcon className="h-5 w-5 text-ink-muted" />}
-              tone="bg-surface"
-              label="Last Order On"
-              value={ledger.data.last_order_date ? formatDate(ledger.data.last_order_date) : "—"}
-            />
-          </div>
-
           <div>
             <h2 className="mb-2 text-sm font-semibold text-ink">Transaction History</h2>
             <div className="overflow-hidden rounded-xl border border-border bg-white">
@@ -234,9 +171,9 @@ export default function CustomerLedgerPage() {
           </div>
         </div>
       )}
-
+  
       {customer.data && ledger.data && (
-        <div className="sticky bottom-0 z-10 border-t border-border bg-white p-4 md:px-8">
+        <div className="sticky bottom-0 z-10 mt-auto border-t border-border bg-white p-4 md:px-8">
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
             <div className="flex items-center justify-between rounded-xl bg-accent-soft px-4 py-3">
               <div>

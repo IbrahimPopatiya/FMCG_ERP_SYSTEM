@@ -76,7 +76,7 @@ export default function CartPage() {
         </div>
       ) : (
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-6 md:p-8">
-          <FreeDeliveryProgress subtotal={subtotal} />
+          {/* <FreeDeliveryProgress subtotal={subtotal} /> */}
 
           <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-white">
             {items.map((item) => (

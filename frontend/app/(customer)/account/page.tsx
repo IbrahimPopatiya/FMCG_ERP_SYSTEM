@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ChevronRightIcon } from "@/components/customer/icons";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { PushNotificationManager } from "@/components/pwa/PushNotificationManager";
 import { clearSession } from "@/lib/auth/session";
 import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
 
@@ -16,17 +18,16 @@ interface AccountRow {
 
 // Only "Credit & Invoices" is backed by a real page today (the /dues page).
 // The rest of this list (business/user profile edit, addresses, payment
-// methods, notifications, settings, help) has no backend support yet — no
-// address book, no saved payment methods, no notifications API — so they
-// render disabled with a "Coming soon" tag rather than as dead links that
-// promise a feature that doesn't exist.
+// methods, settings, help) has no backend support yet — no address book, no
+// saved payment methods — so they render disabled with a "Coming soon" tag
+// rather than as dead links that promise a feature that doesn't exist.
+// Notifications now has real support via the PWA push section below.
 const ACCOUNT_ROWS: AccountRow[] = [
   { label: "Business Details", description: "Manage your business information" },
   { label: "User Profile", description: "Manage personal information" },
   { label: "Delivery Addresses", description: "Manage delivery addresses" },
   { label: "Payment Methods", description: "Manage payment options" },
   { label: "Credit & Invoices", description: "View bills and credit history", href: "/dues" },
-  { label: "Notifications", description: "Manage your notifications" },
   { label: "Settings", description: "App preferences and settings" },
   { label: "Help & Support", description: "Get help and support" },
 ];
@@ -108,6 +109,11 @@ export default function AccountPage() {
                 )
               )}
             </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <InstallPrompt />
+            <PushNotificationManager />
           </div>
 
           <button
