@@ -5,8 +5,10 @@ import { isAxiosError } from "axios";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { ProductImageField } from "@/components/products/ProductImageField";
 import { useBrands } from "@/lib/hooks/useBrands";
 import { useCategories } from "@/lib/hooks/useCategories";
+import { uploadFile } from "@/lib/api/fileUploads";
 import type { ProductCreate } from "@/types/product";
 
 export interface ProductFormValues {
@@ -21,6 +23,8 @@ export interface ProductFormValues {
   selling_price: string;
   gst_rate: string;
   minimum_stock: string;
+  imageUrl: string | null;
+  imageFile: File | null;
 }
 
 export const EMPTY_PRODUCT_FORM: ProductFormValues = {
@@ -35,9 +39,11 @@ export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   selling_price: "",
   gst_rate: "",
   minimum_stock: "",
+  imageUrl: null,
+  imageFile: null,
 };
 
-function toPayload(values: ProductFormValues): ProductCreate {
+function toPayload(values: ProductFormValues, image: string | null): ProductCreate {
   return {
     sku: values.sku.trim(),
     barcode: values.barcode.trim(),
@@ -50,6 +56,7 @@ function toPayload(values: ProductFormValues): ProductCreate {
     selling_price: Number(values.selling_price),
     gst_rate: Number(values.gst_rate),
     minimum_stock: Number(values.minimum_stock),
+    image,
   };
 }
 
@@ -72,6 +79,7 @@ export function ProductForm({
   onSubmit,
 }: ProductFormProps) {
   const [values, setValues] = useState(initialValues);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(initialValues.imageUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const brands = useBrands();
@@ -81,12 +89,33 @@ export function ProductForm({
     setValues((prev) => ({ ...prev, [key]: value }));
   }
 
+  function handleImageSelected(file: File) {
+    set("imageFile", file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleImageRemoved() {
+    set("imageFile", null);
+    set("imageUrl", null);
+    setPreviewUrl(null);
+  }
+
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
     try {
-      await onSubmit(toPayload(values));
+      let image = values.imageUrl;
+      if (values.imageFile) {
+        try {
+          const uploaded = await uploadFile(values.imageFile, "products");
+          image = uploaded.file_url;
+        } catch {
+          setError("Couldn't upload the image. Please try again.");
+          return;
+        }
+      }
+      await onSubmit(toPayload(values, image));
     } catch (err) {
       setError(submitErrorMessage(err));
     } finally {
@@ -98,6 +127,11 @@ export function ProductForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-8" noValidate>
       <section className="flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-ink">Identification</h2>
+        <ProductImageField
+          previewUrl={previewUrl}
+          onFileSelected={handleImageSelected}
+          onRemove={handleImageRemoved}
+        />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
             id="sku"

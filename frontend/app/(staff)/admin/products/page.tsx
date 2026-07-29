@@ -138,9 +138,21 @@ export default function AdminProductsPage() {
                   {
                     header: "Product",
                     render: (p) => (
-                      <Link href={`/admin/products/${p.id}`} className="font-medium text-ink hover:text-primary">
-                        {p.name}
-                        <div className="font-mono text-xs font-normal text-ink-muted">{p.sku}</div>
+                      <Link
+                        href={`/admin/products/${p.id}`}
+                        className="flex items-center gap-3 font-medium text-ink hover:text-primary"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
+                          {p.image ? (
+                            <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-xs font-medium text-ink-muted">{p.unit.slice(0, 2)}</span>
+                          )}
+                        </div>
+                        <div>
+                          {p.name}
+                          <div className="font-mono text-xs font-normal text-ink-muted">{p.sku}</div>
+                        </div>
                       </Link>
                     ),
                   },
@@ -161,10 +173,19 @@ export default function AdminProductsPage() {
             {products.map((p) => (
               <Link key={p.id} href={`/admin/products/${p.id}`}>
                 <Card className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{p.name}</p>
-                    <p className="font-mono text-xs text-ink-muted">{p.sku}</p>
-                    <p className="mt-1 text-sm text-ink-muted">{formatCurrency(p.selling_price)}</p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
+                      {p.image ? (
+                        <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-xs font-medium text-ink-muted">{p.unit.slice(0, 2)}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-ink">{p.name}</p>
+                      <p className="font-mono text-xs text-ink-muted">{p.sku}</p>
+                      <p className="mt-1 text-sm text-ink-muted">{formatCurrency(p.selling_price)}</p>
+                    </div>
                   </div>
                   <ProductStatusBadge status={p.status} />
                 </Card>

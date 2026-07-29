@@ -1,13 +1,14 @@
 """Tests for POST /files - per api_reference.md Section 17, uploads a file to
-object storage (local disk here) and returns its path; the caller then passes
-that path into the relevant business API (customer_signature, image, etc.).
+Supabase Storage and returns its public URL; the caller then passes that URL
+into the relevant business API (customer_signature, image, etc.).
+
+The real Supabase client is mocked so these tests don't hit the network.
 """
 
 import io
-import os
 import uuid
+from unittest.mock import MagicMock, patch
 
-from app.core.config import settings
 from app.core.security import create_access_token
 
 
@@ -26,39 +27,45 @@ def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_upload_file_returns_relative_path(client):
-    headers = auth_headers(client)
-    file_content = b"fake image bytes"
-
-    response = client.post(
-        "/api/v1/files",
-        files={"file": ("photo.jpg", io.BytesIO(file_content), "image/jpeg")},
-        data={"category": "deliveries"},
-        headers=headers,
+def mock_supabase_storage():
+    """Returns a mock whose from_(bucket).get_public_url(path) echoes back a
+    predictable fake URL derived from the storage path."""
+    mock_client = MagicMock()
+    mock_client.storage.from_.return_value.get_public_url.side_effect = (
+        lambda path: f"https://fake.supabase.co/storage/v1/object/public/fmcg_products/{path}"
     )
+    return mock_client
+
+
+def test_upload_file_returns_public_url(client):
+    headers = auth_headers(client)
+
+    with patch("app.services.file_upload._supabase", mock_supabase_storage()):
+        response = client.post(
+            "/api/v1/files",
+            files={"file": ("photo.jpg", io.BytesIO(b"fake image bytes"), "image/jpeg")},
+            data={"category": "deliveries"},
+            headers=headers,
+        )
 
     assert response.status_code == 201
     body = response.json()
-    assert body["file_url"].startswith("deliveries/")
+    assert "deliveries/" in body["file_url"]
     assert body["file_url"].endswith(".jpg")
-
-    saved_path = os.path.join(settings.upload_dir, body["file_url"])
-    assert os.path.isfile(saved_path)
-    with open(saved_path, "rb") as f:
-        assert f.read() == file_content
 
 
 def test_upload_file_defaults_category_to_misc(client):
     headers = auth_headers(client)
 
-    response = client.post(
-        "/api/v1/files",
-        files={"file": ("note.txt", io.BytesIO(b"hello"), "text/plain")},
-        headers=headers,
-    )
+    with patch("app.services.file_upload._supabase", mock_supabase_storage()):
+        response = client.post(
+            "/api/v1/files",
+            files={"file": ("note.txt", io.BytesIO(b"hello"), "text/plain")},
+            headers=headers,
+        )
 
     assert response.status_code == 201
-    assert response.json()["file_url"].startswith("misc/")
+    assert "misc/" in response.json()["file_url"]
 
 
 def test_upload_file_without_token_returns_401_or_403(client):
@@ -67,3 +74,16 @@ def test_upload_file_without_token_returns_401_or_403(client):
     )
 
     assert response.status_code in (401, 403)
+
+
+def test_upload_file_too_large_returns_413(client):
+    oversized = b"x" * (10 * 1024 * 1024 + 1)
+    headers = auth_headers(client)
+
+    response = client.post(
+        "/api/v1/files",
+        files={"file": ("big.jpg", io.BytesIO(oversized), "image/jpeg")},
+        headers=headers,
+    )
+
+    assert response.status_code == 413

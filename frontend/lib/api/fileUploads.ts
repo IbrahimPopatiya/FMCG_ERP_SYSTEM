@@ -1,7 +1,14 @@
 import { api } from "@/lib/api/client";
-// import type { ... } from "@/types/fileUploads";
+import type { FileUploadResponse } from "@/types/fileUploads";
 
-// TODO: implement once this domain's screens are built. Base path matches
-// backend/app/api/file_uploads.py (prefix "/files").
-// Follow the pattern in lib/api/products.ts: one exported function per
-// backend endpoint, typed request/response from types/fileUploads.ts.
+export function uploadFile(file: File, category: string) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("category", category);
+
+  return api
+    .post<FileUploadResponse>("/files", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    .then((res) => res.data);
+}
