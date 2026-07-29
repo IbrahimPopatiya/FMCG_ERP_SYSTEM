@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/lib/providers/query-provider";
-import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { ServiceWorkerProvider } from "@/lib/providers/service-worker-provider";
+import { InstallAppBanner } from "@/components/pwa/InstallAppBanner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -50,8 +51,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex h-dvh flex-col overflow-hidden">
-        <ServiceWorkerRegister />
-        <QueryProvider>{children}</QueryProvider>
+        <ServiceWorkerProvider>
+          <InstallAppBanner />
+          <QueryProvider>{children}</QueryProvider>
+        </ServiceWorkerProvider>
       </body>
     </html>
   );
