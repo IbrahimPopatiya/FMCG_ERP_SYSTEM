@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ChevronRightIcon } from "@/components/customer/icons";
-import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { PushNotificationManager } from "@/components/pwa/PushNotificationManager";
 import { clearSession } from "@/lib/auth/session";
 import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
@@ -111,10 +110,7 @@ export default function AccountPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <InstallPrompt />
-            <PushNotificationManager />
-          </div>
+          <PushNotificationManager />
 
           <button
             type="button"
