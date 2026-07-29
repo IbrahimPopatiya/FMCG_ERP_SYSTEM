@@ -3,7 +3,9 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.core.enums import PaymentRecordStatus
+from app.models.invoice import Invoice
 from app.models.payment import Payment
+from app.models.sales_order import SalesOrder
 from app.schemas.payment import PaymentCreate
 from app.services import invoice as invoice_service
 
@@ -40,6 +42,34 @@ def record_payment(db: Session, data: PaymentCreate, created_by: uuid.UUID) -> P
     db.commit()
     db.refresh(payment)
     return payment
+
+
+def list_payments(
+    db: Session, page: int, page_size: int
+) -> tuple[list[tuple[Payment, str, uuid.UUID, str]], int]:
+    """Joins Invoice + SalesOrder in so callers get invoice_number/customer_id/
+    order_number alongside each payment - a bare Payment row only carries ids."""
+    query = (
+        db.query(Payment, Invoice.invoice_number, SalesOrder.customer_id, SalesOrder.order_number)
+        .join(Invoice, Invoice.id == Payment.invoice_id)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .order_by(Payment.payment_date.desc())
+    )
+    total = query.count()
+    rows = query.offset((page - 1) * page_size).limit(page_size).all()
+    return rows, total
+
+
+def get_payment_with_context(
+    db: Session, payment_id: uuid.UUID
+) -> tuple[Payment, str, uuid.UUID, str] | None:
+    return (
+        db.query(Payment, Invoice.invoice_number, SalesOrder.customer_id, SalesOrder.order_number)
+        .join(Invoice, Invoice.id == Payment.invoice_id)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .filter(Payment.id == payment_id)
+        .first()
+    )
 
 
 def get_payment(db: Session, payment_id: uuid.UUID) -> Payment | None:

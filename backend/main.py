@@ -34,13 +34,19 @@ from app.api import (
     returns,
     credit_notes,
 )
+from app.core.config import settings
 from app.db.init_db import create_all_tables
 
 app = FastAPI(title="DMS API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        *settings.cors_extra_origins_list,
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

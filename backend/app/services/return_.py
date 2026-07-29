@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.core.enums import CreditNoteStatus, MovementType, ReturnReason, ReturnStatus
 from app.models.credit_note import CreditNote
+from app.models.invoice import Invoice
 from app.models.return_ import Return, ReturnItem
+from app.models.sales_order import SalesOrder
 from app.schemas.return_ import ReturnCreate
 from app.services import invoice as invoice_service
 from app.services.inventory import record_movement
@@ -63,6 +65,35 @@ def create_return(db: Session, data: ReturnCreate, created_by: uuid.UUID) -> Ret
     db.commit()
     db.refresh(ret)
     return ret
+
+
+def list_returns(
+    db: Session, page: int, page_size: int
+) -> tuple[list[tuple[Return, str, uuid.UUID, str]], int]:
+    """Joins Invoice + SalesOrder in so callers get invoice_number/customer_id/
+    order_number alongside each return - a bare Return row only carries ids."""
+    query = (
+        db.query(Return, Invoice.invoice_number, SalesOrder.customer_id, SalesOrder.order_number)
+        .join(Invoice, Invoice.id == Return.invoice_id)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .filter(Return.deleted_at.is_(None))
+        .order_by(Return.created_at.desc())
+    )
+    total = query.count()
+    rows = query.offset((page - 1) * page_size).limit(page_size).all()
+    return rows, total
+
+
+def get_return_with_context(
+    db: Session, return_id: uuid.UUID
+) -> tuple[Return, str, uuid.UUID, str] | None:
+    return (
+        db.query(Return, Invoice.invoice_number, SalesOrder.customer_id, SalesOrder.order_number)
+        .join(Invoice, Invoice.id == Return.invoice_id)
+        .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
+        .filter(Return.id == return_id, Return.deleted_at.is_(None))
+        .first()
+    )
 
 
 def get_return(db: Session, return_id: uuid.UUID) -> Return | None:

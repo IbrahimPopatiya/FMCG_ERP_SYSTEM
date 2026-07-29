@@ -32,6 +32,10 @@ def create_user(db: Session, data: UserCreate) -> User:
     return user
 
 
+def list_users(db: Session) -> list[User]:
+    return db.query(User).filter(User.deleted_at.is_(None)).order_by(User.full_name).all()
+
+
 def get_user(db: Session, user_id: uuid.UUID) -> User | None:
     return db.query(User).filter(User.id == user_id, User.deleted_at.is_(None)).first()
 

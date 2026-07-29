@@ -17,6 +17,10 @@ def get_category(db: Session, category_id: uuid.UUID) -> Category | None:
     ).first()
 
 
+def list_categories(db: Session) -> list[Category]:
+    return db.query(Category).filter(Category.deleted_at.is_(None)).order_by(Category.name).all()
+
+
 def _check_parent_exists(db: Session, parent_id: uuid.UUID | None) -> None:
     if parent_id is not None and get_category(db, parent_id) is None:
         raise ParentCategoryNotFoundError("Parent category not found")
