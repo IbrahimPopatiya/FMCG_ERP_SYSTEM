@@ -19,19 +19,14 @@ services:
   backend:
     build: ./backend
     restart: unless-stopped
+    # DATABASE_URL and the STORAGE_* vars come from backend/.env - point them
+    # at Supabase (or whichever vendor) instead of the local `db` service
+    # below to test against external DB/storage. The `db` service is only
+    # for teammates who want a fully local Postgres instead.
     env_file:
       - ./backend/.env
-    environment:
-      # inside the compose network, containers reach each other by
-      # service name - "db", not "localhost"
-      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/dms_db
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend/uploads:/app/uploads
-    depends_on:
-      db:
-        condition: service_healthy
     command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
 
   frontend:

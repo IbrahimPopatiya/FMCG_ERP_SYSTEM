@@ -14,5 +14,5 @@ async def upload_file(
     principal: Principal = Depends(get_current_principal),
 ):
     contents = await file.read()
-    file_url = save_file(contents, file.filename, category)
+    file_url = save_file(contents, file.filename, category, file.content_type)
     return FileUploadResponse(file_url=file_url)

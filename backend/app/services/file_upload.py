@@ -2,22 +2,18 @@ import os
 import uuid
 from datetime import datetime, timezone
 
-from app.core.config import settings
+from app.core import storage
 
 
-def save_file(file_bytes: bytes, original_filename: str, category: str) -> str:
-    """Saves the file under UPLOAD_DIR/<category>/<year>/<random>.<ext> and
-    returns that relative path - the same path shape stored in columns like
-    customer_signature/image/photo."""
+def save_file(file_bytes: bytes, original_filename: str, category: str, content_type: str) -> str:
+    """Uploads the file under <category>/<year>/<random>.<ext> in the
+    configured object storage bucket and returns its public URL - the same
+    value stored in columns like customer_signature/image/photo."""
     year = str(datetime.now(timezone.utc).year)
     ext = os.path.splitext(original_filename)[1]
     filename = f"{uuid.uuid4().hex}{ext}"
 
-    relative_path = os.path.join(category, year, filename)
-    absolute_path = os.path.join(settings.upload_dir, relative_path)
+    relative_path = "/".join([category, year, filename])
+    storage.upload_file(file_bytes, relative_path, content_type)
 
-    os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
-    with open(absolute_path, "wb") as f:
-        f.write(file_bytes)
-
-    return relative_path.replace(os.sep, "/")
+    return storage.build_file_url(relative_path)

@@ -1,13 +1,18 @@
 """Tests for POST /files - per api_reference.md Section 17, uploads a file to
-object storage (local disk here) and returns its path; the caller then passes
-that path into the relevant business API (customer_signature, image, etc.).
+object storage and returns its public URL; the caller then passes that URL
+into the relevant business API (customer_signature, image, etc.).
+
+The actual storage upload is mocked - these tests check the route's
+behavior (auth, category defaulting, path shape), not whether a real bucket
+receives bytes.
 """
 
 import io
-import os
 import uuid
 
-from app.core.config import settings
+import pytest
+
+from app.core import storage
 from app.core.security import create_access_token
 
 
@@ -26,7 +31,23 @@ def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_upload_file_returns_relative_path(client):
+@pytest.fixture()
+def fake_storage(monkeypatch):
+    uploaded = {}
+
+    def fake_upload_file(file_bytes, relative_path, content_type):
+        uploaded["bytes"] = file_bytes
+        uploaded["relative_path"] = relative_path
+        uploaded["content_type"] = content_type
+
+    monkeypatch.setattr(storage, "upload_file", fake_upload_file)
+    monkeypatch.setattr(
+        storage, "build_file_url", lambda relative_path: f"https://fake-storage.test/{relative_path}"
+    )
+    return uploaded
+
+
+def test_upload_file_returns_url_built_from_category_path(client, fake_storage):
     headers = auth_headers(client)
     file_content = b"fake image bytes"
 
@@ -39,16 +60,13 @@ def test_upload_file_returns_relative_path(client):
 
     assert response.status_code == 201
     body = response.json()
-    assert body["file_url"].startswith("deliveries/")
+    assert body["file_url"].startswith("https://fake-storage.test/deliveries/")
     assert body["file_url"].endswith(".jpg")
-
-    saved_path = os.path.join(settings.upload_dir, body["file_url"])
-    assert os.path.isfile(saved_path)
-    with open(saved_path, "rb") as f:
-        assert f.read() == file_content
+    assert fake_storage["bytes"] == file_content
+    assert fake_storage["content_type"] == "image/jpeg"
 
 
-def test_upload_file_defaults_category_to_misc(client):
+def test_upload_file_defaults_category_to_misc(client, fake_storage):
     headers = auth_headers(client)
 
     response = client.post(
@@ -58,7 +76,7 @@ def test_upload_file_defaults_category_to_misc(client):
     )
 
     assert response.status_code == 201
-    assert response.json()["file_url"].startswith("misc/")
+    assert "/misc/" in response.json()["file_url"]
 
 
 def test_upload_file_without_token_returns_401_or_403(client):
