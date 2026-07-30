@@ -87,7 +87,7 @@ function PostRow({ post }: { post: PostResponse }) {
           className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60 ${
             post.is_active
               ? "bg-green-100 text-green-700 hover:bg-green-200"
-              : "bg-red-200 text-ink-muted hover:bg-border"
+              : "bg-red-200 text-red-700 hover:bg-border"
           }`}
         >
           {post.is_active ? "Active" : "Inactive"}
