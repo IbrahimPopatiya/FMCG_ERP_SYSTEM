@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { QtyStepper } from "@/components/ui/QtyStepper";
@@ -114,12 +115,13 @@ function ProductDetailSheet({
         </button>
 
         <div className="mt-3 flex gap-4 overflow-y-auto">
-          <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft">
+            <Image
               src={product.image || dummyProductImage(product.name, product.id)}
               alt={product.name}
-              className="h-full w-full object-cover"
+              fill
+              sizes="112px"
+              className="object-cover"
             />
           </div>
 
@@ -204,11 +206,12 @@ function ReelSlide({
         onClick={onOpenDetails}
         className="absolute inset-0 h-full w-full"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={product.image || dummyProductImage(product.name, product.id)}
           alt={product.name}
-          className="h-full w-full object-cover"
+          fill
+          sizes="100vw"
+          className="object-cover"
         />
       </button>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -117,13 +118,12 @@ function ProductsPageContent() {
               className="flex shrink-0 flex-col items-center gap-1.5"
             >
               <div
-                className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl text-sm font-semibold transition-colors ${
+                className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl text-sm font-semibold transition-colors ${
                   categoryId === c.id ? "bg-primary text-white" : "bg-primary-soft text-primary"
                 }`}
               >
                 {c.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.image} alt={c.name} className="h-full w-full object-cover" />
+                  <Image src={c.image} alt={c.name} fill sizes="48px" className="object-cover" />
                 ) : (
                   c.name.charAt(0).toUpperCase()
                 )}

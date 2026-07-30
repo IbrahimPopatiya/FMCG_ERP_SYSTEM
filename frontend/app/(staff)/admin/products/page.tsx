@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -152,9 +153,9 @@ export default function AdminProductsPage() {
                         href={`/admin/products/${p.id}`}
                         className="flex items-center gap-3 font-medium text-ink hover:text-primary"
                       >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
+                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
                           {p.image ? (
-                            <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                            <Image src={p.image} alt={p.name} fill sizes="40px" className="object-cover" />
                           ) : (
                             <span className="text-xs font-medium text-ink-muted">{p.unit.slice(0, 2)}</span>
                           )}
@@ -183,9 +184,9 @@ export default function AdminProductsPage() {
             {products.map((p) => (
               <Card key={p.id} className="flex items-center gap-3 rounded-2xl">
                 <Link href={`/admin/products/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface">
+                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface">
                     {p.image ? (
-                      <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                      <Image src={p.image} alt={p.name} fill sizes="48px" className="object-cover" />
                     ) : (
                       <span className="text-xs font-medium text-ink-muted">{p.unit.slice(0, 2)}</span>
                     )}

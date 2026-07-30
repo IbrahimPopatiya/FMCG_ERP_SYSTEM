@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { DiscountBadge } from "@/components/customer/DiscountBadge";
@@ -15,10 +16,15 @@ export function CustomerProductCard({ product, qty, onQtyChange }: CustomerProdu
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md">
       <Link href={`/products/${product.id}`} className="relative block">
-        <div className="flex aspect-square items-center justify-center bg-primary-soft">
+        <div className="relative flex aspect-square items-center justify-center bg-primary-soft">
           {product.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(min-width: 640px) 200px, 50vw"
+              className="object-cover"
+            />
           ) : (
             <span className="text-xs font-medium text-primary/60">{product.unit}</span>
           )}
