@@ -65,7 +65,8 @@ body {
  * needed. Orange ramp sampled from customer-design.jpeg: #EE642F primary,
  * #D6551F hover, #FDEAE1 soft tint.
  */
-.customer-theme {
+.customer-theme,
+.staff-theme {
   --background: #f7f7f8;
   --foreground: #1c1c1e;
 

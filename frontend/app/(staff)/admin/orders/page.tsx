@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
+import { SearchIcon, FilterIcon, PersonIcon, BoxIcon, ChevronRightIcon } from "@/components/admin/icons";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
 import { useOrders } from "@/lib/hooks/useOrders";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -27,7 +28,7 @@ function SkeletonRows() {
   return (
     <div className="flex flex-col gap-3 p-4 sm:p-6">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-14 w-full" />
+        <Skeleton key={i} className="h-16 w-full" />
       ))}
     </div>
   );
@@ -36,54 +37,75 @@ function SkeletonRows() {
 export default function AdminOrdersPage() {
   useRoleGuard(["admin", "salesman", "manager", "dispatcher"]);
 
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  const [showFilters, setShowFilters] = useState(false);
   const orders = useOrders();
   const customers = useCustomerDirectorySample();
 
   const customerName = (customerId: string) =>
     customers.data?.items.find((c) => c.id === customerId)?.business_name ?? "Customer";
 
-  const sorted = useMemo(
-    () =>
-      [...(orders.data ?? [])]
-        .filter((o) => statusFilter === "all" || o.status === statusFilter)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [orders.data, statusFilter]
-  );
-
-  const pendingCount = (orders.data ?? []).filter((o) => o.status === "pending").length;
+  const sorted = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return [...(orders.data ?? [])]
+      .filter((o) => statusFilter === "all" || o.status === statusFilter)
+      .filter((o) => {
+        if (!term) return true;
+        return (
+          o.order_number.toLowerCase().includes(term) ||
+          customerName(o.customer_id).toLowerCase().includes(term)
+        );
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders.data, statusFilter, search, customers.data]);
 
   return (
     <div>
-      <TopBar title="Orders" />
+      <TopBar title="Orders" subtitle="All Customer Orders" />
 
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-ink">Orders</h1>
-            <p className="mt-0.5 text-sm text-ink-muted">
-              {pendingCount > 0
-                ? `${pendingCount} order${pendingCount === 1 ? "" : "s"} waiting on approval`
-                : "Every order across the business"}
-            </p>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+            <input
+              type="search"
+              placeholder="Search orders..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-11 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
+            />
           </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters((v) => !v)}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+              showFilters ? "border-primary bg-primary-soft text-primary" : "border-border text-ink-muted hover:bg-surface"
+            }`}
+            aria-label="Filter orders by status"
+          >
+            <FilterIcon className="h-5 w-5" />
+          </button>
         </div>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-          {STATUS_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => setStatusFilter(filter.value)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                statusFilter === filter.value
-                  ? "border-primary bg-primary text-white"
-                  : "border-border text-ink-muted hover:bg-surface"
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+        {showFilters && (
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            {STATUS_FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setStatusFilter(filter.value)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  statusFilter === filter.value
+                    ? "border-primary bg-primary text-white"
+                    : "border-border text-ink-muted hover:bg-surface"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       {orders.isLoading && <SkeletonRows />}
@@ -103,7 +125,7 @@ export default function AdminOrdersPage() {
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No orders here</p>
           <p className="text-sm text-ink-muted">
-            {statusFilter === "all" ? "No orders have been placed yet." : "Try a different status filter."}
+            {statusFilter === "all" && !search ? "No orders have been placed yet." : "Try a different search or filter."}
           </p>
         </div>
       )}
@@ -112,7 +134,7 @@ export default function AdminOrdersPage() {
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
           <div className="hidden sm:block">
-            <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
               <Table<SalesOrderResponse>
                 rowKey={(o) => o.id}
                 rows={sorted}
@@ -129,25 +151,41 @@ export default function AdminOrdersPage() {
                     ),
                   },
                   { header: "Customer", render: (o) => customerName(o.customer_id) },
+                  { header: "Items", render: (o) => `${o.items.length} item${o.items.length === 1 ? "" : "s"}` },
                   { header: "Status", render: (o) => <OrderStatusBadge status={o.status} /> },
-                  { header: "Total", render: (o) => formatCurrency(o.total) },
+                  { header: "Amount", render: (o) => formatCurrency(o.total) },
                   { header: "Placed", render: (o) => formatDate(o.created_at) },
                 ]}
               />
             </div>
           </div>
 
-          {/* Mobile: simplified card list */}
+          {/* Mobile: card list matching the mockup's order-row layout */}
           <div className="flex flex-col gap-3 sm:hidden">
             {sorted.map((o) => (
               <Link key={o.id} href={`/admin/orders/${o.id}`}>
-                <Card className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{customerName(o.customer_id)}</p>
-                    <p className="font-mono text-xs text-ink-muted">{o.order_number}</p>
-                    <p className="mt-1 text-sm text-ink-muted">{formatCurrency(o.total)}</p>
+                <Card className="flex items-center gap-3 rounded-2xl">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-sm font-semibold text-ink">#{o.order_number}</p>
+                      <p className="shrink-0 text-xs text-ink-muted">{formatDate(o.created_at)}</p>
+                    </div>
+                    <p className="mt-1.5 flex items-center gap-1.5 text-sm text-ink-muted">
+                      <PersonIcon className="h-3.5 w-3.5" />
+                      {customerName(o.customer_id)}
+                      <span className="text-ink-muted/60">
+                        · {o.items.length} item{o.items.length === 1 ? "" : "s"}
+                      </span>
+                    </p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                        <BoxIcon className="h-4 w-4 text-ink-muted" />
+                        {formatCurrency(o.total)}
+                      </p>
+                      <OrderStatusBadge status={o.status} />
+                    </div>
                   </div>
-                  <OrderStatusBadge status={o.status} />
+                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-muted" />
                 </Card>
               </Link>
             ))}

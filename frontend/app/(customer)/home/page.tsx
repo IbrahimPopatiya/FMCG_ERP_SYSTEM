@@ -17,9 +17,31 @@ import {
 } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useProducts } from "@/lib/hooks/useProducts";
+import { usePosts } from "@/lib/hooks/usePosts";
 import { formatCurrency } from "@/lib/utils/format";
 import { dummyProductImage } from "@/lib/utils/dummyProductImage";
 import type { ProductCatalogResponse } from "@/types/product";
+import type { PostResponse } from "@/types/post";
+
+// A post is a promoted listing referencing a real product — render it in the
+// same reel using the product's real id/fields so "Add to bag" etc. still
+// work against the underlying product, just with the post's promo image/copy
+// layered on top.
+function postToFeedItem(post: PostResponse): ProductCatalogResponse {
+  return {
+    id: post.product_id,
+    sku: "",
+    name: post.product_name,
+    category_id: null,
+    brand_id: null,
+    unit: "",
+    packing: `Box of ${post.quantity_in_box}`,
+    mrp: post.mrp,
+    effective_price: post.price,
+    gst_rate: 0,
+    image: post.image,
+  };
+}
 
 const FEED_COUNT = 8;
 
@@ -276,13 +298,23 @@ function ReelSlide({
 export default function HomePage() {
   const router = useRouter();
   const products = useProducts();
+  const posts = usePosts();
   const { addItem, getQty, setQty } = useCart();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [openProductId, setOpenProductId] = useState<string | null>(null);
 
-  const feedProducts = useMemo(() => (products.data ?? []).slice(0, FEED_COUNT), [products.data]);
+  // Posts (newest first, from the API) lead the feed, followed by the
+  // regular product catalog — products already referenced by a post are
+  // skipped from the catalog tail so the same item doesn't show up twice.
+  const feedProducts = useMemo(() => {
+    const postItems = (posts.data ?? []).map(postToFeedItem);
+    const postedProductIds = new Set(postItems.map((p) => p.id));
+    const catalogItems = (products.data ?? []).filter((p) => !postedProductIds.has(p.id));
+    return [...postItems, ...catalogItems].slice(0, FEED_COUNT);
+  }, [posts.data, products.data]);
   const openProduct = feedProducts.find((p) => p.id === openProductId) ?? null;
+  const isLoading = products.isLoading || posts.isLoading;
 
   async function handleShare(product: ProductCatalogResponse) {
     const url = `${window.location.origin}/products/${product.id}`;
@@ -304,19 +336,19 @@ export default function HomePage() {
 
   return (
     <div className="relative flex h-full flex-col bg-ink">
-      {products.isLoading && (
+      {isLoading && (
         <div className="flex flex-1 flex-col gap-2 p-3">
           <Skeleton className="h-full w-full" />
         </div>
       )}
 
-      {!products.isLoading && feedProducts.length === 0 && (
+      {!isLoading && feedProducts.length === 0 && (
         <p className="flex flex-1 items-center justify-center px-4 text-center text-sm text-ink-muted">
           No products to show yet.
         </p>
       )}
 
-      {!products.isLoading && feedProducts.length > 0 && (
+      {!isLoading && feedProducts.length > 0 && (
         <div className="flex-1 snap-y snap-mandatory overflow-y-auto scroll-smooth">
           {feedProducts.map((product) => (
             <ReelSlide

@@ -33,6 +33,7 @@ from app.api import (
     payments,
     returns,
     credit_notes,
+    posts,
 )
 from app.core.config import settings
 from app.db.init_db import create_all_tables
@@ -73,6 +74,7 @@ app.include_router(file_uploads.router, prefix="/api/v1")
 app.include_router(payments.router, prefix="/api/v1")
 app.include_router(returns.router, prefix="/api/v1")
 app.include_router(credit_notes.router, prefix="/api/v1")
+app.include_router(posts.router, prefix="/api/v1")
 
 
 if __name__ == "__main__":

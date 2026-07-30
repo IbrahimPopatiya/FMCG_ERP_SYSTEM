@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
+import { TopBar } from "@/components/layout/TopBar";
 import { ProductStatusBadge } from "@/components/products/ProductStatusBadge";
+import { SearchIcon, PlusIcon, PencilIcon, TrashIcon } from "@/components/admin/icons";
 import { useBrands } from "@/lib/hooks/useBrands";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useProductsManage } from "@/lib/hooks/useProductsManage";
+import { useSetProductStatus } from "@/lib/hooks/useProductMutations";
 import { formatCurrency } from "@/lib/utils/format";
 import type { ProductResponse } from "@/types/product";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -83,9 +86,12 @@ export default function AdminProductsPage() {
   const categoryName = (id: string | null) =>
     categories.data?.find((c) => c.id === id)?.name ?? "—";
   const brandName = (id: string | null) => brands.data?.find((b) => b.id === id)?.name ?? "—";
+  const setStatus = useSetProductStatus();
 
   return (
     <div>
+      <TopBar title="Products" subtitle="Manage All Products" />
+
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -97,18 +103,22 @@ export default function AdminProductsPage() {
             </p>
           </div>
           <Link href="/admin/products/new">
-            <Button type="button" className="w-full sm:w-auto">
-              Add product
+            <Button type="button" className="w-full gap-1.5 rounded-full sm:w-auto">
+              <PlusIcon className="h-4 w-4" />
+              Add Product
             </Button>
           </Link>
         </div>
-        <input
-          type="search"
-          placeholder="Search by name, brand, or SKU…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-11 w-full max-w-sm rounded-lg border border-border px-3.5 text-sm text-ink placeholder:text-ink-muted/60 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary-soft"
-        />
+        <div className="relative max-w-sm">
+          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          <input
+            type="search"
+            placeholder="Search products..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-11 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
+          />
+        </div>
       </header>
 
       {isLoading && <SkeletonRows />}
@@ -168,28 +178,51 @@ export default function AdminProductsPage() {
             </div>
           </div>
 
-          {/* Mobile: simplified card list */}
+          {/* Mobile: card list matching the mockup's product-row layout */}
           <div className="flex flex-col gap-3 sm:hidden">
             {products.map((p) => (
-              <Link key={p.id} href={`/admin/products/${p.id}`}>
-                <Card className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
-                      {p.image ? (
-                        <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-xs font-medium text-ink-muted">{p.unit.slice(0, 2)}</span>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-ink">{p.name}</p>
-                      <p className="font-mono text-xs text-ink-muted">{p.sku}</p>
-                      <p className="mt-1 text-sm text-ink-muted">{formatCurrency(p.selling_price)}</p>
-                    </div>
+              <Card key={p.id} className="flex items-center gap-3 rounded-2xl">
+                <Link href={`/admin/products/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface">
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-medium text-ink-muted">{p.unit.slice(0, 2)}</span>
+                    )}
                   </div>
-                  <ProductStatusBadge status={p.status} />
-                </Card>
-              </Link>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-ink">{p.name}</p>
+                    <p className="mt-0.5 flex items-baseline gap-2 text-sm">
+                      <span className="font-bold text-primary">{formatCurrency(p.selling_price)}</span>
+                      {p.mrp > p.selling_price && (
+                        <span className="text-xs text-ink-muted line-through">{formatCurrency(p.mrp)}</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-ink-muted">
+                      {p.unit} · {p.packing}
+                    </p>
+                  </div>
+                </Link>
+                <div className="flex shrink-0 flex-col items-center gap-2">
+                  <Link
+                    href={`/admin/products/${p.id}`}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-ink-muted transition-colors hover:bg-surface"
+                    aria-label="Edit product"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setStatus.mutate({ productId: p.id, status: p.status === "active" ? "inactive" : "active" })
+                    }
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-danger-soft text-danger transition-colors hover:bg-danger hover:text-white"
+                    aria-label={p.status === "active" ? "Deactivate product" : "Activate product"}
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </Card>
             ))}
           </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { UploadCloudIcon } from "@/components/admin/icons";
 
 interface ProductImageFieldProps {
   previewUrl: string | null;
@@ -18,54 +19,42 @@ export function ProductImageField({ previewUrl, onFileSelected, onRemove }: Prod
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <label className="text-sm font-medium text-ink">Product image</label>
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="group relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface transition-colors hover:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft"
-        >
-          {previewUrl ? (
-            <img src={previewUrl} alt="Product preview" className="h-full w-full object-cover" />
-          ) : (
-            <span className="flex flex-col items-center gap-1 text-ink-muted">
-              <svg
-                className="h-6 w-6"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              <span className="text-xs font-medium">Add image</span>
-            </span>
-          )}
-        </button>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="group relative flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 border-dashed border-border bg-surface px-4 py-8 text-center transition-colors hover:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft"
+      >
+        {previewUrl ? (
+          <img src={previewUrl} alt="Product preview" className="h-32 w-32 rounded-xl object-cover" />
+        ) : (
+          <>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">
+              <UploadCloudIcon className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-ink">Tap to upload</p>
+            <p className="text-xs text-ink-muted">JPG, PNG up to 5MB</p>
+          </>
+        )}
+      </button>
 
-        <div className="flex flex-col items-start gap-2">
+      <input ref={inputRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
+
+      {previewUrl && (
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
             className="text-sm font-medium text-primary hover:text-primary-hover"
           >
-            {previewUrl ? "Change image" : "Upload image"}
+            Change image
           </button>
-          {previewUrl && (
-            <button
-              type="button"
-              onClick={onRemove}
-              className="text-sm font-medium text-danger hover:text-danger-hover"
-            >
-              Remove
-            </button>
-          )}
-          <p className="text-xs text-ink-muted">JPG or PNG, up to 10MB.</p>
+          <button type="button" onClick={onRemove} className="text-sm font-medium text-danger hover:text-danger-hover">
+            Remove
+          </button>
         </div>
-      </div>
-
-      <input ref={inputRef} type="file" accept="image/*" onChange={handleChange} className="hidden" />
+      )}
     </div>
   );
 }

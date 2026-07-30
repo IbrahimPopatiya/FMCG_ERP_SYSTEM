@@ -21,9 +21,12 @@ def get_product(db: Session, product_id: uuid.UUID) -> Product | None:
 
 
 def list_active_products(db: Session) -> list[Product]:
-    return db.query(Product).filter(
-        Product.deleted_at.is_(None), Product.status == ProductStatus.ACTIVE
-    ).all()
+    return (
+        db.query(Product)
+        .filter(Product.deleted_at.is_(None), Product.status == ProductStatus.ACTIVE)
+        .order_by(Product.created_at.desc())
+        .all()
+    )
 
 
 def list_all_products(
