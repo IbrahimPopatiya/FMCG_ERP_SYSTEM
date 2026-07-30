@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useCategories } from "@/lib/hooks/useCategories";
@@ -43,10 +44,9 @@ export default function CategoriesPage() {
                 href={`/products?category=${c.id}`}
                 className="flex flex-col items-center gap-3 rounded-xl border border-border bg-white p-5 text-center shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary-soft text-lg font-semibold text-primary">
+                <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary-soft text-lg font-semibold text-primary">
                   {c.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.image} alt={c.name} className="h-full w-full object-cover" />
+                    <Image src={c.image} alt={c.name} fill sizes="64px" className="object-cover" />
                   ) : (
                     c.name.charAt(0).toUpperCase()
                   )}

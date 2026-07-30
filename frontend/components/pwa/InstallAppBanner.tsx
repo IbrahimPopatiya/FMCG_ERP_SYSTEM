@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useInstallPrompt } from "@/lib/hooks/useInstallPrompt";
 
 const DISMISSED_KEY = "dms_install_dismissed";
+
+function readDismissed(): boolean {
+  if (typeof window === "undefined") return true;
+  return localStorage.getItem(DISMISSED_KEY) === "1";
+}
 
 function StepIcon({ children }: { children: React.ReactNode }) {
   return (
@@ -60,12 +65,8 @@ const STEPS = [
 
 export function InstallAppBanner() {
   const { canInstall, isIOS, promptInstall } = useInstallPrompt();
-  const [dismissed, setDismissed] = useState(true);
+  const [dismissed, setDismissed] = useState(readDismissed);
   const [showIOSSteps, setShowIOSSteps] = useState(false);
-
-  useEffect(() => {
-    setDismissed(localStorage.getItem(DISMISSED_KEY) === "1");
-  }, []);
 
   function dismiss() {
     localStorage.setItem(DISMISSED_KEY, "1");

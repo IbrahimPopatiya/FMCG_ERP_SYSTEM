@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -9,10 +10,14 @@ import { Select } from "@/components/ui/Select";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { RouteForm } from "@/components/routes/RouteForm";
+
+const RouteForm = dynamic(() => import("@/components/routes/RouteForm").then((m) => m.RouteForm), {
+  ssr: false,
+});
 import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useAssignRouteSalesman, useCreateRoute, useDeleteRoute } from "@/lib/hooks/useRouteMutations";
 import { useRoutes } from "@/lib/hooks/useRoutes";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import type { RouteResponse } from "@/types/salesRoutes";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
@@ -39,6 +44,7 @@ export default function RoutesPage() {
   const createRoute = useCreateRoute();
   const assignSalesman = useAssignRouteSalesman();
   const deleteRoute = useDeleteRoute();
+  const isDesktop = useIsDesktop();
 
   const rows = routes.data ?? [];
   const salesmen = (staff.data ?? []).filter((u) => u.role === "salesman");
@@ -85,6 +91,7 @@ export default function RoutesPage() {
 
       {!routes.isLoading && !routes.isError && rows.length > 0 && (
         <div className="p-4 sm:p-6">
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<RouteResponse>
@@ -126,7 +133,9 @@ export default function RoutesPage() {
               />
             </div>
           </div>
+          )}
 
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {rows.map((r) => (
               <Card key={r.id} className="flex flex-col gap-3">
@@ -142,6 +151,7 @@ export default function RoutesPage() {
               </Card>
             ))}
           </div>
+          )}
         </div>
       )}
 

@@ -5,9 +5,12 @@ import type {
   SalesOrderLoadItem,
   SalesOrderResponse,
 } from "@/types/salesOrder";
+import type { Page } from "@/types/pagination";
 
-export function listOrders() {
-  return api.get<SalesOrderResponse[]>("/orders").then((res) => res.data);
+export function listOrders(page: number, pageSize: number) {
+  return api
+    .get<Page<SalesOrderResponse>>("/orders", { params: { page, page_size: pageSize } })
+    .then((res) => res.data);
 }
 
 export function getOrder(orderId: string) {

@@ -128,3 +128,30 @@ def get_effective_price(
         return base_price
 
     return base_price - (base_price * item.discount_percent / 100)
+
+
+def get_effective_prices(
+    db: Session, price_list_id: uuid.UUID | None, products: list[tuple[uuid.UUID, Decimal]]
+) -> dict[uuid.UUID, Decimal]:
+    """Batch version of get_effective_price - one query for every product instead of
+    one query per product. Used by the catalog listing, which can have thousands of
+    products."""
+    if price_list_id is None:
+        return {product_id: base_price for product_id, base_price in products}
+
+    discounts = {
+        row.product_id: row.discount_percent
+        for row in db.query(PriceListItem).filter(
+            PriceListItem.price_list_id == price_list_id,
+            PriceListItem.product_id.in_([product_id for product_id, _ in products]),
+        )
+    }
+
+    return {
+        product_id: (
+            base_price - (base_price * discounts[product_id] / 100)
+            if product_id in discounts
+            else base_price
+        )
+        for product_id, base_price in products
+    }

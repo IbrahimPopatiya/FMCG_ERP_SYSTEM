@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -85,10 +86,9 @@ export default function AdminPostsPage() {
         <div className="flex flex-col gap-3 p-4 sm:p-6">
           {posts.map((post) => (
             <Card key={post.id} className="flex items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
+              <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
                 {post.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={post.image} alt={post.product_name} className="h-full w-full object-cover" />
+                  <Image src={post.image} alt={post.product_name} fill sizes="64px" className="object-cover" />
                 ) : (
                   <span className="text-xs font-medium text-ink-muted">No image</span>
                 )}

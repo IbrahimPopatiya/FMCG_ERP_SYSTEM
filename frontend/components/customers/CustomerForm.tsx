@@ -1,6 +1,7 @@
 "use client";
 
 import { SubmitEvent, useRef, useState } from "react";
+import Image from "next/image";
 import { isAxiosError } from "axios";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -114,9 +115,16 @@ export function CustomerForm({ onSubmit, onSuccess }: CustomerFormProps) {
         onClick={() => fileInputRef.current?.click()}
         className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-surface px-4 py-6 text-center transition-colors hover:border-primary"
       >
-        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-primary-soft text-primary">
+        <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-primary-soft text-primary">
           {photoPreview ? (
-            <img src={photoPreview} alt="Profile preview" className="h-full w-full object-cover" />
+            <Image
+              src={photoPreview}
+              alt="Profile preview"
+              fill
+              sizes="48px"
+              unoptimized={photoPreview.startsWith("blob:")}
+              className="object-cover"
+            />
           ) : (
             <PersonIcon className="h-6 w-6" />
           )}

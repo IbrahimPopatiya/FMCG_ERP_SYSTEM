@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { TopBar } from "@/components/layout/TopBar";
 import { Card } from "@/components/ui/Card";
@@ -8,7 +9,7 @@ import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { CartIcon, BoxIcon, BellIcon, TruckIcon, PeopleIcon, WalletIcon } from "@/components/admin/icons";
 import { useOrders } from "@/lib/hooks/useOrders";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 import type { OrderStatus, SalesOrderResponse } from "@/types/salesOrder";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
@@ -93,9 +94,7 @@ function OrderRow({ order, customerName }: { order: SalesOrderResponse; customer
           #{order.order_number} <span className="font-normal text-ink-muted">{customerName}</span>
         </p>
         <p className="mt-0.5 text-xs text-ink-muted">
-          {new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(
-            new Date(order.created_at)
-          )}
+          {formatDateTime(order.created_at)}
         </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -112,7 +111,23 @@ export default function DashboardPage() {
   const orders = useOrders();
   const customers = useCustomerDirectorySample();
 
-  const allOrders = orders.data ?? [];
+  const allOrders = orders.data?.pages.flatMap((page) => page.items) ?? [];
+  const totalOrders = orders.data?.pages[0]?.total ?? 0;
+
+  // Orders are sorted newest-first, so this week's stats only need pages up
+  // to the first order older than 7 days - keep loading until we hit that,
+  // instead of pulling the entire order history just to add up a week's worth.
+  const oldestLoaded = allOrders[allOrders.length - 1];
+  const shouldLoadMoreForWeeklyStats =
+    !!orders.hasNextPage && (!oldestLoaded || isThisWeek(oldestLoaded.created_at));
+
+  useEffect(() => {
+    if (shouldLoadMoreForWeeklyStats) {
+      orders.fetchNextPage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldLoadMoreForWeeklyStats]);
+
   const todaysOrders = allOrders.filter((o) => isToday(o.created_at));
   const thisWeekOrders = allOrders.filter((o) => isThisWeek(o.created_at));
   const weeklyValue = thisWeekOrders.reduce((sum, o) => sum + o.total, 0);
@@ -136,7 +151,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
             label="Total Orders"
-            value={String(allOrders.length)}
+            value={String(totalOrders)}
             hint={todaysOrders.length > 0 ? `+${todaysOrders.length} today` : undefined}
             tone="blue"
             Icon={CartIcon}
@@ -151,9 +166,8 @@ export default function DashboardPage() {
             isLoading={customers.isLoading}
           />
           <StatCard
-            label="Total Order Amount"
-            value={formatCurrency(allOrders.reduce((sum, o) => sum + o.total, 0))}
-            hint={weeklyValue > 0 ? `${formatCurrency(weeklyValue)} this week` : undefined}
+            label="This Week's Order Amount"
+            value={formatCurrency(weeklyValue)}
             tone="purple"
             Icon={WalletIcon}
             isLoading={isLoading}
