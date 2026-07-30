@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TopBar } from "@/components/layout/TopBar";
-import { BrandForm } from "@/components/brands/BrandForm";
+
+const BrandForm = dynamic(() => import("@/components/brands/BrandForm").then((m) => m.BrandForm), {
+  ssr: false,
+});
 import { useBrands } from "@/lib/hooks/useBrands";
 import { useCreateBrand, useDeleteBrand } from "@/lib/hooks/useBrandMutations";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";

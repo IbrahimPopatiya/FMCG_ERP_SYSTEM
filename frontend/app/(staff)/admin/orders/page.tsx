@@ -13,6 +13,7 @@ import { SearchIcon, FilterIcon, PersonIcon, BoxIcon, ChevronRightIcon } from "@
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
 import { useOrders } from "@/lib/hooks/useOrders";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { OrderStatus, SalesOrderResponse } from "@/types/salesOrder";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -55,9 +56,13 @@ export default function AdminOrdersPage() {
 
   const orders = { isLoading, isError, refetch };
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+  const isDesktop = useIsDesktop();
 
-  const customerName = (customerId: string) =>
-    customers.data?.items.find((c) => c.id === customerId)?.business_name ?? "Customer";
+  const customerNameById = useMemo(
+    () => new Map((customers.data?.items ?? []).map((c) => [c.id, c.business_name])),
+    [customers.data]
+  );
+  const customerName = (customerId: string) => customerNameById.get(customerId) ?? "Customer";
 
   const allLoaded = useMemo(
     () => data?.pages.flatMap((page) => page.items) ?? [],
@@ -150,6 +155,7 @@ export default function AdminOrdersPage() {
       {!orders.isLoading && !orders.isError && (sorted.length > 0 || hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
               <Table<SalesOrderResponse>
@@ -176,8 +182,10 @@ export default function AdminOrdersPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: card list matching the mockup's order-row layout */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {sorted.map((o) => (
               <Link key={o.id} href={`/admin/orders/${o.id}`}>
@@ -207,6 +215,7 @@ export default function AdminOrdersPage() {
               </Link>
             ))}
           </div>
+          )}
 
           <div ref={sentinelRef} className="flex justify-center py-6">
             {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}

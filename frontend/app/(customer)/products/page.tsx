@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Select } from "@/components/ui/Select";
@@ -14,6 +14,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useProducts } from "@/lib/hooks/useProducts";
+import type { ProductCatalogResponse } from "@/types/product";
 
 type SortOption = "popular" | "price_low" | "price_high" | "name";
 
@@ -45,6 +46,18 @@ function ProductsPageContent() {
   const products = useProducts();
   const categories = useCategories();
   const { getQty, addItem, setQty } = useCart();
+
+  // Depends only on the cart functions, not on `filtered` - stays the same
+  // reference across search/sort/category changes, so memoized product
+  // cards can skip re-rendering while the user is just typing/filtering.
+  const handleQtyChange = useCallback(
+    (product: ProductCatalogResponse, qty: number) => {
+      if (qty === 0) setQty(product.id, 0);
+      else if (getQty(product.id) === 0) addItem(product, qty);
+      else setQty(product.id, qty);
+    },
+    [setQty, getQty, addItem]
+  );
 
   const activeCategories = useMemo(() => {
     const usedIds = new Set((products.data ?? []).map((p) => p.category_id).filter(Boolean));
@@ -180,11 +193,7 @@ function ProductsPageContent() {
               key={product.id}
               product={product}
               qty={getQty(product.id)}
-              onQtyChange={(qty) => {
-                if (qty === 0) setQty(product.id, 0);
-                else if (getQty(product.id) === 0) addItem(product, qty);
-                else setQty(product.id, qty);
-              }}
+              onQtyChange={handleQtyChange}
             />
           ))}
         </div>

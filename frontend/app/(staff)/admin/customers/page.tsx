@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -9,13 +10,18 @@ import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { CustomerForm } from "@/components/customers/CustomerForm";
 import { CustomerStatusBadge } from "@/components/customers/CustomerStatusBadge";
+
+const CustomerForm = dynamic(
+  () => import("@/components/customers/CustomerForm").then((m) => m.CustomerForm),
+  { ssr: false }
+);
 import { SearchIcon, PlusIcon } from "@/components/admin/icons";
 import { useCreateCustomer } from "@/lib/hooks/useCustomerMutations";
 import { useCustomersManage } from "@/lib/hooks/useCustomersManage";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import { formatCurrency } from "@/lib/utils/format";
 import type { CustomerListItem, CustomerStatus } from "@/types/customers";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -93,6 +99,7 @@ export default function AdminCustomersPage() {
   const createCustomer = useCreateCustomer();
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+  const isDesktop = useIsDesktop();
 
   const allCustomers = data?.pages.flatMap((page) => page.items) ?? [];
   const total = data?.pages[0]?.total ?? 0;
@@ -181,13 +188,14 @@ export default function AdminCustomersPage() {
         </div>
       )}
 
-      {!isLoading && !isError && customers.length === 0 && (
+      {!isLoading && !isError && customers.length === 0 && !hasNextPage && (
         <EmptyState onAdd={() => setFormOpen(true)} hasSearch={!!search} />
       )}
 
-      {!isLoading && !isError && customers.length > 0 && (
+      {!isLoading && !isError && (customers.length > 0 || hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
               <Table<CustomerListItem>
@@ -212,8 +220,10 @@ export default function AdminCustomersPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: avatar-initial rows matching the mockup */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {customers.map((c) => (
               <Link key={c.id} href={`/admin/customers/${c.id}`}>
@@ -236,6 +246,7 @@ export default function AdminCustomersPage() {
               </Link>
             ))}
           </div>
+          )}
 
           <div ref={sentinelRef} className="flex justify-center py-6">
             {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}

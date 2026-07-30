@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { PriceListItemForm } from "@/components/priceLists/PriceListItemForm";
+
+const PriceListItemForm = dynamic(
+  () => import("@/components/priceLists/PriceListItemForm").then((m) => m.PriceListItemForm),
+  { ssr: false }
+);
 import { useProducts } from "@/lib/hooks/useProducts";
 import {
   useAddPriceListItem,

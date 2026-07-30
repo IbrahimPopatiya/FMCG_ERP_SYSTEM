@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -9,12 +10,16 @@ import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { ReturnForm } from "@/components/returns/ReturnForm";
 import { ReturnStatusBadge } from "@/components/returns/ReturnStatusBadge";
+
+const ReturnForm = dynamic(() => import("@/components/returns/ReturnForm").then((m) => m.ReturnForm), {
+  ssr: false,
+});
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
 import { useReturnsManage } from "@/lib/hooks/useReturns";
 import { useCreateReturn } from "@/lib/hooks/useReturnMutations";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import { formatDate, toTitleCase } from "@/lib/utils/format";
 import type { ReturnListItem, ReturnStatus } from "@/types/returns";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -56,9 +61,13 @@ export default function ReturnsPage() {
   const createReturn = useCreateReturn();
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+  const isDesktop = useIsDesktop();
 
-  const customerName = (customerId: string) =>
-    customers.data?.items.find((c) => c.id === customerId)?.business_name ?? "Customer";
+  const customerNameById = useMemo(
+    () => new Map((customers.data?.items ?? []).map((c) => [c.id, c.business_name])),
+    [customers.data]
+  );
+  const customerName = (customerId: string) => customerNameById.get(customerId) ?? "Customer";
 
   const total = data?.pages[0]?.total ?? 0;
   const filtered = useMemo(() => {
@@ -113,7 +122,7 @@ export default function ReturnsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length === 0 && (
+      {!isLoading && !isError && filtered.length === 0 && !hasNextPage && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No returns here</p>
           <p className="text-sm text-ink-muted">
@@ -122,9 +131,10 @@ export default function ReturnsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length > 0 && (
+      {!isLoading && !isError && (filtered.length > 0 || hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<ReturnListItem>
@@ -150,8 +160,10 @@ export default function ReturnsPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: simplified card list */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {filtered.map((r) => (
               <Link key={r.id} href={`/admin/returns/${r.id}`}>
@@ -166,6 +178,7 @@ export default function ReturnsPage() {
               </Link>
             ))}
           </div>
+          )}
 
           <div ref={sentinelRef} className="flex justify-center py-6">
             {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}

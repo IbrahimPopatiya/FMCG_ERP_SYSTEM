@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -9,14 +10,22 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Select } from "@/components/ui/Select";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { AdjustStockForm } from "@/components/inventory/AdjustStockForm";
-import { TransferStockForm } from "@/components/inventory/TransferStockForm";
+
+const AdjustStockForm = dynamic(
+  () => import("@/components/inventory/AdjustStockForm").then((m) => m.AdjustStockForm),
+  { ssr: false }
+);
+const TransferStockForm = dynamic(
+  () => import("@/components/inventory/TransferStockForm").then((m) => m.TransferStockForm),
+  { ssr: false }
+);
 import { useCreateInventoryAdjustment, useCreateInventoryTransfer } from "@/lib/hooks/useInventoryMutations";
 import { useInventory } from "@/lib/hooks/useInventory";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useProductStockList } from "@/lib/hooks/useProductStockList";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import type { InventoryResponse } from "@/types/inventory";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
@@ -52,6 +61,7 @@ export default function InventoryPage() {
   const createAdjustment = useCreateInventoryAdjustment();
   const createTransfer = useCreateInventoryTransfer();
   const sentinelRef = useInfiniteScrollSentinel(() => inventory.fetchNextPage(), !!inventory.hasNextPage);
+  const isDesktop = useIsDesktop();
 
   const isLoading = inventory.isLoading || warehouses.isLoading || products.isLoading;
   const isError = inventory.isError || warehouses.isError || products.isError;
@@ -147,6 +157,7 @@ export default function InventoryPage() {
       {!isLoading && !isError && (filtered.length > 0 || inventory.hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<InventoryRow>
@@ -179,8 +190,10 @@ export default function InventoryPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: simplified card list */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {filtered.map((r) => (
               <Card key={`${r.warehouse_id}-${r.product_id}`} className="flex items-center justify-between gap-3">
@@ -195,6 +208,7 @@ export default function InventoryPage() {
               </Card>
             ))}
           </div>
+          )}
 
           <div ref={sentinelRef} className="flex justify-center py-6">
             {inventory.isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}

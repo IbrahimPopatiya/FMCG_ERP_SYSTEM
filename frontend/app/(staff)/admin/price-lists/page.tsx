@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TopBar } from "@/components/layout/TopBar";
-import { PriceListForm } from "@/components/priceLists/PriceListForm";
+
+const PriceListForm = dynamic(
+  () => import("@/components/priceLists/PriceListForm").then((m) => m.PriceListForm),
+  { ssr: false }
+);
 import { useCreatePriceList, useDeletePriceList } from "@/lib/hooks/usePriceListMutations";
 import { usePriceLists } from "@/lib/hooks/usePriceLists";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
