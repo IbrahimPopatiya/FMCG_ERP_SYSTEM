@@ -13,6 +13,7 @@ import { AdjustStockForm } from "@/components/inventory/AdjustStockForm";
 import { TransferStockForm } from "@/components/inventory/TransferStockForm";
 import { useCreateInventoryAdjustment, useCreateInventoryTransfer } from "@/lib/hooks/useInventoryMutations";
 import { useInventory } from "@/lib/hooks/useInventory";
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useProductStockList } from "@/lib/hooks/useProductStockList";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
@@ -40,6 +41,7 @@ export default function InventoryPage() {
   useRoleGuard(["admin", "manager"]);
 
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [warehouseFilter, setWarehouseFilter] = useState<string>("all");
   const [showAdjust, setShowAdjust] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
@@ -77,13 +79,13 @@ export default function InventoryPage() {
   }, [inventoryRows, products.data, warehouses.data]);
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = debouncedSearch.trim().toLowerCase();
     return rows.filter((row) => {
       if (warehouseFilter !== "all" && row.warehouse_id !== warehouseFilter) return false;
       if (!query) return true;
       return row.productName.toLowerCase().includes(query) || row.productSku.toLowerCase().includes(query);
     });
-  }, [rows, search, warehouseFilter]);
+  }, [rows, debouncedSearch, warehouseFilter]);
 
   return (
     <div>

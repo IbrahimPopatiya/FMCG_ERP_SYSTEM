@@ -14,6 +14,7 @@ import { CustomerStatusBadge } from "@/components/customers/CustomerStatusBadge"
 import { SearchIcon, PlusIcon } from "@/components/admin/icons";
 import { useCreateCustomer } from "@/lib/hooks/useCustomerMutations";
 import { useCustomersManage } from "@/lib/hooks/useCustomersManage";
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency } from "@/lib/utils/format";
 import type { CustomerListItem, CustomerStatus } from "@/types/customers";
@@ -77,6 +78,7 @@ export default function AdminCustomersPage() {
   useRoleGuard(["admin", "salesman", "manager", "cashier"]);
 
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [tab, setTab] = useState<TabValue>("all");
   const [isFormOpen, setFormOpen] = useState(false);
   const {
@@ -87,7 +89,7 @@ export default function AdminCustomersPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useCustomersManage(search);
+  } = useCustomersManage(debouncedSearch);
   const createCustomer = useCreateCustomer();
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);

@@ -8,6 +8,7 @@ import { CartIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
 import { clearSession } from "@/lib/auth/session";
+import { formatCurrencyWhole } from "@/lib/utils/format";
 
 // Persistent left sidebar shown at md+ widths, replacing the mobile bottom
 // bar. Customers on desktop get the same 5 sections plus a "deliver to" +
@@ -94,11 +95,7 @@ export function CustomerDesktopSidebar() {
             <CartIcon className="h-4 w-4" />
             {totalQty} item{totalQty === 1 ? "" : "s"}
           </span>
-          <span className="text-sm font-semibold">
-            {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(
-              subtotal
-            )}
-          </span>
+          <span className="text-sm font-semibold">{formatCurrencyWhole(subtotal)}</span>
         </Link>
       )}
 

@@ -12,6 +12,7 @@ import { AccountAvatar } from "@/components/customer/AccountAvatar";
 import { SearchIcon, FilterIcon, CategoryAllIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCategories } from "@/lib/hooks/useCategories";
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useProducts } from "@/lib/hooks/useProducts";
 
 type SortOption = "popular" | "price_low" | "price_high" | "name";
@@ -37,6 +38,7 @@ export default function ProductsPage() {
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [categoryId, setCategoryId] = useState<string | null>(searchParams.get("category"));
   const [sort, setSort] = useState<SortOption>("popular");
 
@@ -50,7 +52,7 @@ function ProductsPageContent() {
   }, [products.data, categories.data]);
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = debouncedSearch.trim().toLowerCase();
     const list = (products.data ?? []).filter((p) => {
       if (categoryId && p.category_id !== categoryId) return false;
       if (!query) return true;
@@ -61,7 +63,7 @@ function ProductsPageContent() {
     else if (sort === "price_high") sorted.sort((a, b) => b.effective_price - a.effective_price);
     else if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
     return sorted;
-  }, [products.data, search, categoryId, sort]);
+  }, [products.data, debouncedSearch, categoryId, sort]);
 
   return (
     <div className="flex flex-col">

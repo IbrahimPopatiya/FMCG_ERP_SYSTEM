@@ -50,11 +50,13 @@ export function TopBar({ title, subtitle, backHref, onBack }: TopBarProps) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        {currentUser.data && (
-          <span className="hidden items-center gap-1.5 text-sm font-medium text-ink-muted sm:flex">
-            {currentUser.data.full_name}
-          </span>
-        )}
+        <span className="hidden h-5 w-24 items-center gap-1.5 text-sm font-medium text-ink-muted sm:flex">
+          {currentUser.data ? (
+            currentUser.data.full_name
+          ) : (
+            <span className="h-3.5 w-full animate-pulse rounded bg-surface" />
+          )}
+        </span>
         <button
           type="button"
           className="relative flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface hover:text-ink"

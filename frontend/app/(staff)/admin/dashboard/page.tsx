@@ -9,7 +9,7 @@ import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { CartIcon, BoxIcon, BellIcon, TruckIcon, PeopleIcon, WalletIcon } from "@/components/admin/icons";
 import { useOrders } from "@/lib/hooks/useOrders";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrency, formatDateTime } from "@/lib/utils/format";
 import type { OrderStatus, SalesOrderResponse } from "@/types/salesOrder";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
@@ -94,9 +94,7 @@ function OrderRow({ order, customerName }: { order: SalesOrderResponse; customer
           #{order.order_number} <span className="font-normal text-ink-muted">{customerName}</span>
         </p>
         <p className="mt-0.5 text-xs text-ink-muted">
-          {new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(
-            new Date(order.created_at)
-          )}
+          {formatDateTime(order.created_at)}
         </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1.5">
