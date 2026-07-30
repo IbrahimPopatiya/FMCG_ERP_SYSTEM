@@ -182,7 +182,6 @@ function ReelSlide({
   onToggleSave,
   onShare,
   onOpenBag,
-  onOpenDetails,
   onBack,
 }: {
   product: ProductCatalogResponse;
@@ -193,24 +192,18 @@ function ReelSlide({
   onToggleSave: () => void;
   onShare: () => void;
   onOpenBag: () => void;
-  onOpenDetails: () => void;
   onBack: () => void;
 }) {
   return (
     <section className="relative h-full w-full shrink-0 snap-start snap-always overflow-hidden bg-ink">
-      <button
-        type="button"
-        aria-label="Open product image"
-        onClick={onOpenDetails}
-        className="absolute inset-0 h-full w-full"
-      >
+      <div className="absolute inset-0 h-full w-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={product.image || dummyProductImage(product.name, product.id)}
           alt={product.name}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
         />
-      </button>
+      </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
 
@@ -361,7 +354,6 @@ export default function HomePage() {
               onToggleSave={() => setSaved((prev) => ({ ...prev, [product.id]: !prev[product.id] }))}
               onShare={() => handleShare(product)}
               onOpenBag={() => setOpenProductId(product.id)}
-              onOpenDetails={() => setOpenProductId(product.id)}
               onBack={() => router.back()}
             />
           ))}
