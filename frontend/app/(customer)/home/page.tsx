@@ -1,262 +1,356 @@
 "use client";
 
-import { useMemo } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { QtyStepper } from "@/components/ui/QtyStepper";
-import { DiscountBadge } from "@/components/customer/DiscountBadge";
-import { AccountAvatar } from "@/components/customer/AccountAvatar";
-import { SearchIcon } from "@/components/customer/icons";
+import {
+  CartIcon,
+  HeartIcon,
+  BookmarkIcon,
+  ShareIcon,
+  BackArrowIcon,
+  CloseIcon,
+  TagIcon,
+  SparkleIcon,
+  BoxIcon,
+} from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
-import { useCategories } from "@/lib/hooks/useCategories";
-import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
-import { useCustomerDues } from "@/lib/hooks/useCustomerDues";
-import { useOrders } from "@/lib/hooks/useOrders";
 import { useProducts } from "@/lib/hooks/useProducts";
 import { formatCurrency } from "@/lib/utils/format";
+import { dummyProductImage } from "@/lib/utils/dummyProductImage";
 import type { ProductCatalogResponse } from "@/types/product";
 
-const LATEST_COUNT = 8;
+const FEED_COUNT = 8;
 
-function ProductSliderCard({
+// Deterministic pseudo-counts so the same product always shows the same
+// like/save numbers across renders, without needing real backend fields.
+function fakeCount(seed: string, base: number, spread: number): number {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return base + (hash % spread);
+}
+
+function RailButton({
+  active,
+  onClick,
+  children,
+  label,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition-colors ${
+        active ? "bg-primary text-white" : "bg-black/35 text-white hover:bg-black/50"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Product detail bottom sheet, opened by tapping the product name or the
+// reel image — mirrors a native "slide up from the bottom" product card.
+function ProductDetailSheet({
   product,
   qty,
-  onAdd,
-  onQtyChange,
+  onClose,
+  onConfirm,
 }: {
   product: ProductCatalogResponse;
   qty: number;
-  onAdd: () => void;
-  onQtyChange: (qty: number) => void;
+  onClose: () => void;
+  onConfirm: (qty: number) => void;
 }) {
+  const [pendingQty, setPendingQty] = useState(qty > 0 ? qty : 1);
+
   return (
-    <div className="w-36 shrink-0 rounded-xl border border-border bg-white p-3 shadow-sm">
-      <Link href={`/products/${product.id}`} className="relative block">
-        <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-primary-soft">
-          {product.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-xs font-medium text-primary/60">{product.unit}</span>
-          )}
+    <div className="absolute inset-0 z-20 flex flex-col justify-end">
+      <button
+        type="button"
+        aria-label="Close product details"
+        onClick={onClose}
+        className="absolute inset-0"
+      />
+
+      <div className="relative flex max-h-[70%] flex-col rounded-t-3xl bg-white p-5 pb-6 shadow-2xl">
+        <div className="mx-auto mb-1 h-1 w-10 shrink-0 rounded-full bg-border" />
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-surface text-ink-muted hover:bg-border"
+        >
+          <CloseIcon className="h-4 w-4" />
+        </button>
+
+        <div className="mt-3 flex gap-4 overflow-y-auto">
+          <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={product.image || dummyProductImage(product.name, product.id)}
+              alt={product.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+
+          <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+            <p className="text-lg font-bold leading-snug text-ink">{product.name}</p>
+
+            <div className="flex items-center justify-between gap-2 border-b border-border pb-2 text-sm">
+              <span className="flex items-center gap-1.5 text-ink-muted">
+                <TagIcon className="h-4 w-4" />
+                Selling Price
+              </span>
+              <span className="font-semibold text-ink">{formatCurrency(product.effective_price)}</span>
+            </div>
+
+            {product.mrp > product.effective_price && (
+              <div className="flex items-center justify-between gap-2 border-b border-border pb-2 text-sm">
+                <span className="flex items-center gap-1.5 text-ink-muted">
+                  <SparkleIcon className="h-4 w-4" />
+                  MRP
+                </span>
+                <span className="text-ink-muted line-through">{formatCurrency(product.mrp)}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2 pb-1 text-sm">
+              <span className="flex items-center gap-1.5 text-ink-muted">
+                <BoxIcon className="h-4 w-4" />
+                Box Quantity
+              </span>
+              <span className="font-medium text-ink">{product.packing}</span>
+            </div>
+          </div>
         </div>
-        <div className="absolute left-1.5 top-1.5">
-          <DiscountBadge mrp={product.mrp} effectivePrice={product.effective_price} />
-        </div>
-      </Link>
-      <p className="line-clamp-2 text-xs font-medium leading-snug text-ink">{product.name}</p>
-      <p className="mt-0.5 text-xs text-ink-muted">{product.packing}</p>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-ink">{formatCurrency(product.effective_price)}</p>
-        {qty === 0 ? (
+
+        <div className="mt-5 flex shrink-0 flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium text-ink-muted">Quantity</span>
+            <QtyStepper qty={pendingQty} onChange={(next) => setPendingQty(Math.max(1, next))} />
+          </div>
+
           <button
             type="button"
-            onClick={onAdd}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-base font-semibold text-white hover:bg-primary-hover"
-            aria-label="Add"
+            onClick={() => onConfirm(pendingQty)}
+            className="flex h-12 w-full items-center justify-center rounded-xl bg-[#d12626] text-sm font-semibold text-white transition-colors hover:bg-red-700"
           >
-            +
+            Confirm
           </button>
-        ) : (
-          <QtyStepper qty={qty} onChange={onQtyChange} size="sm" />
-        )}
+        </div>
       </div>
     </div>
   );
 }
 
-function ProductSlider({
-  title,
-  products,
-  emptyMessage,
-  getQty,
-  onAdd,
-  onQtyChange,
+function ReelSlide({
+  product,
+  liked,
+  saved,
+  qty,
+  onToggleLike,
+  onToggleSave,
+  onShare,
+  onOpenBag,
+  onOpenDetails,
+  onBack,
 }: {
-  title: string;
-  products: ProductCatalogResponse[];
-  emptyMessage?: string;
-  getQty: (productId: string) => number;
-  onAdd: (product: ProductCatalogResponse) => void;
-  onQtyChange: (productId: string, qty: number) => void;
+  product: ProductCatalogResponse;
+  liked: boolean;
+  saved: boolean;
+  qty: number;
+  onToggleLike: () => void;
+  onToggleSave: () => void;
+  onShare: () => void;
+  onOpenBag: () => void;
+  onOpenDetails: () => void;
+  onBack: () => void;
 }) {
   return (
-    <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-ink">{title}</h2>
-        <Link href="/products" className="text-sm font-medium text-primary hover:text-primary-hover">
-          View All
-        </Link>
+    <section className="relative h-full w-full shrink-0 snap-start snap-always overflow-hidden bg-ink">
+      <button
+        type="button"
+        aria-label="Open product image"
+        onClick={onOpenDetails}
+        className="absolute inset-0 h-full w-full"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={product.image || dummyProductImage(product.name, product.id)}
+          alt={product.name}
+          className="h-full w-full object-cover"
+        />
+      </button>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+
+      <button
+        type="button"
+        aria-label="Back"
+        onClick={onBack}
+        className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm hover:bg-black/50"
+      >
+        <BackArrowIcon className="h-4 w-4" />
+      </button>
+
+      {/* Right action rail */}
+      <div className="absolute bottom-24 right-3 flex flex-col items-end gap-5">
+        {/* Like Card */}
+        <button
+          type="button"
+          aria-label="Like"
+          onClick={onToggleLike}
+          className={`flex h-[72px] w-[50px] flex-col items-center justify-between py-2 rounded-2xl border backdrop-blur-md transition-all ${
+            liked
+              ? "bg-[#d12626]/80 border-[#d12626] text-white"
+              : "bg-black/35 border-white/10 text-white hover:bg-black/50"
+          }`}
+        >
+          <HeartIcon className="h-5 w-5 mt-1" filled={liked} />
+          <span className="text-[10px] font-semibold mb-0.5">
+            {fakeCount(product.id, 40, 260) + (liked ? 1 : 0)}
+          </span>
+        </button>
+
+        {/* Save Card */}
+        <button
+          type="button"
+          aria-label="Save"
+          onClick={onToggleSave}
+          className={`flex h-[72px] w-[50px] flex-col items-center justify-between py-2 rounded-2xl border backdrop-blur-md transition-all ${
+            saved
+              ? "bg-[#d12626]/80 border-[#d12626] text-white"
+              : "bg-black/35 border-white/10 text-white hover:bg-black/50"
+          }`}
+        >
+          <BookmarkIcon className="h-5 w-5 mt-1" filled={saved} />
+          <span className="text-[10px] font-semibold mb-0.5">
+            {fakeCount(product.id + "s", 10, 120) + (saved ? 1 : 0)}
+          </span>
+        </button>
+
+        {/* Share Card */}
+        <button
+          type="button"
+          aria-label="Share"
+          onClick={onShare}
+          className="flex h-[72px] w-[50px] flex-col items-center justify-between py-2 rounded-2xl border border-white/10 bg-black/35 text-white backdrop-blur-md transition-all hover:bg-black/50"
+        >
+          <ShareIcon className="h-5 w-5 mt-1" />
+          <span className="text-[10px] font-semibold mb-0.5">Share</span>
+        </button>
+
+        <button
+          type="button"
+          aria-label={qty > 0 ? "Edit bag quantity" : "Add to bag"}
+          onClick={onOpenBag}
+          className={`flex h-[72px] w-[50px] flex-col items-center justify-between py-2 rounded-2xl border backdrop-blur-md transition-all ${
+            qty > 0
+              ? "bg-[#d12626]/80 border-[#d12626] text-white"
+              : "border-white/10 bg-black/35 text-white hover:bg-black/50"
+          }`}
+        >
+          <CartIcon className="h-5 w-5 mt-1" />
+          <span className="text-[10px] font-semibold mb-0.5">{qty > 0 ? qty : "Add"}</span>
+        </button>
       </div>
 
-      {products.length === 0 && emptyMessage && (
-        <p className="py-6 text-center text-sm text-ink-muted">{emptyMessage}</p>
-      )}
-
-      {products.length > 0 && (
-        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-          {products.map((product) => (
-            <ProductSliderCard
-              key={product.id}
-              product={product}
-              qty={getQty(product.id)}
-              onAdd={() => onAdd(product)}
-              onQtyChange={(qty) => onQtyChange(product.id, qty)}
-            />
-          ))}
-        </div>
-      )}
+      {/* Bottom-left product name */}
+      <div className="absolute inset-x-0 bottom-0 p-4 pr-24 pointer-events-none">
+        <span className="truncate block text-left text-[20px] font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+          {product.name}
+        </span>
+      </div>
     </section>
   );
 }
 
 export default function HomePage() {
-  const customer = useCurrentCustomer();
+  const router = useRouter();
   const products = useProducts();
-  const categories = useCategories();
-  const orders = useOrders();
-  const dues = useCustomerDues();
   const { addItem, getQty, setQty } = useCart();
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const [openProductId, setOpenProductId] = useState<string | null>(null);
 
-  const activeCategories = useMemo(() => {
-    const usedIds = new Set((products.data ?? []).map((p) => p.category_id).filter(Boolean));
-    return (categories.data ?? []).filter((c) => usedIds.has(c.id));
-  }, [products.data, categories.data]);
+  const feedProducts = useMemo(() => (products.data ?? []).slice(0, FEED_COUNT), [products.data]);
+  const openProduct = feedProducts.find((p) => p.id === openProductId) ?? null;
 
-  const latestProducts = useMemo(() => (products.data ?? []).slice(0, LATEST_COUNT), [products.data]);
-
-  // "Recent buy" = products this customer has actually ordered before, most
-  // recent order first, deduped — falls back to remaining products (past the
-  // "latest" slice) so first-time customers still see a full slider.
-  const recentBuyProducts = useMemo(() => {
-    const productById = new Map((products.data ?? []).map((p) => [p.id, p]));
-    const sortedOrders = [...(orders.data ?? [])].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-    const seen = new Set<string>();
-    const fromHistory: ProductCatalogResponse[] = [];
-    for (const order of sortedOrders) {
-      for (const item of order.items) {
-        if (seen.has(item.product_id)) continue;
-        const product = productById.get(item.product_id);
-        if (product) {
-          seen.add(item.product_id);
-          fromHistory.push(product);
-        }
+  async function handleShare(product: ProductCatalogResponse) {
+    const url = `${window.location.origin}/products/${product.id}`;
+    const shareData: ShareData = {
+      title: product.name,
+      text: `${product.name} — ${formatCurrency(product.effective_price)}`,
+      url,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(url);
       }
+    } catch {
+      // User cancelled the share sheet — nothing to do.
     }
-    if (fromHistory.length > 0) return fromHistory;
-    return (products.data ?? []).slice(LATEST_COUNT);
-  }, [products.data, orders.data]);
+  }
 
   return (
-    <div className="flex flex-col">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4 pb-6 md:p-8">
-        <div className="flex items-center gap-3">
-          <div className="min-w-0 flex-1 rounded-xl border border-border bg-white px-4 py-3">
-            <p className="text-xs text-ink-muted">Deliver to</p>
-            <p className="truncate text-sm font-semibold text-ink">
-              {customer.data?.business_name ?? "Your store"}
-              {customer.data && (
-                <span className="font-normal text-ink-muted"> · {customer.data.city}, {customer.data.state}</span>
-              )}
-            </p>
-          </div>
-          <AccountAvatar className="h-11 w-11" />
+    <div className="relative flex h-full flex-col bg-ink">
+      {products.isLoading && (
+        <div className="flex flex-1 flex-col gap-2 p-3">
+          <Skeleton className="h-full w-full" />
         </div>
+      )}
 
-        <Link
-          href="/products"
-          className="flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-3 text-sm text-ink-muted shadow-sm"
-        >
-          <SearchIcon className="h-5 w-5" />
-          Search…
-        </Link>
+      {!products.isLoading && feedProducts.length === 0 && (
+        <p className="flex flex-1 items-center justify-center px-4 text-center text-sm text-ink-muted">
+          No products to show yet.
+        </p>
+      )}
 
-        <section>
-          {categories.isLoading && (
-            <div className="flex gap-3 overflow-x-hidden">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-16 shrink-0 rounded-full" />
-              ))}
-            </div>
-          )}
-          {!categories.isLoading && activeCategories.length > 0 && (
-            <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-              {activeCategories.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/products?category=${c.id}`}
-                  className="flex shrink-0 flex-col items-center gap-1.5"
-                >
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-border bg-white text-lg font-semibold text-primary shadow-sm">
-                    {c.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.image} alt={c.name} className="h-full w-full object-cover" />
-                    ) : (
-                      c.name.charAt(0).toUpperCase()
-                    )}
-                  </div>
-                  <p className="w-16 truncate text-center text-xs font-medium text-ink">{c.name}</p>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+      {!products.isLoading && feedProducts.length > 0 && (
+        <div className="flex-1 snap-y snap-mandatory overflow-y-auto scroll-smooth">
+          {feedProducts.map((product) => (
+            <ReelSlide
+              key={product.id}
+              product={product}
+              liked={!!liked[product.id]}
+              saved={!!saved[product.id]}
+              qty={getQty(product.id)}
+              onToggleLike={() => setLiked((prev) => ({ ...prev, [product.id]: !prev[product.id] }))}
+              onToggleSave={() => setSaved((prev) => ({ ...prev, [product.id]: !prev[product.id] }))}
+              onShare={() => handleShare(product)}
+              onOpenBag={() => setOpenProductId(product.id)}
+              onOpenDetails={() => setOpenProductId(product.id)}
+              onBack={() => router.back()}
+            />
+          ))}
+        </div>
+      )}
 
-        {dues.data && dues.data.total_due > 0 && (
-          <Link
-            href="/dues"
-            className="flex items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3"
-          >
-            <div>
-              <p className="text-sm font-medium text-ink">Outstanding dues</p>
-              <p className="text-xs text-ink-muted">Tap to view your unpaid invoices</p>
-            </div>
-            <p className="text-base font-semibold text-ink">{formatCurrency(dues.data.total_due)}</p>
-          </Link>
-        )}
-
-        {products.isLoading ? (
-          <div className="flex gap-3 overflow-x-hidden">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-48 w-36 shrink-0 rounded-xl" />
-            ))}
-          </div>
-        ) : (
-          <ProductSlider
-            title="Latest Products"
-            products={latestProducts}
-            getQty={getQty}
-            onAdd={(product) => addItem(product, 1)}
-            onQtyChange={setQty}
-          />
-        )}
-
-        {products.isLoading ? (
-          <div className="flex gap-3 overflow-x-hidden">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-48 w-36 shrink-0 rounded-xl" />
-            ))}
-          </div>
-        ) : (
-          <ProductSlider
-            title="Recent Buy Products"
-            products={recentBuyProducts}
-            emptyMessage="Nothing to show here yet."
-            getQty={getQty}
-            onAdd={(product) => addItem(product, 1)}
-            onQtyChange={setQty}
-          />
-        )}
-
-        <Link href="/products">
-          <Button type="button" className="w-full">
-            Browse all products
-          </Button>
-        </Link>
-      </div>
+      {openProduct && (
+        <ProductDetailSheet
+          product={openProduct}
+          qty={getQty(openProduct.id)}
+          onClose={() => setOpenProductId(null)}
+          onConfirm={(qty) => {
+            if (getQty(openProduct.id) === 0) {
+              addItem(openProduct, qty);
+            } else {
+              setQty(openProduct.id, qty);
+            }
+            setOpenProductId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

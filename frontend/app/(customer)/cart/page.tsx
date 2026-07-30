@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { FreeDeliveryProgress } from "@/components/customer/FreeDeliveryProgress";
+import { MenuButton } from "@/components/customer/CustomerMenu";
+import { AccountAvatar } from "@/components/customer/AccountAvatar";
+import { TrashIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCreateOrder } from "@/lib/hooks/useOrderMutations";
 import { formatCurrency } from "@/lib/utils/format";
@@ -47,11 +50,14 @@ export default function CartPage() {
 
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3 md:px-8">
-        <h1 className="text-lg font-semibold tracking-tight text-ink">
-          Your Cart {items.length > 0 && `(${items.length})`}
-        </h1>
-      </header>
+      {/* <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-white px-4 py-3 md:px-8">
+        <MenuButton />
+        <div className="min-w-0 flex-1">
+          <p className="text-lg font-bold text-ink">My Cart</p>
+          <p className="text-xs text-ink-muted">{items.length} {items.length === 1 ? "Item" : "Items"}</p>
+        </div>
+        <AccountAvatar />
+      </header> */}
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-4 py-20 text-center">
@@ -76,12 +82,12 @@ export default function CartPage() {
         </div>
       ) : (
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-6 md:p-8">
-          <FreeDeliveryProgress subtotal={subtotal} />
+          
 
-          <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-white">
+          <div className="flex flex-col gap-3">
             {items.map((item) => (
-              <div key={item.productId} className="flex items-center gap-3 p-3">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
+              <div key={item.productId} className="flex gap-3 rounded-xl border border-border bg-white p-3">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
                   {item.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.image} alt={item.name} className="h-full w-full rounded-lg object-cover" />
@@ -89,20 +95,26 @@ export default function CartPage() {
                     <span className="text-[10px] font-medium text-primary/60">{item.unit}</span>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ink">{item.name}</p>
-                  <p className="text-xs text-ink-muted">{item.packing}</p>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-ink">{item.name}</p>
+                      <p className="text-xs text-ink-muted">{item.packing}</p>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Remove item"
+                      onClick={() => setPendingRemoval(item.productId)}
+                      className="shrink-0 text-ink-muted hover:text-danger"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
                   <p className="mt-0.5 text-sm font-semibold text-ink">{formatCurrency(item.price)}</p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <QtyStepper qty={item.qty} onChange={(qty) => setQty(item.productId, qty)} size="sm" />
-                  <button
-                    type="button"
-                    onClick={() => setPendingRemoval(item.productId)}
-                    className="text-xs font-medium text-danger hover:underline"
-                  >
-                    Remove
-                  </button>
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                    <QtyStepper qty={item.qty} onChange={(qty) => setQty(item.productId, qty)} size="sm" />
+                    <span className="text-sm font-semibold text-ink">{formatCurrency(item.price * item.qty)}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -110,16 +122,16 @@ export default function CartPage() {
 
           <div className="flex flex-col gap-2 rounded-xl border border-border bg-white p-4">
             <div className="flex items-center justify-between text-sm text-ink-muted">
-              <span>Subtotal</span>
+              <span>Subtotal ({items.length} {items.length === 1 ? "Item" : "Items"})</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-sm text-ink-muted">
-              <span>Estimated GST</span>
+              <span>Estimated Tax</span>
               <span>{formatCurrency(estimatedTax)}</span>
             </div>
             <div className="mt-1 flex items-center justify-between border-t border-border pt-2 text-base font-semibold text-ink">
-              <span>Total</span>
-              <span>{formatCurrency(subtotal + estimatedTax)}</span>
+              <span>Total Amount</span>
+              <span className="text-primary">{formatCurrency(subtotal + estimatedTax)}</span>
             </div>
             <p className="text-xs text-ink-muted">Final total is confirmed by the distributor on approval.</p>
           </div>

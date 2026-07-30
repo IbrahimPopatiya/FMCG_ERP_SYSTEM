@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { CUSTOMER_NAV_ITEMS } from "@/components/customer/navItems";
+import { CUSTOMER_NAV_ITEMS, CUSTOMER_MENU_ITEMS } from "@/components/customer/navItems";
 import { CartIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
@@ -61,6 +61,25 @@ export function CustomerDesktopSidebar() {
                   {totalQty > 9 ? "9+" : totalQty}
                 </span>
               )}
+            </Link>
+          );
+        })}
+
+        <div className="my-2 border-t border-border" />
+
+        {CUSTOMER_MENU_ITEMS.map((item) => {
+          const active = pathname.startsWith(item.href);
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                active ? "bg-primary-soft text-primary" : "text-ink-muted hover:bg-surface hover:text-ink"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              {item.label}
             </Link>
           );
         })}

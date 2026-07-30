@@ -10,11 +10,17 @@ interface NavItem {
   icon?: (props: { className?: string }) => React.ReactElement;
 }
 
-export function MobileBottomNav({ items }: { items: NavItem[] }) {
+export function MobileBottomNav({
+  items,
+  className = "bg-white border-border text-ink-muted/70",
+}: {
+  items: NavItem[];
+  className?: string;
+}) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex shrink-0 border-t border-border bg-white sm:hidden">
+    <nav className={`flex shrink-0 border-t sm:hidden ${className}`}>
       {items.map((item) => {
         const active = pathname.startsWith(item.href);
         const Icon = item.icon;
@@ -22,8 +28,8 @@ export function MobileBottomNav({ items }: { items: NavItem[] }) {
           <Link
             key={item.href}
             href={item.href}
-            className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
-              active ? "text-primary" : "text-ink-muted/70"
+            className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors ${
+              active ? "text-primary opacity-100" : "text-inherit opacity-70 hover:opacity-100"
             }`}
           >
             {!!item.badge && (
