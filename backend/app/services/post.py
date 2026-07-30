@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -11,6 +12,10 @@ from app.services.product import get_product
 
 class ProductNotFoundError(Exception):
     """Raised when a post references a product that doesn't exist."""
+
+
+class PostNotFoundError(Exception):
+    """Raised when a post id doesn't match any post."""
 
 
 def _create_product_for_post(db: Session, data: PostCreate) -> Product:
@@ -67,3 +72,36 @@ def list_posts(db: Session) -> list[Post]:
         .order_by(Post.created_at.desc())
         .all()
     )
+
+
+def list_all_posts(db: Session) -> list[Post]:
+    """Newest first, including inactive - for admin post management."""
+    return db.query(Post).order_by(Post.created_at.desc()).all()
+
+
+def get_post(db: Session, post_id: uuid.UUID) -> Post | None:
+    return db.query(Post).filter(Post.id == post_id).first()
+
+
+def set_post_active(db: Session, post_id: uuid.UUID, is_active: bool) -> Post:
+    post = get_post(db, post_id)
+    if post is None:
+        raise PostNotFoundError("Post not found")
+
+    post.is_active = is_active
+    db.commit()
+    db.refresh(post)
+    return post
+
+
+def repost(db: Session, post_id: uuid.UUID) -> Post:
+    """Bumps the post back to the top of the newest-first feed and reactivates it."""
+    post = get_post(db, post_id)
+    if post is None:
+        raise PostNotFoundError("Post not found")
+
+    post.created_at = datetime.now(timezone.utc)
+    post.is_active = True
+    db.commit()
+    db.refresh(post)
+    return post

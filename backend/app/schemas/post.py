@@ -14,6 +14,10 @@ class PostCreate(BaseModel):
     quantity_in_box: int
 
 
+class PostStatusUpdate(BaseModel):
+    is_active: bool
+
+
 class PostResponse(BaseModel):
     id: uuid.UUID
     product_id: uuid.UUID
