@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
+import { Badge } from "@/components/ui/Badge";
 import { TopBar } from "@/components/layout/TopBar";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { SearchIcon, FilterIcon, PersonIcon, BoxIcon, ChevronRightIcon } from "@/components/admin/icons";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
 import { useOrders } from "@/lib/hooks/useOrders";
+import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { OrderStatus, SalesOrderResponse } from "@/types/salesOrder";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -40,15 +42,31 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const [showFilters, setShowFilters] = useState(false);
-  const orders = useOrders();
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useOrders();
   const customers = useCustomerDirectorySample();
+
+  const orders = { isLoading, isError, refetch };
+  const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
 
   const customerName = (customerId: string) =>
     customers.data?.items.find((c) => c.id === customerId)?.business_name ?? "Customer";
 
+  const allLoaded = useMemo(
+    () => data?.pages.flatMap((page) => page.items) ?? [],
+    [data]
+  );
+
   const sorted = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return [...(orders.data ?? [])]
+    return allLoaded
       .filter((o) => statusFilter === "all" || o.status === statusFilter)
       .filter((o) => {
         if (!term) return true;
@@ -56,10 +74,9 @@ export default function AdminOrdersPage() {
           o.order_number.toLowerCase().includes(term) ||
           customerName(o.customer_id).toLowerCase().includes(term)
         );
-      })
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orders.data, statusFilter, search, customers.data]);
+  }, [allLoaded, statusFilter, search, customers.data]);
 
   return (
     <div>
@@ -121,7 +138,7 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {!orders.isLoading && !orders.isError && sorted.length === 0 && (
+      {!orders.isLoading && !orders.isError && sorted.length === 0 && !hasNextPage && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No orders here</p>
           <p className="text-sm text-ink-muted">
@@ -130,7 +147,7 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {!orders.isLoading && !orders.isError && sorted.length > 0 && (
+      {!orders.isLoading && !orders.isError && (sorted.length > 0 || hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
           <div className="hidden sm:block">
@@ -189,6 +206,10 @@ export default function AdminOrdersPage() {
                 </Card>
               </Link>
             ))}
+          </div>
+
+          <div ref={sentinelRef} className="flex justify-center py-6">
+            {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}
           </div>
         </div>
       )}

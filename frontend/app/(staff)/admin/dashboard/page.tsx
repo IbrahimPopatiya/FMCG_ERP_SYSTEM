@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { TopBar } from "@/components/layout/TopBar";
 import { Card } from "@/components/ui/Card";
@@ -112,7 +113,23 @@ export default function DashboardPage() {
   const orders = useOrders();
   const customers = useCustomerDirectorySample();
 
-  const allOrders = orders.data ?? [];
+  const allOrders = orders.data?.pages.flatMap((page) => page.items) ?? [];
+  const totalOrders = orders.data?.pages[0]?.total ?? 0;
+
+  // Orders are sorted newest-first, so this week's stats only need pages up
+  // to the first order older than 7 days - keep loading until we hit that,
+  // instead of pulling the entire order history just to add up a week's worth.
+  const oldestLoaded = allOrders[allOrders.length - 1];
+  const shouldLoadMoreForWeeklyStats =
+    !!orders.hasNextPage && (!oldestLoaded || isThisWeek(oldestLoaded.created_at));
+
+  useEffect(() => {
+    if (shouldLoadMoreForWeeklyStats) {
+      orders.fetchNextPage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldLoadMoreForWeeklyStats]);
+
   const todaysOrders = allOrders.filter((o) => isToday(o.created_at));
   const thisWeekOrders = allOrders.filter((o) => isThisWeek(o.created_at));
   const weeklyValue = thisWeekOrders.reduce((sum, o) => sum + o.total, 0);
@@ -136,7 +153,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
             label="Total Orders"
-            value={String(allOrders.length)}
+            value={String(totalOrders)}
             hint={todaysOrders.length > 0 ? `+${todaysOrders.length} today` : undefined}
             tone="blue"
             Icon={CartIcon}
@@ -151,9 +168,8 @@ export default function DashboardPage() {
             isLoading={customers.isLoading}
           />
           <StatCard
-            label="Total Order Amount"
-            value={formatCurrency(allOrders.reduce((sum, o) => sum + o.total, 0))}
-            hint={weeklyValue > 0 ? `${formatCurrency(weeklyValue)} this week` : undefined}
+            label="This Week's Order Amount"
+            value={formatCurrency(weeklyValue)}
             tone="purple"
             Icon={WalletIcon}
             isLoading={isLoading}

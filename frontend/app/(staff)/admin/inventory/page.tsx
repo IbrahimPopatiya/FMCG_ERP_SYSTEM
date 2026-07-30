@@ -13,6 +13,7 @@ import { AdjustStockForm } from "@/components/inventory/AdjustStockForm";
 import { TransferStockForm } from "@/components/inventory/TransferStockForm";
 import { useCreateInventoryAdjustment, useCreateInventoryTransfer } from "@/lib/hooks/useInventoryMutations";
 import { useInventory } from "@/lib/hooks/useInventory";
+import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useProductStockList } from "@/lib/hooks/useProductStockList";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
 import type { InventoryResponse } from "@/types/inventory";
@@ -48,15 +49,21 @@ export default function InventoryPage() {
   const products = useProductStockList();
   const createAdjustment = useCreateInventoryAdjustment();
   const createTransfer = useCreateInventoryTransfer();
+  const sentinelRef = useInfiniteScrollSentinel(() => inventory.fetchNextPage(), !!inventory.hasNextPage);
 
   const isLoading = inventory.isLoading || warehouses.isLoading || products.isLoading;
   const isError = inventory.isError || warehouses.isError || products.isError;
+
+  const inventoryRows = useMemo(
+    () => inventory.data?.pages.flatMap((page) => page.items) ?? [],
+    [inventory.data]
+  );
 
   const rows: InventoryRow[] = useMemo(() => {
     const productMap = new Map((products.data?.items ?? []).map((p) => [p.id, p]));
     const warehouseMap = new Map((warehouses.data ?? []).map((w) => [w.id, w]));
 
-    return (inventory.data ?? []).map((row) => {
+    return inventoryRows.map((row) => {
       const product = productMap.get(row.product_id);
       const warehouse = warehouseMap.get(row.warehouse_id);
       return {
@@ -67,7 +74,7 @@ export default function InventoryPage() {
         warehouseName: warehouse?.name ?? "Warehouse",
       };
     });
-  }, [inventory.data, products.data, warehouses.data]);
+  }, [inventoryRows, products.data, warehouses.data]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -128,14 +135,14 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length === 0 && (
+      {!isLoading && !isError && filtered.length === 0 && !inventory.hasNextPage && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No stock records found</p>
           <p className="text-sm text-ink-muted">Try a different search or warehouse.</p>
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length > 0 && (
+      {!isLoading && !isError && (filtered.length > 0 || inventory.hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
           <div className="hidden sm:block">
@@ -185,6 +192,10 @@ export default function InventoryPage() {
                 </Badge>
               </Card>
             ))}
+          </div>
+
+          <div ref={sentinelRef} className="flex justify-center py-6">
+            {inventory.isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}
           </div>
         </div>
       )}

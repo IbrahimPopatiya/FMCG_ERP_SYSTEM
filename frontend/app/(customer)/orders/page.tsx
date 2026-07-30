@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { useOrders } from "@/lib/hooks/useOrders";
+import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 
 export default function OrdersPage() {
-  const orders = useOrders();
-  const sorted = [...(orders.data ?? [])].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
+  const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useOrders();
+  const orders = { isLoading, isError, refetch };
+  const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+  const sorted = data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <div className="flex flex-col">
@@ -38,7 +41,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {!orders.isLoading && !orders.isError && sorted.length === 0 && (
+      {!orders.isLoading && !orders.isError && sorted.length === 0 && !hasNextPage && (
         <div className="flex flex-col items-center gap-3 px-4 py-20 text-center">
           <h2 className="text-base font-semibold text-ink">No orders yet</h2>
           <p className="max-w-xs text-sm text-ink-muted">
@@ -52,7 +55,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {!orders.isLoading && !orders.isError && sorted.length > 0 && (
+      {!orders.isLoading && !orders.isError && (sorted.length > 0 || hasNextPage) && (
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 p-4 pb-6 md:p-8">
           {sorted.map((order) => (
             <Link
@@ -68,6 +71,9 @@ export default function OrdersPage() {
               <OrderStatusBadge status={order.status} />
             </Link>
           ))}
+          <div ref={sentinelRef} className="flex justify-center py-4">
+            {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}
+          </div>
         </div>
       )}
     </div>
