@@ -1,4 +1,5 @@
 export interface PostCreate {
+  product_id?: string | null;
   image?: string | null;
   product_name: string;
   price: number;

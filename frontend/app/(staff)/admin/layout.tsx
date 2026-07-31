@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DesktopSidebar } from "@/components/layout/DesktopSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { AdminMenuProvider } from "@/components/layout/AdminMenu";
 import { getStaffRole } from "@/lib/auth/session";
 import { getRoleNav, ROLE_NAV } from "@/lib/nav/roleNav";
 
@@ -18,11 +19,17 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="staff-theme flex flex-1 overflow-hidden bg-background">
-      <DesktopSidebar items={nav.desktop} />
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <main className="min-h-0 flex-1 overflow-y-auto bg-background">{children}</main>
-        <MobileBottomNav items={nav.mobile} />
-      </div>
+      <AdminMenuProvider items={nav.desktop}>
+        <DesktopSidebar items={nav.desktop} />
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+          <main className="min-h-0 flex-1 overflow-y-auto bg-background">{children}</main>
+          <MobileBottomNav
+            items={nav.mobile}
+            variant="island"
+            className="border-border/60 bg-white/80 text-ink-muted"
+          />
+        </div>
+      </AdminMenuProvider>
     </div>
   );
 }

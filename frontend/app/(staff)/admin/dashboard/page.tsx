@@ -138,6 +138,7 @@ export default function DashboardPage() {
     allCustomers.find((c) => c.id === customerId)?.business_name ?? "Customer";
 
   const recentOrders = [...allOrders]
+    .filter((o) => o.status === "pending")
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 8);
 
@@ -148,7 +149,7 @@ export default function DashboardPage() {
       <TopBar title="Home" subtitle="Dashboard Overview" />
 
       <div className="flex flex-col gap-6 p-4 sm:p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-">
           <StatCard
             label="Total Orders"
             value={String(totalOrders)}
@@ -164,13 +165,6 @@ export default function DashboardPage() {
             tone="green"
             Icon={PeopleIcon}
             isLoading={customers.isLoading}
-          />
-          <StatCard
-            label="This Week's Order Amount"
-            value={formatCurrency(weeklyValue)}
-            tone="purple"
-            Icon={WalletIcon}
-            isLoading={isLoading}
           />
         </div>
 

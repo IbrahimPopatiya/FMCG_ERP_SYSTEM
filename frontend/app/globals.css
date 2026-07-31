@@ -124,11 +124,11 @@ body {
   --color-accent-soft: #ececee;
 }
 
-/* Staff/admin shell — keep the previous warm red ramp. */
+/* Staff/admin shell — black/ink primary ramp. */
 .staff-theme {
-  --color-primary: #d12626;
-  --color-primary-hover: #b01e1e;
-  --color-primary-soft: #fdeae8;
+  --color-primary: #1c1c1e;
+  --color-primary-hover: #0a0a0b;
+  --color-primary-soft: #f2f2f3;
 
   --color-accent: #d9a441;
   --color-accent-soft: #fdf1d8;

@@ -1,26 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { ProductStatusBadge } from "@/components/products/ProductStatusBadge";
-import { SearchIcon, PlusIcon, PencilIcon, TrashIcon } from "@/components/admin/icons";
-import { useBrands } from "@/lib/hooks/useBrands";
-import { useCategories } from "@/lib/hooks/useCategories";
+import { AdminProductCard } from "@/components/products/AdminProductCard";
+import { SearchIcon, PlusIcon } from "@/components/admin/icons";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
-import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import { useProductsManage } from "@/lib/hooks/useProductsManage";
 import { useSetProductStatus } from "@/lib/hooks/useProductMutations";
-import { formatCurrency } from "@/lib/utils/format";
+import { useCreatePost } from "@/lib/hooks/usePostMutations";
 import type { ProductResponse } from "@/types/product";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
+
+// Mirrors the backend's own leading-digit parse (app/services/post.py
+// _extract_box_quantity) so a post's box quantity lines up with the
+// product's packing string, e.g. "12 x 500ml" -> 12.
+function extractBoxQuantity(packing: string): number {
+  const match = packing.trim().match(/^\d+/);
+  return match ? Number(match[0]) : 1;
+}
 
 function SkeletonRows() {
   return (
@@ -77,19 +79,52 @@ export default function AdminProductsPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useProductsManage(debouncedSearch);
-  const categories = useCategories();
-  const brands = useBrands();
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
-  const isDesktop = useIsDesktop();
 
   const products = data?.pages.flatMap((page) => page.items) ?? [];
   const total = data?.pages[0]?.total ?? 0;
 
-  const categoryName = (id: string | null) =>
-    categories.data?.find((c) => c.id === id)?.name ?? "—";
-  const brandName = (id: string | null) => brands.data?.find((b) => b.id === id)?.name ?? "—";
   const setStatus = useSetProductStatus();
+  const handleToggleStatus = (p: ProductResponse) =>
+    setStatus.mutate({ productId: p.id, status: p.status === "active" ? "inactive" : "active" });
+
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const createPost = useCreatePost();
+
+  function toggleSelected(p: ProductResponse) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(p.id)) next.delete(p.id);
+      else next.add(p.id);
+      return next;
+    });
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  async function handleRepost() {
+    const selectedProducts = products.filter((p) => selectedIds.has(p.id));
+    if (selectedProducts.length === 0) return;
+
+    await Promise.all(
+      selectedProducts.map((p) =>
+        createPost.mutateAsync({
+          product_id: p.id,
+          image: p.image,
+          product_name: p.name,
+          price: p.selling_price,
+          mrp: p.mrp,
+          quantity_in_box: extractBoxQuantity(p.packing),
+        })
+      )
+    );
+    exitSelectMode();
+  }
 
   return (
     <div>
@@ -105,12 +140,33 @@ export default function AdminProductsPage() {
                 : "Manage what customers can order"}
             </p>
           </div>
-          <Link href="/admin/products/new">
-            <Button type="button" className="w-full gap-1.5 rounded-full sm:w-auto">
-              <PlusIcon className="h-4 w-4" />
-              Add Product
+          <div className="flex items-center gap-2">
+            {selectMode && (
+              <button
+                type="button"
+                onClick={exitSelectMode}
+                className="rounded-full px-3.5 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+              >
+                Cancel
+              </button>
+            )}
+            <Button
+              type="button"
+              variant={selectMode ? "primary" : "secondary"}
+              className="gap-1.5 rounded-full"
+              isLoading={createPost.isPending}
+              disabled={selectMode && selectedIds.size === 0}
+              onClick={selectMode ? handleRepost : () => setSelectMode(true)}
+            >
+              {selectMode ? `Repost${selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}` : "Post"}
             </Button>
-          </Link>
+            <Link href="/admin/products/new">
+              <Button type="button" className="w-full gap-1.5 rounded-full sm:w-auto">
+                <PlusIcon className="h-4 w-4" />
+                Add Product
+              </Button>
+            </Link>
+          </div>
         </div>
         <div className="relative max-w-sm">
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
@@ -141,93 +197,18 @@ export default function AdminProductsPage() {
 
       {!isLoading && !isError && total > 0 && (
         <div className="p-4 sm:p-6">
-          {isDesktop && (
-            <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-              <Table<ProductResponse>
-                rowKey={(p) => p.id}
-                rows={products}
-                columns={[
-                  {
-                    header: "Product",
-                    render: (p) => (
-                      <Link
-                        href={`/admin/products/${p.id}`}
-                        className="flex items-center gap-3 font-medium text-ink hover:text-primary"
-                      >
-                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
-                          {p.image ? (
-                            <Image src={p.image} alt={p.name} fill sizes="40px" className="object-cover" />
-                          ) : (
-                            <span className="text-xs font-medium text-ink-muted">{p.unit.slice(0, 2)}</span>
-                          )}
-                        </div>
-                        <div>
-                          {p.name}
-                          <div className="font-mono text-xs font-normal text-ink-muted">{p.sku}</div>
-                        </div>
-                      </Link>
-                    ),
-                  },
-                  { header: "Category", render: (p) => categoryName(p.category_id) },
-                  { header: "Brand", render: (p) => brandName(p.brand_id) },
-                  { header: "Packing", render: (p) => `${p.unit} · ${p.packing}` },
-                  { header: "MRP", render: (p) => formatCurrency(p.mrp) },
-                  { header: "Selling price", render: (p) => formatCurrency(p.selling_price) },
-                  { header: "GST", render: (p) => `${p.gst_rate}%` },
-                  { header: "Status", render: (p) => <ProductStatusBadge status={p.status} /> },
-                ]}
-              />
-            </div>
-          )}
-
-          {isDesktop === false && (
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
             {products.map((p) => (
-              <Card key={p.id} className="flex items-center gap-3 rounded-2xl">
-                <Link href={`/admin/products/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface">
-                    {p.image ? (
-                      <Image src={p.image} alt={p.name} fill sizes="48px" className="object-cover" />
-                    ) : (
-                      <span className="text-xs font-medium text-ink-muted">{p.unit.slice(0, 2)}</span>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{p.name}</p>
-                    <p className="mt-0.5 flex items-baseline gap-2 text-sm">
-                      <span className="font-bold text-primary">{formatCurrency(p.selling_price)}</span>
-                      {p.mrp > p.selling_price && (
-                        <span className="text-xs text-ink-muted line-through">{formatCurrency(p.mrp)}</span>
-                      )}
-                    </p>
-                    <p className="text-xs text-ink-muted">
-                      {p.unit} · {p.packing}
-                    </p>
-                  </div>
-                </Link>
-                <div className="flex shrink-0 flex-col items-center gap-2">
-                  <Link
-                    href={`/admin/products/${p.id}`}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-ink-muted transition-colors hover:bg-surface"
-                    aria-label="Edit product"
-                  >
-                    <PencilIcon className="h-4 w-4" />
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setStatus.mutate({ productId: p.id, status: p.status === "active" ? "inactive" : "active" })
-                    }
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-danger-soft text-danger transition-colors hover:bg-danger hover:text-white"
-                    aria-label={p.status === "active" ? "Deactivate product" : "Activate product"}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              </Card>
+              <AdminProductCard
+                key={p.id}
+                product={p}
+                onToggleStatus={handleToggleStatus}
+                selectMode={selectMode}
+                selected={selectedIds.has(p.id)}
+                onToggleSelect={toggleSelected}
+              />
             ))}
           </div>
-          )}
 
           <div ref={sentinelRef} className="flex justify-center py-6">
             {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}
