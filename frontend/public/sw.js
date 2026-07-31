@@ -20,6 +20,11 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
+  // Only ever handle http(s) requests - browser extensions (chrome-extension://,
+  // moz-extension://, ...) can surface fetch events through the page's SW
+  // scope too, and the Cache API throws if you try to cache.put() those.
+  if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
   // Next's own build output (/_next/static/...) is content-hashed and never
   // changes for a given deploy - serve it straight from cache instead of
   // re-validating over the network on every navigation, and only go to the
