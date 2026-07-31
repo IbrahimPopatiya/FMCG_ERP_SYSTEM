@@ -31,16 +31,19 @@ function CustomerMobileNav() {
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   return (
     <CartProvider>
-      <CustomerMenuProvider>
-        <div className="customer-theme flex flex-1 overflow-hidden bg-background">
+      {/* customer-theme must wrap the menu drawer too — CustomerMenuProvider
+          renders the slide-out as a sibling of its children, so if the theme
+          class sits inside the provider the drawer falls back to root blue. */}
+      <div className="customer-theme flex flex-1 overflow-hidden bg-background">
+        <CustomerMenuProvider>
           <CustomerDesktopSidebar />
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
             <AppTopBar title="Zaid Traders" leading={<MenuButton />} trailing={<AccountAvatar />} />
             <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
             <CustomerMobileNav />
           </div>
-        </div>
-      </CustomerMenuProvider>
+        </CustomerMenuProvider>
+      </div>
     </CartProvider>
   );
 }
