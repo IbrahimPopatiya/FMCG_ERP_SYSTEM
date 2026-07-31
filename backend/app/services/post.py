@@ -104,9 +104,17 @@ def list_posts(db: Session) -> list[Post]:
     )
 
 
-def list_all_posts(db: Session) -> list[Post]:
-    """Newest first, including inactive - for admin post management."""
-    return db.query(Post).order_by(Post.created_at.desc()).all()
+def list_all_posts(
+    db: Session, page: int, page_size: int, search: str | None = None
+) -> tuple[list[Post], int]:
+    """Newest first, including inactive, paginated - for admin post management."""
+    query = db.query(Post)
+    if search:
+        query = query.filter(Post.product_name.ilike(f"%{search}%"))
+    query = query.order_by(Post.created_at.desc())
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return items, total
 
 
 def get_post(db: Session, post_id: uuid.UUID) -> Post | None:

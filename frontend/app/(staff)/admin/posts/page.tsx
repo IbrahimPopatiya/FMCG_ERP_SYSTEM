@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAdminPosts } from "@/lib/hooks/usePosts";
 import { useRepostPost, useSetPostStatus } from "@/lib/hooks/usePostMutations";
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
+import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency } from "@/lib/utils/format";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 import type { PostResponse } from "@/types/post";
@@ -100,15 +103,22 @@ function PostRow({ post }: { post: PostResponse }) {
 export default function AdminPostsPage() {
   useRoleGuard(["admin", "salesman", "manager"]);
 
-  const { data, isLoading, isError, refetch } = useAdminPosts();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useAdminPosts(debouncedSearch);
 
-  const posts = useMemo(() => {
-    const all = data ?? [];
-    const term = search.trim().toLowerCase();
-    if (!term) return all;
-    return all.filter((post) => post.product_name.toLowerCase().includes(term));
-  }, [data, search]);
+  const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+
+  const posts = data?.pages.flatMap((page) => page.items) ?? [];
+  const total = data?.pages[0]?.total ?? 0;
 
   return (
     <div>
@@ -117,8 +127,8 @@ export default function AdminPostsPage() {
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-ink">Posts</h1>
             <p className="mt-0.5 text-sm text-ink-muted">
-              {(data ?? []).length > 0
-                ? `${(data ?? []).length} post${(data ?? []).length === 1 ? "" : "s"} promoted on the customer home feed`
+              {total > 0
+                ? `${total} post${total === 1 ? "" : "s"} promoted on the customer home feed`
                 : "Promote products on the customer home feed"}
             </p>
           </div>
@@ -150,13 +160,19 @@ export default function AdminPostsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && posts.length === 0 && <EmptyState hasSearch={search.trim().length > 0} />}
+      {!isLoading && !isError && posts.length === 0 && !hasNextPage && (
+        <EmptyState hasSearch={search.trim().length > 0} />
+      )}
 
-      {!isLoading && !isError && posts.length > 0 && (
+      {!isLoading && !isError && (posts.length > 0 || hasNextPage) && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">
           {posts.map((post) => (
             <PostRow key={post.id} post={post} />
           ))}
+
+          <div ref={sentinelRef} className="flex justify-center py-6">
+            {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}
+          </div>
         </div>
       )}
     </div>

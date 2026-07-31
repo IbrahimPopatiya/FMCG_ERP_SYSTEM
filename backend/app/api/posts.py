@@ -1,11 +1,13 @@
 import uuid
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import Principal, get_current_principal, get_current_user, require_staff
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.common import Page
 from app.schemas.post import PostCreate, PostResponse, PostStatusUpdate
 from app.services import post as post_service
 from app.services.post import PostNotFoundError, ProductNotFoundError
@@ -34,13 +36,18 @@ def list_posts(
     return post_service.list_posts(db)
 
 
-@router.get("/admin", response_model=list[PostResponse])
+@router.get("/admin", response_model=Page[PostResponse])
 def list_all_posts(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ):
-    """Newest first, including inactive - for the admin Posts management screen."""
-    return post_service.list_all_posts(db)
+    """Newest first, including inactive, paginated - for the admin Posts
+    management screen. `search` matches the post's product name."""
+    items, total = post_service.list_all_posts(db, page, page_size, search)
+    return Page(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.patch("/{post_id}/status", response_model=PostResponse)
