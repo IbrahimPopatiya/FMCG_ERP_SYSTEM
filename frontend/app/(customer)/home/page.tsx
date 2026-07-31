@@ -171,7 +171,7 @@ function ProductDetailSheet({
           <button
             type="button"
             onClick={() => onConfirm(pendingQty)}
-            className="flex h-12 w-full items-center justify-center rounded-xl bg-[#d12626] text-sm font-semibold text-white transition-colors hover:bg-red-700"
+            className="flex h-12 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
           >
             Add to Cart
           </button>
@@ -218,7 +218,7 @@ function ReelSlide({
       <div className="absolute bottom-24 right-3 flex flex-col items-center gap-5">
         <button type="button" aria-label="Like" onClick={onToggleLike} className="flex flex-col items-center gap-1">
           <HeartIcon
-            className={`h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] ${liked ? "text-[#d12626]" : "text-white"}`}
+            className={`h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] ${liked ? "text-primary" : "text-white"}`}
             filled={liked}
           />
           <span className="text-[12px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
@@ -228,7 +228,7 @@ function ReelSlide({
 
         <button type="button" aria-label="Save" onClick={onToggleSave} className="flex flex-col items-center gap-1">
           <BookmarkIcon
-            className={`h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] ${saved ? "text-[#d12626]" : "text-white"}`}
+            className={`h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] ${saved ? "text-primary" : "text-white"}`}
             filled={saved}
           />
           <span className="text-[12px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
@@ -247,7 +247,7 @@ function ReelSlide({
           className="flex flex-col items-center gap-1"
         >
           <CartIcon
-            className={`h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] ${qty > 0 ? "text-[#d12626]" : "text-white"}`}
+            className={`h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] ${qty > 0 ? "text-primary" : "text-white"}`}
           />
           {qty > 0 && (
             <span className="text-[12px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">{qty}</span>

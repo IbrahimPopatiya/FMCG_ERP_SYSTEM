@@ -91,13 +91,9 @@ body {
 }
 
 /*
- * Customer storefront theme. Scoped to the .customer-theme wrapper so the
- * staff/admin blue theme is untouched. Because every shared UI primitive
- * (Button, Badge, Card, ...) is built on the same `--color-*` custom
- * properties via Tailwind's `@theme inline`, overriding the properties here
- * re-skins every existing component automatically — no component rewrites
- * needed. Orange ramp sampled from customer-design.jpeg: #EE642F primary,
- * #D6551F hover, #FDEAE1 soft tint.
+ * Shared light-shell neutrals for customer + staff. Brand color ramps are
+ * set per theme below so staff keeps its own palette while the storefront
+ * can swap independently.
  */
 .customer-theme,
 .staff-theme {
@@ -107,17 +103,33 @@ body {
   --color-ink: #1c1c1e;
   --color-ink-muted: #6b6b70;
 
-  --color-primary: #d12626;
-  --color-primary-hover: #b01e1e;
-  --color-primary-soft: #fdeae8;
-
-  --color-accent: #d9a441;
-  --color-accent-soft: #fdf1d8;
-
   --color-danger: #e0393f;
   --color-danger-hover: #c22e33;
   --color-danger-soft: #fce9ea;
 
   --color-surface: #f7f7f8;
   --color-border: #ececee;
+}
+
+/*
+ * Customer storefront — charcoal gray on white: clean, premium, quiet.
+ * Soft tint is a cool gray wash so chips/buttons don't feel colored.
+ */
+.customer-theme {
+  --color-primary: #1c1c1e;
+  --color-primary-hover: #0a0a0b;
+  --color-primary-soft: #f2f2f3;
+
+  --color-accent: #6b6b70;
+  --color-accent-soft: #ececee;
+}
+
+/* Staff/admin shell — keep the previous warm red ramp. */
+.staff-theme {
+  --color-primary: #d12626;
+  --color-primary-hover: #b01e1e;
+  --color-primary-soft: #fdeae8;
+
+  --color-accent: #d9a441;
+  --color-accent-soft: #fdf1d8;
 }
