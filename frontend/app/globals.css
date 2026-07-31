@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /*
  * Brand tokens. DMS is a distribution/logistics tool — the palette is a
  * five-stop blue ramp (light sky -> deep navy) from final_docs/image.png:

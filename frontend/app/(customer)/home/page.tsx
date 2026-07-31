@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import {
+  BellIcon,
   CartIcon,
   HeartIcon,
   BookmarkIcon,
   ShareIcon,
   BackArrowIcon,
+  CategoryAllIcon,
   CloseIcon,
   TagIcon,
   SparkleIcon,
@@ -18,10 +20,13 @@ import {
 import { useCart } from "@/components/cart/CartProvider";
 import { useProducts } from "@/lib/hooks/useProducts";
 import { usePosts } from "@/lib/hooks/usePosts";
+import { useCategories } from "@/lib/hooks/useCategories";
+import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
 import { formatCurrency } from "@/lib/utils/format";
 import { dummyProductImage } from "@/lib/utils/dummyProductImage";
 import type { ProductCatalogResponse } from "@/types/product";
 import type { PostResponse } from "@/types/post";
+import type { CategoryResponse } from "@/types/categories";
 
 // A post is a promoted listing referencing a real product — render it in the
 // same reel using the product's real id/fields so "Add to bag" etc. still
@@ -44,6 +49,71 @@ function postToFeedItem(post: PostResponse): ProductCatalogResponse {
 }
 
 const FEED_COUNT = 8;
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
+function CategoryBar({
+  categories,
+  selectedId,
+  onSelect,
+}: {
+  categories: CategoryResponse[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  return (
+    <div className="flex gap-4 overflow-x-auto px-4 pb-3 pt-1 scrollbar-none">
+      <button
+        type="button"
+        onClick={() => onSelect(null)}
+        className="flex shrink-0 flex-col items-center gap-1.5"
+      >
+        <span
+          className={`flex h-12 w-12 items-center justify-center rounded-full bg-white text-ink transition-all ${
+            selectedId === null ? "ring-2 ring-[#d12626] ring-offset-2 ring-offset-ink" : ""
+          }`}
+        >
+          <CategoryAllIcon className="h-5 w-5" />
+        </span>
+        <span className={`text-xs font-medium ${selectedId === null ? "text-[#d12626]" : "text-white/70"}`}>
+          All
+        </span>
+      </button>
+
+      {categories.map((category) => {
+        const active = selectedId === category.id;
+        return (
+          <button
+            key={category.id}
+            type="button"
+            onClick={() => onSelect(category.id)}
+            className="flex shrink-0 flex-col items-center gap-1.5"
+          >
+            <span
+              className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white text-ink transition-all ${
+                active ? "ring-2 ring-[#d12626] ring-offset-2 ring-offset-ink" : ""
+              }`}
+            >
+              {category.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={category.image} alt={category.name} className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold">{initials(category.name)}</span>
+              )}
+            </span>
+            <span className={`max-w-[64px] truncate text-xs font-medium ${active ? "text-[#d12626]" : "text-white/70"}`}>
+              {category.name}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 // Deterministic pseudo-counts so the same product always shows the same
 // like/save numbers across renders, without needing real backend fields.
@@ -292,20 +362,28 @@ export default function HomePage() {
   const router = useRouter();
   const products = useProducts();
   const posts = usePosts();
+  const categories = useCategories();
+  const currentCustomer = useCurrentCustomer();
   const { addItem, getQty, setQty } = useCart();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [openProductId, setOpenProductId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   // Posts (newest first, from the API) lead the feed, followed by the
   // regular product catalog — products already referenced by a post are
   // skipped from the catalog tail so the same item doesn't show up twice.
+  // Picking a category filters the whole feed down to that category; "All"
+  // (selectedCategoryId === null) shows everything, capped to FEED_COUNT.
   const feedProducts = useMemo(() => {
     const postItems = (posts.data ?? []).map(postToFeedItem);
     const postedProductIds = new Set(postItems.map((p) => p.id));
     const catalogItems = (products.data ?? []).filter((p) => !postedProductIds.has(p.id));
-    return [...postItems, ...catalogItems].slice(0, FEED_COUNT);
-  }, [posts.data, products.data]);
+    const combined = [...postItems, ...catalogItems];
+
+    if (selectedCategoryId === null) return combined.slice(0, FEED_COUNT);
+    return combined.filter((p) => p.category_id === selectedCategoryId);
+  }, [posts.data, products.data, selectedCategoryId]);
   const openProduct = feedProducts.find((p) => p.id === openProductId) ?? null;
   const isLoading = products.isLoading || posts.isLoading;
 
@@ -327,8 +405,37 @@ export default function HomePage() {
     }
   }
 
+  const businessName = currentCustomer.data?.business_name ?? "";
+
   return (
     <div className="relative flex h-full flex-col bg-ink">
+      <div className="shrink-0 border-b border-white/5 bg-ink pt-3">
+        <div className="flex items-center justify-between px-4 pb-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">
+              {businessName ? initials(businessName) : ""}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-white">{businessName || "Welcome"}</p>
+              <p className="truncate text-xs text-white/50">Wholesale &amp; Distribution</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            aria-label="Notifications"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white"
+          >
+            <BellIcon className="h-4.5 w-4.5" />
+          </button>
+        </div>
+
+        <CategoryBar
+          categories={categories.data ?? []}
+          selectedId={selectedCategoryId}
+          onSelect={setSelectedCategoryId}
+        />
+      </div>
+
       {isLoading && (
         <div className="flex flex-1 flex-col gap-2 p-3">
           <Skeleton className="h-full w-full" />
@@ -336,8 +443,8 @@ export default function HomePage() {
       )}
 
       {!isLoading && feedProducts.length === 0 && (
-        <p className="flex flex-1 items-center justify-center px-4 text-center text-sm text-ink-muted">
-          No products to show yet.
+        <p className="flex flex-1 items-center justify-center px-4 text-center text-sm text-white/60">
+          {selectedCategoryId ? "No products in this category yet." : "No products to show yet."}
         </p>
       )}
 

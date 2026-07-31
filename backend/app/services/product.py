@@ -49,7 +49,7 @@ def list_all_products(
     return items, total
 
 
-def create_product(db: Session, data: ProductCreate) -> Product:
+def create_product(db: Session, data: ProductCreate, created_by: uuid.UUID) -> Product:
     product = Product(**data.model_dump())
     db.add(product)
     try:
@@ -58,6 +58,13 @@ def create_product(db: Session, data: ProductCreate) -> Product:
         db.rollback()
         raise DuplicateProductError("A product with this sku or barcode already exists")
     db.refresh(product)
+
+    # Every new product is auto-posted to the customer Home feed too - see
+    # app/services/post.py:create_post_for_product.
+    from app.services import post as post_service
+
+    post_service.create_post_for_product(db, product, created_by)
+
     return product
 
 

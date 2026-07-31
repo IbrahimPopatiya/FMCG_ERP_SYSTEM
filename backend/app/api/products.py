@@ -74,7 +74,7 @@ def create_product(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        return product_service.create_product(db, data)
+        return product_service.create_product(db, data, current_user.id)
     except DuplicateProductError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
