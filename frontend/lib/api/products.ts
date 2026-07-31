@@ -11,6 +11,28 @@ export function listProducts() {
   return api.get<ProductCatalogResponse[]>("/products").then((res) => res.data);
 }
 
+export interface ProductsFeedParams {
+  page: number;
+  pageSize: number;
+  search?: string;
+  categoryId?: string | null;
+  sort?: "popular" | "price_low" | "price_high" | "name";
+}
+
+export function listProductsFeed({ page, pageSize, search, categoryId, sort }: ProductsFeedParams) {
+  return api
+    .get<Page<ProductCatalogResponse>>("/products/feed", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: search || undefined,
+        category_id: categoryId || undefined,
+        sort: sort || undefined,
+      },
+    })
+    .then((res) => res.data);
+}
+
 export function listProductsForManagement(page: number, pageSize: number, search?: string) {
   return api
     .get<Page<ProductResponse>>("/products/manage", {

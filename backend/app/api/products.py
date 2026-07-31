@@ -54,6 +54,47 @@ def list_products(
     ]
 
 
+@router.get("/feed", response_model=Page[ProductCatalogResponse])
+def list_products_feed(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(12, ge=1, le=100),
+    search: Optional[str] = Query(default=None),
+    category_id: Optional[uuid.UUID] = Query(default=None),
+    sort: str = Query(default="popular"),
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Paginated customer catalog feed - the browsing/scrolling version of
+    `GET /products` used by the customer Products screen. `GET /products`
+    itself stays unpaginated since it's also used to populate full-catalog
+    dropdowns/lookups elsewhere (inventory, purchases, returns, price lists)."""
+    price_list_id = principal.customer.price_list_id if principal.type == "customer" else None
+
+    products, total = product_service.list_active_products_feed(
+        db, page, page_size, search, category_id, sort
+    )
+    prices = price_list_service.get_effective_prices(
+        db, price_list_id, [(p.id, p.selling_price) for p in products]
+    )
+    items = [
+        ProductCatalogResponse(
+            id=p.id,
+            sku=p.sku,
+            name=p.name,
+            category_id=p.category_id,
+            brand_id=p.brand_id,
+            unit=p.unit,
+            packing=p.packing,
+            mrp=p.mrp,
+            effective_price=prices[p.id],
+            gst_rate=p.gst_rate,
+            image=p.image,
+        )
+        for p in products
+    ]
+    return Page(items=items, total=total, page=page, page_size=page_size)
+
+
 @router.get("/manage", response_model=Page[ProductResponse])
 def list_products_for_management(
     page: int = Query(1, ge=1),

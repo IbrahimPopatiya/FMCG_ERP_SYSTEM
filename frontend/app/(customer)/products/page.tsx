@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Select } from "@/components/ui/Select";
 import { CustomerProductCard } from "@/components/products/CustomerProductCard";
@@ -13,7 +13,8 @@ import { SearchIcon, FilterIcon, CategoryAllIcon } from "@/components/customer/i
 import { useCart } from "@/components/cart/CartProvider";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
-import { useProducts } from "@/lib/hooks/useProducts";
+import { useProductsFeed } from "@/lib/hooks/useProducts";
+import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import type { ProductCatalogResponse } from "@/types/product";
 
 type SortOption = "popular" | "price_low" | "price_high" | "name";
@@ -43,13 +44,24 @@ function ProductsPageContent() {
   const [categoryId, setCategoryId] = useState<string | null>(searchParams.get("category"));
   const [sort, setSort] = useState<SortOption>("popular");
 
-  const products = useProducts();
   const categories = useCategories();
   const { getQty, addItem, setQty } = useCart();
 
-  // Depends only on the cart functions, not on `filtered` - stays the same
-  // reference across search/sort/category changes, so memoized product
-  // cards can skip re-rendering while the user is just typing/filtering.
+  const {
+    data,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useProductsFeed({ search: debouncedSearch, categoryId, sort });
+
+  const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+
+  // Depends only on the cart functions, not on the loaded product list -
+  // stays the same reference across search/sort/category changes, so
+  // memoized product cards can skip re-rendering while the user is just
+  // typing/filtering.
   const handleQtyChange = useCallback(
     (product: ProductCatalogResponse, qty: number) => {
       if (qty === 0) setQty(product.id, 0);
@@ -59,24 +71,8 @@ function ProductsPageContent() {
     [setQty, getQty, addItem]
   );
 
-  const activeCategories = useMemo(() => {
-    const usedIds = new Set((products.data ?? []).map((p) => p.category_id).filter(Boolean));
-    return (categories.data ?? []).filter((c) => usedIds.has(c.id));
-  }, [products.data, categories.data]);
-
-  const filtered = useMemo(() => {
-    const query = debouncedSearch.trim().toLowerCase();
-    const list = (products.data ?? []).filter((p) => {
-      if (categoryId && p.category_id !== categoryId) return false;
-      if (!query) return true;
-      return p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query);
-    });
-    const sorted = [...list];
-    if (sort === "price_low") sorted.sort((a, b) => a.effective_price - b.effective_price);
-    else if (sort === "price_high") sorted.sort((a, b) => b.effective_price - a.effective_price);
-    else if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
-    return sorted;
-  }, [products.data, debouncedSearch, categoryId, sort]);
+  const products = data?.pages.flatMap((page) => page.items) ?? [];
+  const total = data?.pages[0]?.total ?? 0;
 
   return (
     <div className="flex flex-col">
@@ -85,7 +81,7 @@ function ProductsPageContent() {
           <MenuButton />
           <div className="min-w-0 flex-1">
             <p className="text-lg font-bold text-ink">Products</p>
-            <p className="text-xs text-ink-muted">Shop from 1000+ items</p>
+            <p className="text-xs text-ink-muted">Shop from our full catalog</p>
           </div>
           <AccountAvatar />
         </div>
@@ -125,7 +121,7 @@ function ProductsPageContent() {
             </div>
             <p className={`text-xs font-medium ${categoryId === null ? "text-primary" : "text-ink-muted"}`}>All</p>
           </button>
-          {activeCategories.map((c) => (
+          {(categories.data ?? []).map((c) => (
             <button
               key={c.id}
               type="button"
@@ -151,9 +147,9 @@ function ProductsPageContent() {
         </div>
       </header>
 
-      {products.isLoading && <SkeletonGrid />}
+      {isLoading && <SkeletonGrid />}
 
-      {products.isError && (
+      {isError && (
         <div className="p-4 md:p-8">
           <div className="rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger">
             Couldn&apos;t load products. Pull down to refresh.
@@ -161,9 +157,9 @@ function ProductsPageContent() {
         </div>
       )}
 
-      {!products.isLoading && !products.isError && (
+      {!isLoading && !isError && (
         <div className="flex items-center justify-between px-4 pt-3 text-sm text-ink-muted md:px-8">
-          <span>{filtered.length} Products</span>
+          <span>{total} Products</span>
           <div className="w-40">
             <Select
               value={sort}
@@ -179,23 +175,29 @@ function ProductsPageContent() {
         </div>
       )}
 
-      {!products.isLoading && !products.isError && filtered.length === 0 && (
+      {!isLoading && !isError && products.length === 0 && !hasNextPage && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No products found</p>
           <p className="text-sm text-ink-muted">Try a different search or category.</p>
         </div>
       )}
 
-      {!products.isLoading && !products.isError && filtered.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 p-4 pb-6 md:grid-cols-4 md:p-8 lg:grid-cols-5">
-          {filtered.map((product) => (
-            <CustomerProductCard
-              key={product.id}
-              product={product}
-              qty={getQty(product.id)}
-              onQtyChange={handleQtyChange}
-            />
-          ))}
+      {!isLoading && !isError && (products.length > 0 || hasNextPage) && (
+        <div className="p-4 pb-6 md:p-8">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
+            {products.map((product) => (
+              <CustomerProductCard
+                key={product.id}
+                product={product}
+                qty={getQty(product.id)}
+                onQtyChange={handleQtyChange}
+              />
+            ))}
+          </div>
+
+          <div ref={sentinelRef} className="flex justify-center py-6">
+            {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}
+          </div>
         </div>
       )}
     </div>

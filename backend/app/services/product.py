@@ -29,6 +29,41 @@ def list_active_products(db: Session) -> list[Product]:
     )
 
 
+def list_active_products_feed(
+    db: Session,
+    page: int,
+    page_size: int,
+    search: str | None = None,
+    category_id: uuid.UUID | None = None,
+    sort: str = "popular",
+) -> tuple[list[Product], int]:
+    """Paginated, filterable version of the customer catalog feed - same
+    active-only scope as list_active_products, but with search/category/sort
+    handled in SQL instead of fetching everything and filtering in the
+    browser."""
+    query = db.query(Product).filter(
+        Product.deleted_at.is_(None), Product.status == ProductStatus.ACTIVE
+    )
+    if category_id is not None:
+        query = query.filter(Product.category_id == category_id)
+    if search:
+        like = f"%{search}%"
+        query = query.filter((Product.name.ilike(like)) | (Product.sku.ilike(like)))
+
+    if sort == "price_low":
+        query = query.order_by(Product.selling_price.asc())
+    elif sort == "price_high":
+        query = query.order_by(Product.selling_price.desc())
+    elif sort == "name":
+        query = query.order_by(Product.name.asc())
+    else:
+        query = query.order_by(Product.created_at.desc())
+
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return items, total
+
+
 def list_all_products(
     db: Session, page: int, page_size: int, search: str | None = None
 ) -> tuple[list[Product], int]:
