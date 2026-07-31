@@ -1,11 +1,13 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { AppTopBar } from "@/components/layout/AppTopBar";
 import { CartProvider, useCart } from "@/components/cart/CartProvider";
 import { CustomerDesktopSidebar } from "@/components/customer/CustomerShell";
 import { CustomerMenuProvider, MenuButton } from "@/components/customer/CustomerMenu";
 import { AccountAvatar } from "@/components/customer/AccountAvatar";
+import { HomeSearchProvider, HomeSearchButton } from "@/components/customer/HomeSearch";
 import { CUSTOMER_NAV_ITEMS } from "@/components/customer/navItems";
 
 // Mobile-first shell for shopkeepers: bottom nav on phones, a persistent
@@ -28,6 +30,24 @@ function CustomerMobileNav() {
   );
 }
 
+function CustomerTopBar() {
+  const pathname = usePathname();
+  const isHome = pathname === "/home";
+
+  return (
+    <AppTopBar
+      title="Zaid Traders"
+      leading={<MenuButton />}
+      trailing={
+        <div className="flex items-center gap-1.5">
+          {isHome && <HomeSearchButton />}
+          <AccountAvatar />
+        </div>
+      }
+    />
+  );
+}
+
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   return (
     <CartProvider>
@@ -36,12 +56,14 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           class sits inside the provider the drawer falls back to root blue. */}
       <div className="customer-theme flex flex-1 overflow-hidden bg-background">
         <CustomerMenuProvider>
-          <CustomerDesktopSidebar />
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-            <AppTopBar title="Zaid Traders" leading={<MenuButton />} trailing={<AccountAvatar />} />
-            <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
-            <CustomerMobileNav />
-          </div>
+          <HomeSearchProvider>
+            <CustomerDesktopSidebar />
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+              <CustomerTopBar />
+              <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+              <CustomerMobileNav />
+            </div>
+          </HomeSearchProvider>
         </CustomerMenuProvider>
       </div>
     </CartProvider>

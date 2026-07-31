@@ -17,10 +17,12 @@ export function AppTopBar({
       className="sticky top-0 z-10 shrink-0 border-b border-border/70 bg-white/80 backdrop-blur-xl"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
-      <div className="relative flex h-14 items-center justify-center px-14">
+      <div className="relative flex h-14 items-center justify-center px-14 sm:px-16">
         {leading && <div className="absolute left-2 flex items-center">{leading}</div>}
         <h1 className="truncate text-[22px] font-bold tracking-tight text-ink">{title}</h1>
-        {trailing && <div className="absolute right-2 flex items-center">{trailing}</div>}
+        {trailing && (
+          <div className="absolute right-2 flex max-w-[45%] items-center justify-end">{trailing}</div>
+        )}
       </div>
     </header>
   );

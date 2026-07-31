@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { FilterDrawer } from "@/components/customer/FilterDrawer";
+import { useHomeSearch } from "@/components/customer/HomeSearch";
 import {
   CartIcon,
   HeartIcon,
@@ -269,13 +270,25 @@ export default function HomePage() {
   const posts = usePosts();
   const categories = useCategories();
   const { addItem, getQty, setQty } = useCart();
+  const { register: registerHomeSearch } = useHomeSearch();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [openProductId, setOpenProductId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
+
+  // Top-bar search icon (layout) reveals this row; focus once it mounts.
+  useEffect(() => {
+    return registerHomeSearch(() => setIsSearchOpen(true));
+  }, [registerHomeSearch]);
+
+  useEffect(() => {
+    if (isSearchOpen) searchInputRef.current?.focus();
+  }, [isSearchOpen]);
 
   // Posts (newest first, from the API) lead the feed, followed by the
   // regular product catalog — products already referenced by a post are
@@ -324,27 +337,42 @@ export default function HomePage() {
 
   return (
     <div className="relative flex h-full flex-col bg-white">
-      <div className="flex shrink-0 items-center gap-2 border-b border-border bg-white px-4 py-3">
-        <div className="flex h-11 flex-1 items-center gap-2 rounded-xl border border-border px-3.5">
-          <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
-          <input
-            type="search"
-            placeholder="Search products…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-full w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
-          />
-        </div>
+      {isSearchOpen && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-border bg-white px-4 py-3">
+          <div className="flex h-11 flex-1 items-center gap-2 rounded-xl border border-border px-3.5">
+            <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
+            <input
+              ref={searchInputRef}
+              type="search"
+              placeholder="Search products…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-full w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
+            />
+          </div>
 
-        <button
-          type="button"
-          aria-label="Filters"
-          onClick={() => setIsFilterOpen(true)}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary transition-colors hover:brightness-95"
-        >
-          <SettingsIcon className="h-[18px] w-[18px]" />
-        </button>
-      </div>
+          <button
+            type="button"
+            aria-label="Filters"
+            onClick={() => setIsFilterOpen(true)}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary transition-colors hover:brightness-95"
+          >
+            <SettingsIcon className="h-[18px] w-[18px]" />
+          </button>
+
+          <button
+            type="button"
+            aria-label="Close search"
+            onClick={() => {
+              setIsSearchOpen(false);
+              setSearch("");
+            }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface text-ink-muted transition-colors hover:bg-border hover:text-ink"
+          >
+            <CloseIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       <FilterDrawer
         open={isFilterOpen}
