@@ -1,15 +1,17 @@
 "use client";
 
 import { Suspense, useCallback, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Select } from "@/components/ui/Select";
 import { CustomerProductCard } from "@/components/products/CustomerProductCard";
-import { SearchIcon, BoxIcon } from "@/components/customer/icons";
+import { FilterDrawer } from "@/components/customer/FilterDrawer";
+import { SearchIcon, BoxIcon, SettingsIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useProductsFeed } from "@/lib/hooks/useProducts";
+import { useCategories } from "@/lib/hooks/useCategories";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import type { ProductCatalogResponse } from "@/types/product";
 
@@ -34,13 +36,17 @@ export default function ProductsPage() {
 }
 
 function ProductsPageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const categoryId = searchParams.get("category");
   const [sort, setSort] = useState<SortOption>("popular");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { getQty, addItem, setQty } = useCart();
+  const categories = useCategories();
 
   const {
     data,
@@ -66,6 +72,15 @@ function ProductsPageContent() {
     [setQty, getQty, addItem]
   );
 
+  function handleApplyFilter(nextCategoryId: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextCategoryId) params.set("category", nextCategoryId);
+    else params.delete("category");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+    setIsFilterOpen(false);
+  }
+
   const products = data?.pages.flatMap((page) => page.items) ?? [];
   const total = data?.pages[0]?.total ?? 0;
 
@@ -82,17 +97,36 @@ function ProductsPageContent() {
           </div>
         </div>
 
-        <div className="flex h-11 items-center gap-2 rounded-xl border border-border px-3.5">
-          <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
-          <input
-            type="search"
-            placeholder="Search for products, brands and more…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-full w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
-          />
+        <div className="flex items-center gap-2">
+          <div className="flex h-11 flex-1 items-center gap-2 rounded-xl border border-border px-3.5">
+            <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
+            <input
+              type="search"
+              placeholder="Search for products, brands and more…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-full w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
+            />
+          </div>
+
+          <button
+            type="button"
+            aria-label="Filters"
+            onClick={() => setIsFilterOpen(true)}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary transition-colors hover:brightness-95"
+          >
+            <SettingsIcon className="h-[18px] w-[18px]" />
+          </button>
         </div>
       </header>
+
+      <FilterDrawer
+        open={isFilterOpen}
+        categories={categories.data ?? []}
+        selectedCategoryId={categoryId}
+        onApply={handleApplyFilter}
+        onClose={() => setIsFilterOpen(false)}
+      />
 
       {isLoading && <SkeletonGrid />}
 
