@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -56,8 +57,14 @@ export default function ProductDetailPage() {
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4 pb-6 md:p-8">
           <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-primary-soft md:aspect-[16/9]">
             {product.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                sizes="(min-width: 768px) 672px, 100vw"
+                className="object-cover"
+                priority
+              />
             ) : (
               <span className="text-sm font-medium text-primary/60">{product.unit}</span>
             )}

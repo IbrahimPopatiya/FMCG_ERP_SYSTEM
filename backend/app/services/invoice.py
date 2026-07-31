@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.enums import OrderStatus, PaymentStatus
@@ -124,13 +125,20 @@ def list_dues_for_customer(
         .all()
     )
 
+    # One grouped SUM for every invoice's cleared payments, instead of one
+    # query per invoice.
+    invoice_ids = [invoice.id for invoice, _, _ in rows]
+    cleared_by_invoice = dict(
+        db.query(Payment.invoice_id, func.sum(Payment.total_amount))
+        .filter(Payment.invoice_id.in_(invoice_ids), Payment.status == "cleared")
+        .group_by(Payment.invoice_id)
+        .all()
+    ) if invoice_ids else {}
+
     results = []
     total_due = Decimal("0")
     for invoice, order_id, order_number in rows:
-        cleared = db.query(Payment.total_amount).filter(
-            Payment.invoice_id == invoice.id, Payment.status == "cleared"
-        ).all()
-        cleared_sum = sum((row[0] for row in cleared), start=Decimal("0"))
+        cleared_sum = cleared_by_invoice.get(invoice.id, Decimal("0"))
         balance = invoice.total - cleared_sum
         total_due += balance
         results.append((invoice, order_id, order_number, balance))
@@ -196,7 +204,13 @@ def get_customer_ledger(db: Session, customer_id: uuid.UUID, credit_limit: Decim
         transactions.append({**event, "balance": balance})
     transactions.reverse()  # newest first, matching the invoice/dues list convention
 
-    _dues_rows, total_due = list_dues_for_customer(db, customer_id)
+    # Count of unpaid invoices, built from invoice_rows already fetched above
+    # - avoids re-running the whole dues query (and its own N+1) a second
+    # time just to get this count.
+    outstanding_invoices = sum(
+        1 for invoice, _, _ in invoice_rows if invoice.payment_status != PaymentStatus.PAID
+    )
+
     last_order_date = max((d for _, _, d in invoice_rows), default=None)
     total_invoiced = sum((i.total for i, _, _ in invoice_rows), start=Decimal("0"))
     total_payments = sum((p.total_amount for p, _ in payment_rows), start=Decimal("0"))
@@ -207,7 +221,7 @@ def get_customer_ledger(db: Session, customer_id: uuid.UUID, credit_limit: Decim
         "current_balance": balance,
         "total_invoiced": total_invoiced,
         "total_payments": total_payments,
-        "outstanding_invoices": len(_dues_rows),
+        "outstanding_invoices": outstanding_invoices,
         "last_order_date": last_order_date,
         "transactions": transactions,
     }

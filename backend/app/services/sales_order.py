@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.deps import Principal
 from app.core.enums import MovementType, OrderSource, OrderStatus, UserRole
@@ -307,24 +307,30 @@ def load_sales_order(
     return order
 
 
-def list_orders_for_principal(db: Session, principal: Principal) -> list[SalesOrder]:
+def list_orders_for_principal(
+    db: Session, principal: Principal, page: int, page_size: int
+) -> tuple[list[SalesOrder], int]:
     query = db.query(SalesOrder).filter(SalesOrder.deleted_at.is_(None))
+
     if principal.type == "customer":
-        return query.filter(SalesOrder.customer_id == principal.customer.id).all()
+        query = query.filter(SalesOrder.customer_id == principal.customer.id)
+    elif principal.user.role == UserRole.SALESMAN:
+        # Only salesmen are scoped to their own route's customers - every other
+        # staff role (admin, manager, dispatcher, cashier) needs full visibility
+        # to approve/track orders across the business. One join instead of
+        # fetching routes then customers then orders as three separate queries.
+        query = (
+            query.join(Customer, Customer.id == SalesOrder.customer_id)
+            .join(Route, Route.id == Customer.route_id)
+            .filter(Route.salesman_id == principal.user.id)
+        )
 
-    # Only salesmen are scoped to their own route's customers - every other
-    # staff role (admin, manager, dispatcher, cashier) needs full visibility
-    # to approve/track orders across the business.
-    if principal.user.role != UserRole.SALESMAN:
-        return query.order_by(SalesOrder.created_at.desc()).all()
-
-    routes = db.query(Route).filter(Route.salesman_id == principal.user.id).all()
-    route_ids = [r.id for r in routes]
-    customer_ids = [
-        c.id for c in db.query(Customer).filter(Customer.route_id.in_(route_ids)).all()
-    ] if route_ids else []
-    return (
-        query.filter(SalesOrder.customer_id.in_(customer_ids)).order_by(SalesOrder.created_at.desc()).all()
-        if customer_ids
-        else []
+    total = query.count()
+    items = (
+        query.options(selectinload(SalesOrder.items))
+        .order_by(SalesOrder.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
     )
+    return items, total

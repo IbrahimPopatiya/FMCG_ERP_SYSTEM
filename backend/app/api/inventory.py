@@ -8,6 +8,7 @@ from app.core.deps import get_current_user, require_role
 from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.common import Page
 from app.schemas.inventory import (
     InventoryAdjustmentCreate,
     InventoryAdjustmentResponse,
@@ -54,15 +55,17 @@ def create_transfer(
     )
 
 
-@router.get("", response_model=list[InventoryResponse])
+@router.get("", response_model=Page[InventoryResponse])
 def get_inventory(
     warehouse_id: Optional[uuid.UUID] = Query(default=None),
     product_id: Optional[uuid.UUID] = Query(default=None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    rows = inventory_service.list_inventory(db, warehouse_id, product_id)
-    return [
+    rows, total = inventory_service.list_inventory(db, warehouse_id, product_id, page, page_size)
+    items = [
         InventoryResponse(
             warehouse_id=row.warehouse_id,
             product_id=row.product_id,
@@ -74,3 +77,4 @@ def get_inventory(
         )
         for row in rows
     ]
+    return Page(items=items, total=total, page=page, page_size=page_size)

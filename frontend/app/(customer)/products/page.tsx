@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Select } from "@/components/ui/Select";
@@ -11,7 +12,9 @@ import { AccountAvatar } from "@/components/customer/AccountAvatar";
 import { SearchIcon, FilterIcon, CategoryAllIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCategories } from "@/lib/hooks/useCategories";
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useProducts } from "@/lib/hooks/useProducts";
+import type { ProductCatalogResponse } from "@/types/product";
 
 type SortOption = "popular" | "price_low" | "price_high" | "name";
 
@@ -36,6 +39,7 @@ export default function ProductsPage() {
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [categoryId, setCategoryId] = useState<string | null>(searchParams.get("category"));
   const [sort, setSort] = useState<SortOption>("popular");
 
@@ -43,13 +47,25 @@ function ProductsPageContent() {
   const categories = useCategories();
   const { getQty, addItem, setQty } = useCart();
 
+  // Depends only on the cart functions, not on `filtered` - stays the same
+  // reference across search/sort/category changes, so memoized product
+  // cards can skip re-rendering while the user is just typing/filtering.
+  const handleQtyChange = useCallback(
+    (product: ProductCatalogResponse, qty: number) => {
+      if (qty === 0) setQty(product.id, 0);
+      else if (getQty(product.id) === 0) addItem(product, qty);
+      else setQty(product.id, qty);
+    },
+    [setQty, getQty, addItem]
+  );
+
   const activeCategories = useMemo(() => {
     const usedIds = new Set((products.data ?? []).map((p) => p.category_id).filter(Boolean));
     return (categories.data ?? []).filter((c) => usedIds.has(c.id));
   }, [products.data, categories.data]);
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = debouncedSearch.trim().toLowerCase();
     const list = (products.data ?? []).filter((p) => {
       if (categoryId && p.category_id !== categoryId) return false;
       if (!query) return true;
@@ -60,7 +76,7 @@ function ProductsPageContent() {
     else if (sort === "price_high") sorted.sort((a, b) => b.effective_price - a.effective_price);
     else if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
     return sorted;
-  }, [products.data, search, categoryId, sort]);
+  }, [products.data, debouncedSearch, categoryId, sort]);
 
   return (
     <div className="flex flex-col">
@@ -117,13 +133,12 @@ function ProductsPageContent() {
               className="flex shrink-0 flex-col items-center gap-1.5"
             >
               <div
-                className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl text-sm font-semibold transition-colors ${
+                className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl text-sm font-semibold transition-colors ${
                   categoryId === c.id ? "bg-primary text-white" : "bg-primary-soft text-primary"
                 }`}
               >
                 {c.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.image} alt={c.name} className="h-full w-full object-cover" />
+                  <Image src={c.image} alt={c.name} fill sizes="48px" className="object-cover" />
                 ) : (
                   c.name.charAt(0).toUpperCase()
                 )}
@@ -178,11 +193,7 @@ function ProductsPageContent() {
               key={product.id}
               product={product}
               qty={getQty(product.id)}
-              onQtyChange={(qty) => {
-                if (qty === 0) setQty(product.id, 0);
-                else if (getQty(product.id) === 0) addItem(product, qty);
-                else setQty(product.id, qty);
-              }}
+              onQtyChange={handleQtyChange}
             />
           ))}
         </div>

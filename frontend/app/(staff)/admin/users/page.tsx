@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -9,14 +10,18 @@ import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { UserForm } from "@/components/users/UserForm";
 import { UserStatusBadge } from "@/components/users/UserStatusBadge";
+
+const UserForm = dynamic(() => import("@/components/users/UserForm").then((m) => m.UserForm), {
+  ssr: false,
+});
 import {
   useCreateUser,
   useDeleteUser,
   useSetUserStatus,
   useStaffDirectory,
 } from "@/lib/hooks/useUsers";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import { toTitleCase } from "@/lib/utils/format";
 import type { UserResponse } from "@/types/users";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -53,6 +58,7 @@ export default function UsersPage() {
   const createUser = useCreateUser();
   const setStatus = useSetUserStatus();
   const removeUser = useDeleteUser();
+  const isDesktop = useIsDesktop();
 
   const users = directory.data ?? [];
 
@@ -105,6 +111,7 @@ export default function UsersPage() {
       {!directory.isLoading && !directory.isError && users.length > 0 && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<UserResponse>
@@ -156,8 +163,10 @@ export default function UsersPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: simplified card list */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {users.map((u) => (
               <Card key={u.id} className="flex flex-col gap-3">
@@ -198,6 +207,7 @@ export default function UsersPage() {
               </Card>
             ))}
           </div>
+          )}
         </div>
       )}
 

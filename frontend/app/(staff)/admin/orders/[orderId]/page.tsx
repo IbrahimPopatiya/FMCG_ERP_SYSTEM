@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { isAxiosError } from "axios";
@@ -194,9 +195,9 @@ export default function AdminOrderDetailPage() {
                     const p = product(item.product_id);
                     return (
                       <div key={item.id} className="flex items-center gap-3 px-4 py-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface">
+                        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface">
                           {p?.image ? (
-                            <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                            <Image src={p.image} alt={p.name} fill sizes="48px" className="object-cover" />
                           ) : (
                             <span className="text-xs font-medium text-ink-muted">{(p?.unit ?? "PR").slice(0, 2)}</span>
                           )}

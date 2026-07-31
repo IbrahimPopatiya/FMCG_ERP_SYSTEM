@@ -6,9 +6,12 @@ import type {
   InventoryTransferCreate,
   InventoryTransferResponse,
 } from "@/types/inventory";
+import type { Page } from "@/types/pagination";
 
-export function getInventory() {
-  return api.get<InventoryResponse[]>("/inventory").then((res) => res.data);
+export function getInventory(page: number, pageSize: number) {
+  return api
+    .get<Page<InventoryResponse>>("/inventory", { params: { page, page_size: pageSize } })
+    .then((res) => res.data);
 }
 
 export function createInventoryAdjustment(data: InventoryAdjustmentCreate) {

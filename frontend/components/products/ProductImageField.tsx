@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { UploadCloudIcon } from "@/components/admin/icons";
 
 interface ProductImageFieldProps {
@@ -27,7 +28,17 @@ export function ProductImageField({ previewUrl, onFileSelected, onRemove }: Prod
         className="group relative flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 border-dashed border-border bg-surface px-4 py-8 text-center transition-colors hover:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft"
       >
         {previewUrl ? (
-          <img src={previewUrl} alt="Product preview" className="h-32 w-32 rounded-xl object-cover" />
+          <Image
+            src={previewUrl}
+            alt="Product preview"
+            width={128}
+            height={128}
+            // A freshly-picked file is previewed via a local blob: URL, which
+            // only exists in this browser tab - Next's image optimizer can't
+            // fetch it server-side, so skip optimization for that case.
+            unoptimized={previewUrl.startsWith("blob:")}
+            className="h-32 w-32 rounded-xl object-cover"
+          />
         ) : (
           <>
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">

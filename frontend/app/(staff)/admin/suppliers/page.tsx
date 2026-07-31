@@ -1,16 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { SupplierForm } from "@/components/suppliers/SupplierForm";
 import { SupplierStatusBadge } from "@/components/suppliers/SupplierStatusBadge";
+
+const SupplierForm = dynamic(
+  () => import("@/components/suppliers/SupplierForm").then((m) => m.SupplierForm),
+  { ssr: false }
+);
 import { useCreateSupplier, useSetSupplierStatus } from "@/lib/hooks/useSupplierMutations";
 import { useSuppliers } from "@/lib/hooks/useSuppliers";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import type { SupplierResponse } from "@/types/suppliers";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
@@ -44,6 +50,7 @@ export default function SuppliersPage() {
   const suppliers = useSuppliers();
   const createSupplier = useCreateSupplier();
   const setStatus = useSetSupplierStatus();
+  const isDesktop = useIsDesktop();
 
   const rows = suppliers.data ?? [];
 
@@ -89,6 +96,7 @@ export default function SuppliersPage() {
       {!suppliers.isLoading && !suppliers.isError && rows.length > 0 && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<SupplierResponse>
@@ -132,8 +140,10 @@ export default function SuppliersPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: simplified card list */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {rows.map((s) => (
               <Card key={s.id} className="flex flex-col gap-3">
@@ -163,6 +173,7 @@ export default function SuppliersPage() {
               </Card>
             ))}
           </div>
+          )}
         </div>
       )}
 

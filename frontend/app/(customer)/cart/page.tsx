@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -87,10 +88,15 @@ export default function CartPage() {
           <div className="flex flex-col gap-3">
             {items.map((item) => (
               <div key={item.productId} className="flex gap-3 rounded-xl border border-border bg-white p-3">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
+                <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
                   {item.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image} alt={item.name} className="h-full w-full rounded-lg object-cover" />
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      sizes="64px"
+                      className="rounded-lg object-cover"
+                    />
                   ) : (
                     <span className="text-[10px] font-medium text-primary/60">{item.unit}</span>
                   )}

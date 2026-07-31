@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -9,12 +10,17 @@ import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { PurchaseForm } from "@/components/purchases/PurchaseForm";
 import { PurchaseStatusBadge } from "@/components/purchases/PurchaseStatusBadge";
+
+const PurchaseForm = dynamic(
+  () => import("@/components/purchases/PurchaseForm").then((m) => m.PurchaseForm),
+  { ssr: false }
+);
 import { useCreatePurchase } from "@/lib/hooks/usePurchaseMutations";
 import { usePurchasesManage } from "@/lib/hooks/usePurchases";
 import { useSuppliers } from "@/lib/hooks/useSuppliers";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { PurchaseResponse, PurchaseStatus } from "@/types/purchases";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -55,9 +61,13 @@ export default function PurchasesPage() {
   const createPurchase = useCreatePurchase();
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+  const isDesktop = useIsDesktop();
 
-  const supplierName = (supplierId: string) =>
-    suppliers.data?.find((s) => s.id === supplierId)?.name ?? "Supplier";
+  const supplierNameById = useMemo(
+    () => new Map((suppliers.data ?? []).map((s) => [s.id, s.name])),
+    [suppliers.data]
+  );
+  const supplierName = (supplierId: string) => supplierNameById.get(supplierId) ?? "Supplier";
 
   const total = data?.pages[0]?.total ?? 0;
   const filtered = useMemo(() => {
@@ -112,7 +122,7 @@ export default function PurchasesPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length === 0 && (
+      {!isLoading && !isError && filtered.length === 0 && !hasNextPage && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No purchases here</p>
           <p className="text-sm text-ink-muted">
@@ -121,9 +131,10 @@ export default function PurchasesPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length > 0 && (
+      {!isLoading && !isError && (filtered.length > 0 || hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<PurchaseResponse>
@@ -149,8 +160,10 @@ export default function PurchasesPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: simplified card list */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {filtered.map((p) => (
               <Link key={p.id} href={`/admin/purchases/${p.id}`}>
@@ -165,6 +178,7 @@ export default function PurchasesPage() {
               </Link>
             ))}
           </div>
+          )}
 
           <div ref={sentinelRef} className="flex justify-center py-6">
             {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}

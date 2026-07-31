@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TopBar } from "@/components/layout/TopBar";
-import { CategoryForm } from "@/components/categories/CategoryForm";
+
+const CategoryForm = dynamic(
+  () => import("@/components/categories/CategoryForm").then((m) => m.CategoryForm),
+  { ssr: false }
+);
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useCreateCategory, useDeleteCategory } from "@/lib/hooks/useCategoryMutations";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";

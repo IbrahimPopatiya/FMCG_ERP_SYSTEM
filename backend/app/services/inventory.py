@@ -116,10 +116,19 @@ def list_inventory(
     db: Session,
     warehouse_id: Optional[uuid.UUID] = None,
     product_id: Optional[uuid.UUID] = None,
-) -> list[Inventory]:
+    page: int = 1,
+    page_size: int = 20,
+) -> tuple[list[Inventory], int]:
     query = db.query(Inventory)
     if warehouse_id is not None:
         query = query.filter(Inventory.warehouse_id == warehouse_id)
     if product_id is not None:
         query = query.filter(Inventory.product_id == product_id)
-    return query.all()
+    total = query.count()
+    items = (
+        query.order_by(Inventory.warehouse_id, Inventory.product_id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return items, total

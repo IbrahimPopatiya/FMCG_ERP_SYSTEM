@@ -1,3 +1,5 @@
+import { memo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { DiscountBadge } from "@/components/customer/DiscountBadge";
@@ -8,17 +10,26 @@ import type { ProductCatalogResponse } from "@/types/product";
 interface CustomerProductCardProps {
   product: ProductCatalogResponse;
   qty: number;
-  onQtyChange: (qty: number) => void;
+  // Takes the product itself (not just its id) so the parent's callback
+  // doesn't need to depend on the current filtered/sorted list just to look
+  // the product back up - that would change identity on every keystroke in
+  // search and defeat memoization below.
+  onQtyChange: (product: ProductCatalogResponse, qty: number) => void;
 }
 
-export function CustomerProductCard({ product, qty, onQtyChange }: CustomerProductCardProps) {
+function CustomerProductCardBase({ product, qty, onQtyChange }: CustomerProductCardProps) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md">
       <Link href={`/products/${product.id}`} className="relative block">
-        <div className="flex aspect-square items-center justify-center bg-primary-soft">
+        <div className="relative flex aspect-square items-center justify-center bg-primary-soft">
           {product.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(min-width: 640px) 200px, 50vw"
+              className="object-cover"
+            />
           ) : (
             <span className="text-xs font-medium text-primary/60">{product.unit}</span>
           )}
@@ -42,7 +53,7 @@ export function CustomerProductCard({ product, qty, onQtyChange }: CustomerProdu
           {qty === 0 ? (
             <button
               type="button"
-              onClick={() => onQtyChange(1)}
+              onClick={() => onQtyChange(product, 1)}
               className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-primary-soft text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
             >
               <CartIcon className="h-3.5 w-3.5" />
@@ -50,7 +61,7 @@ export function CustomerProductCard({ product, qty, onQtyChange }: CustomerProdu
             </button>
           ) : (
             <div className="flex justify-center">
-              <QtyStepper qty={qty} onChange={onQtyChange} size="sm" />
+              <QtyStepper qty={qty} onChange={(next) => onQtyChange(product, next)} size="sm" />
             </div>
           )}
         </div>
@@ -58,3 +69,5 @@ export function CustomerProductCard({ product, qty, onQtyChange }: CustomerProdu
     </div>
   );
 }
+
+export const CustomerProductCard = memo(CustomerProductCardBase);

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -9,12 +10,17 @@ import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { PaymentForm } from "@/components/payments/PaymentForm";
 import { PaymentRecordStatusBadge } from "@/components/payments/PaymentRecordStatusBadge";
+
+const PaymentForm = dynamic(
+  () => import("@/components/payments/PaymentForm").then((m) => m.PaymentForm),
+  { ssr: false }
+);
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
 import { usePaymentsManage } from "@/lib/hooks/usePayments";
 import { useRecordPayment } from "@/lib/hooks/usePaymentMutations";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { PaymentListItem, PaymentRecordStatus } from "@/types/payments";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -55,9 +61,13 @@ export default function PaymentsPage() {
   const recordPayment = useRecordPayment();
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+  const isDesktop = useIsDesktop();
 
-  const customerName = (customerId: string) =>
-    customers.data?.items.find((c) => c.id === customerId)?.business_name ?? "Customer";
+  const customerNameById = useMemo(
+    () => new Map((customers.data?.items ?? []).map((c) => [c.id, c.business_name])),
+    [customers.data]
+  );
+  const customerName = (customerId: string) => customerNameById.get(customerId) ?? "Customer";
 
   const total = data?.pages[0]?.total ?? 0;
   const filtered = useMemo(() => {
@@ -112,7 +122,7 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length === 0 && (
+      {!isLoading && !isError && filtered.length === 0 && !hasNextPage && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No payments here</p>
           <p className="text-sm text-ink-muted">
@@ -121,9 +131,10 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length > 0 && (
+      {!isLoading && !isError && (filtered.length > 0 || hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<PaymentListItem>
@@ -149,8 +160,10 @@ export default function PaymentsPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: simplified card list */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {filtered.map((p) => (
               <Link key={p.id} href={`/admin/payments/${p.id}`}>
@@ -165,6 +178,7 @@ export default function PaymentsPage() {
               </Link>
             ))}
           </div>
+          )}
 
           <div ref={sentinelRef} className="flex justify-center py-6">
             {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}

@@ -1,16 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { WarehouseForm } from "@/components/warehouses/WarehouseForm";
 import { WarehouseStatusBadge } from "@/components/warehouses/WarehouseStatusBadge";
+
+const WarehouseForm = dynamic(
+  () => import("@/components/warehouses/WarehouseForm").then((m) => m.WarehouseForm),
+  { ssr: false }
+);
 import { useSetWarehouseStatus, useCreateWarehouse } from "@/lib/hooks/useWarehouseMutations";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import type { WarehouseResponse } from "@/types/warehouses";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
@@ -35,6 +41,7 @@ export default function WarehousesPage() {
   const warehouses = useWarehouses();
   const createWarehouse = useCreateWarehouse();
   const setStatus = useSetWarehouseStatus();
+  const isDesktop = useIsDesktop();
 
   const rows = warehouses.data ?? [];
 
@@ -79,6 +86,7 @@ export default function WarehousesPage() {
 
       {!warehouses.isLoading && !warehouses.isError && rows.length > 0 && (
         <div className="p-4 sm:p-6">
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<WarehouseResponse>
@@ -114,7 +122,9 @@ export default function WarehousesPage() {
               />
             </div>
           </div>
+          )}
 
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {rows.map((w) => (
               <Card key={w.id} className="flex flex-col gap-3">
@@ -143,6 +153,7 @@ export default function WarehousesPage() {
               </Card>
             ))}
           </div>
+          )}
         </div>
       )}
 
