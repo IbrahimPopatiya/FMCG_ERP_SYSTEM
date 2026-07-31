@@ -23,7 +23,7 @@ import { useProducts } from "@/lib/hooks/useProducts";
 import { usePosts } from "@/lib/hooks/usePosts";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrency, formatPackingLabel } from "@/lib/utils/format";
 import { dummyProductImage } from "@/lib/utils/dummyProductImage";
 import type { ProductCatalogResponse } from "@/types/product";
 import type { PostResponse } from "@/types/post";
@@ -272,7 +272,9 @@ function ReelSlide({
             )}
           </div>
           {product.packing && (
-            <span className="truncate text-xs font-medium text-black/70">{product.packing}</span>
+            <span className="truncate text-xs font-medium text-black/70">
+              {formatPackingLabel(product.packing)}
+            </span>
           )}
         </div>
       </div>
