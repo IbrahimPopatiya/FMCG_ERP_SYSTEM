@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /*
  * Brand tokens. DMS is a distribution/logistics tool — the palette is a
  * five-stop blue ramp (light sky -> deep navy) from final_docs/image.png:
@@ -62,27 +70,28 @@ body {
  * (Button, Badge, Card, ...) is built on the same `--color-*` custom
  * properties via Tailwind's `@theme inline`, overriding the properties here
  * re-skins every existing component automatically — no component rewrites
- * needed. Green ramp sampled from the wholesale-FMCG mockups
- * (final_docs/images/): #1F8A3D primary, #146C2E hover, #E7F5EA soft tint.
+ * needed. Orange ramp sampled from customer-design.jpeg: #EE642F primary,
+ * #D6551F hover, #FDEAE1 soft tint.
  */
-.customer-theme {
-  --background: #f6f8f6;
-  --foreground: #14231a;
+.customer-theme,
+.staff-theme {
+  --background: #f7f7f8;
+  --foreground: #1c1c1e;
 
-  --color-ink: #14231a;
-  --color-ink-muted: #5c6b60;
+  --color-ink: #1c1c1e;
+  --color-ink-muted: #6b6b70;
 
-  --color-primary: #1f8a3d;
-  --color-primary-hover: #146c2e;
-  --color-primary-soft: #e7f5ea;
+  --color-primary: #d12626;
+  --color-primary-hover: #b01e1e;
+  --color-primary-soft: #fdeae8;
 
   --color-accent: #d9a441;
   --color-accent-soft: #fdf1d8;
 
-  --color-danger: #c23b3b;
-  --color-danger-hover: #a12f2f;
-  --color-danger-soft: #fbeaea;
+  --color-danger: #e0393f;
+  --color-danger-hover: #c22e33;
+  --color-danger-soft: #fce9ea;
 
-  --color-surface: #f6f8f6;
-  --color-border: #e0e6e0;
+  --color-surface: #f7f7f8;
+  --color-border: #ececee;
 }

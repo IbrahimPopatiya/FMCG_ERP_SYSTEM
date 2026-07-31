@@ -2,10 +2,12 @@ import { Badge } from "@/components/ui/Badge";
 import type { OrderStatus } from "@/types/salesOrder";
 import { toTitleCase } from "@/lib/utils/format";
 
-const TONE: Record<OrderStatus, "neutral" | "success" | "warning" | "danger"> = {
+// Colors per the reference mockup: pending=amber, approved="confirmed"=blue,
+// loaded="processing"=purple, delivered=green, cancelled=red.
+const TONE: Record<OrderStatus, "neutral" | "success" | "warning" | "danger" | "info" | "purple"> = {
   pending: "warning",
-  approved: "neutral",
-  loaded: "neutral",
+  approved: "info",
+  loaded: "purple",
   delivered: "success",
   cancelled: "danger",
 };

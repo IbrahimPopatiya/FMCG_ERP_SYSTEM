@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { CUSTOMER_NAV_ITEMS } from "@/components/customer/navItems";
+import { CUSTOMER_NAV_ITEMS, CUSTOMER_MENU_ITEMS } from "@/components/customer/navItems";
 import { CartIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
 import { clearSession } from "@/lib/auth/session";
+import { formatCurrencyWhole } from "@/lib/utils/format";
 
 // Persistent left sidebar shown at md+ widths, replacing the mobile bottom
 // bar. Customers on desktop get the same 5 sections plus a "deliver to" +
@@ -64,6 +65,25 @@ export function CustomerDesktopSidebar() {
             </Link>
           );
         })}
+
+        <div className="my-2 border-t border-border" />
+
+        {CUSTOMER_MENU_ITEMS.map((item) => {
+          const active = pathname.startsWith(item.href);
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                active ? "bg-primary-soft text-primary" : "text-ink-muted hover:bg-surface hover:text-ink"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
 
       {totalQty > 0 && (
@@ -75,11 +95,7 @@ export function CustomerDesktopSidebar() {
             <CartIcon className="h-4 w-4" />
             {totalQty} item{totalQty === 1 ? "" : "s"}
           </span>
-          <span className="text-sm font-semibold">
-            {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(
-              subtotal
-            )}
-          </span>
+          <span className="text-sm font-semibold">{formatCurrencyWhole(subtotal)}</span>
         </Link>
       )}
 

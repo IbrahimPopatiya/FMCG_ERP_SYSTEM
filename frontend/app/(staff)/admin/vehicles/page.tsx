@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -9,8 +10,12 @@ import { Select } from "@/components/ui/Select";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
-import { VehicleForm } from "@/components/vehicles/VehicleForm";
 import { VehicleStatusBadge } from "@/components/vehicles/VehicleStatusBadge";
+
+const VehicleForm = dynamic(
+  () => import("@/components/vehicles/VehicleForm").then((m) => m.VehicleForm),
+  { ssr: false }
+);
 import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useVehicles } from "@/lib/hooks/useVehicles";
 import {
@@ -19,6 +24,7 @@ import {
   useDeleteVehicle,
   useSetVehicleStatus,
 } from "@/lib/hooks/useVehicleMutations";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import type { VehicleResponse, VehicleStatus } from "@/types/vehicles";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
@@ -63,6 +69,7 @@ export default function VehiclesPage() {
   const assignDriver = useAssignVehicleDriver();
   const setStatus = useSetVehicleStatus();
   const removeVehicle = useDeleteVehicle();
+  const isDesktop = useIsDesktop();
 
   const rows = vehicles.data ?? [];
   const driverOptions = (drivers.data ?? []).filter((u) => u.role === "driver");
@@ -117,6 +124,7 @@ export default function VehiclesPage() {
       {!vehicles.isLoading && !vehicles.isError && rows.length > 0 && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<VehicleResponse>
@@ -182,8 +190,10 @@ export default function VehiclesPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: simplified card list */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {rows.map((v) => (
               <Card key={v.id} className="flex flex-col gap-3">
@@ -207,6 +217,7 @@ export default function VehiclesPage() {
               </Card>
             ))}
           </div>
+          )}
         </div>
       )}
 

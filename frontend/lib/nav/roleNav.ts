@@ -16,37 +16,23 @@ interface RoleNav {
 // categories) point at pages that don't exist in the frontend yet - Phase 2
 // builds them. This map isn't wired into the staff layout/nav yet - that's
 // Phase 3, once every referenced page actually exists.
+// Admin nav is intentionally trimmed to the 5 screens in the reference
+// mockup (Home / Orders / Customers / Posts / Products). Every other admin
+// domain page (brands, inventory, invoices, etc.) still exists and works if
+// visited directly by URL - it's just not linked from the nav anymore.
 const ADMIN_DESKTOP: NavItem[] = [
-  { href: "/admin/dashboard", label: "Dashboard" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/categories", label: "Categories" },
-  { href: "/admin/brands", label: "Brands" },
-  { href: "/admin/price-lists", label: "Price Lists" },
-  { href: "/admin/customers", label: "Customers" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/routes", label: "Routes" },
+  { href: "/admin/dashboard", label: "Home" },
   { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/invoices", label: "Invoices" },
-  { href: "/admin/deliveries", label: "Deliveries" },
-  { href: "/admin/vehicles", label: "Vehicles" },
-  { href: "/admin/inventory", label: "Inventory" },
-  { href: "/admin/purchases", label: "Purchases" },
-  { href: "/admin/suppliers", label: "Suppliers" },
-  { href: "/admin/payments", label: "Payments" },
-  { href: "/admin/returns", label: "Returns" },
-  { href: "/admin/credit-notes", label: "Credit Notes" },
+  { href: "/admin/customers", label: "Customers" },
+  { href: "/admin/posts", label: "Posts" },
+  { href: "/admin/products", label: "Products" },
 ];
 
 export const ROLE_NAV: Record<UserRole, RoleNav> = {
   admin: {
     home: "/admin/dashboard",
     desktop: ADMIN_DESKTOP,
-    mobile: [
-      { href: "/admin/orders", label: "Orders" },
-      { href: "/admin/deliveries", label: "Deliveries" },
-      { href: "/admin/products", label: "Products" },
-      { href: "/admin/customers", label: "Customers" },
-    ],
+    mobile: ADMIN_DESKTOP,
   },
   salesman: {
     home: "/admin/dashboard",

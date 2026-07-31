@@ -11,6 +11,18 @@ import { useSetCustomerStatus } from "@/lib/hooks/useCustomerMutations";
 import { formatCurrency } from "@/lib/utils/format";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
+function initialsAvatarTone(seed: string) {
+  const tones = [
+    "bg-blue-100 text-blue-700",
+    "bg-green-100 text-green-700",
+    "bg-amber-100 text-amber-700",
+    "bg-purple-100 text-purple-700",
+    "bg-pink-100 text-pink-700",
+  ];
+  const hash = seed.split("").reduce((sum, c) => sum + c.charCodeAt(0), 0);
+  return tones[hash % tones.length];
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3">
@@ -29,7 +41,7 @@ export default function CustomerDetailPage() {
 
   return (
     <div>
-      <TopBar title="Customer" />
+      <TopBar title="Customer" subtitle={customer.data?.business_name} backHref="/admin/customers" />
 
       {customer.isLoading && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">
@@ -51,32 +63,39 @@ export default function CustomerDetailPage() {
         const data = customer.data;
         return (
           <div className="mx-auto flex max-w-2xl flex-col gap-4 p-4 sm:p-6">
-            <Card className="flex items-center justify-between gap-3">
-              <div>
-                <h1 className="text-lg font-semibold tracking-tight text-ink">{data.business_name}</h1>
+            <Card className="flex items-center gap-4 rounded-2xl">
+              <div
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-semibold ${initialsAvatarTone(
+                  data.id
+                )}`}
+              >
+                {data.business_name.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="truncate text-lg font-semibold tracking-tight text-ink">{data.business_name}</h1>
                 <p className="text-sm text-ink-muted">{data.owner_name}</p>
                 <p className="mt-1 font-mono text-xs text-ink-muted">{data.customer_code}</p>
               </div>
               <CustomerStatusBadge status={data.status} />
             </Card>
 
-            <div className="divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
+            <div className="divide-y divide-border rounded-2xl border border-border bg-white shadow-sm">
               <Row label="Mobile" value={data.mobile} />
               {data.alternate_mobile && <Row label="Alternate mobile" value={data.alternate_mobile} />}
               {data.gst_number && <Row label="GST number" value={data.gst_number} />}
             </div>
 
-            <div className="rounded-lg border border-border bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
               <p className="text-sm text-ink-muted">Address</p>
               <p className="mt-1 text-sm font-medium text-ink">
                 {data.address}, {data.city}, {data.state} {data.pincode}
               </p>
             </div>
 
-            <div className="divide-y divide-border rounded-lg border border-border bg-white shadow-sm">
+            {/* <div className="divide-y divide-border rounded-2xl border border-border bg-white shadow-sm">
               <Row label="Credit limit" value={formatCurrency(data.credit_limit)} />
               <Row label="Payment terms" value={`${data.payment_terms} days`} />
-            </div>
+            </div> */}
 
             <div className="flex justify-end">
               <Button

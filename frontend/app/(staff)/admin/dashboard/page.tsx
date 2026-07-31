@@ -1,17 +1,16 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { TopBar } from "@/components/layout/TopBar";
-import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Table } from "@/components/ui/Table";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
+import { CartIcon, BoxIcon, BellIcon, TruckIcon, PeopleIcon, WalletIcon } from "@/components/admin/icons";
 import { useOrders } from "@/lib/hooks/useOrders";
-import { useInventory } from "@/lib/hooks/useInventory";
-import { useProductStockList } from "@/lib/hooks/useProductStockList";
-import { formatCurrency } from "@/lib/utils/format";
-import type { SalesOrderResponse } from "@/types/salesOrder";
+import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
+import { formatCurrency, formatDateTime } from "@/lib/utils/format";
+import type { OrderStatus, SalesOrderResponse } from "@/types/salesOrder";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const TODAY = new Date();
@@ -25,39 +24,84 @@ function isToday(iso: string) {
   );
 }
 
-const QUICK_ACTIONS = [
-  { href: "/admin/orders", label: "Orders", hint: "Review & approve" },
-  { href: "/admin/deliveries", label: "Deliveries", hint: "Track dispatch" },
-  { href: "/admin/products", label: "Products", hint: "Manage catalog" },
-  { href: "/admin/customers", label: "Customers", hint: "Accounts & credit" },
-];
+function isThisWeek(iso: string) {
+  const d = new Date(iso);
+  const diffDays = (TODAY.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays >= 0 && diffDays <= 7;
+}
+
+// Per-status icon chip on the "Latest Orders" list — colors follow the same
+// tones as OrderStatusBadge so the icon and the pill always agree.
+const STATUS_ICON: Record<OrderStatus, { Icon: typeof CartIcon; chip: string }> = {
+  pending: { Icon: CartIcon, chip: "bg-amber-50 text-amber-600" },
+  approved: { Icon: BoxIcon, chip: "bg-blue-50 text-blue-600" },
+  loaded: { Icon: BellIcon, chip: "bg-purple-50 text-purple-600" },
+  delivered: { Icon: TruckIcon, chip: "bg-green-50 text-green-600" },
+  cancelled: { Icon: CartIcon, chip: "bg-red-50 text-red-600" },
+};
 
 function StatCard({
   label,
   value,
   hint,
+  tone,
+  Icon,
   isLoading,
-  tone = "neutral",
 }: {
   label: string;
   value: string;
   hint?: string;
+  tone: "blue" | "green" | "purple";
+  Icon: typeof CartIcon;
   isLoading: boolean;
-  tone?: "neutral" | "warning" | "danger";
 }) {
-  const valueClass =
-    tone === "warning" ? "text-amber-600" : tone === "danger" ? "text-red-600" : "text-ink";
+  const CHIP: Record<typeof tone, string> = {
+    blue: "bg-blue-50 text-blue-600",
+    green: "bg-green-50 text-green-600",
+    purple: "bg-purple-50 text-purple-600",
+  };
 
   return (
-    <Card className="flex flex-col gap-1.5">
-      <p className="text-sm font-medium text-ink-muted">{label}</p>
-      {isLoading ? (
-        <Skeleton className="h-8 w-16" />
-      ) : (
-        <p className={`text-2xl font-semibold tracking-tight ${valueClass}`}>{value}</p>
-      )}
-      {hint && <p className="text-xs text-ink-muted">{hint}</p>}
+    <Card className="flex flex-col gap-3 rounded-2xl">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${CHIP[tone]}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-xs font-medium text-ink-muted">{label}</p>
+        {isLoading ? (
+          <Skeleton className="mt-1 h-7 w-16" />
+        ) : (
+          <p className="mt-0.5 text-2xl font-bold tracking-tight text-ink">{value}</p>
+        )}
+        {hint && <p className="mt-0.5 text-xs font-medium text-green-600">{hint}</p>}
+      </div>
     </Card>
+  );
+}
+
+function OrderRow({ order, customerName }: { order: SalesOrderResponse; customerName: string }) {
+  const { Icon, chip } = STATUS_ICON[order.status];
+  return (
+    <Link
+      href={`/admin/orders/${order.id}`}
+      className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-surface/60"
+    >
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${chip}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-ink">
+          #{order.order_number} <span className="font-normal text-ink-muted">{customerName}</span>
+        </p>
+        <p className="mt-0.5 text-xs text-ink-muted">
+          {formatDateTime(order.created_at)}
+        </p>
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        <p className="text-sm font-semibold text-ink">{formatCurrency(order.total)}</p>
+        <OrderStatusBadge status={order.status} />
+      </div>
+    </Link>
   );
 }
 
@@ -65,186 +109,98 @@ export default function DashboardPage() {
   useRoleGuard(["admin", "salesman", "driver", "manager", "dispatcher", "cashier"]);
 
   const orders = useOrders();
-  const inventory = useInventory();
-  const stock = useProductStockList();
+  const customers = useCustomerDirectorySample();
 
-  const allOrders = orders.data ?? [];
+  const allOrders = orders.data?.pages.flatMap((page) => page.items) ?? [];
+  const totalOrders = orders.data?.pages[0]?.total ?? 0;
+
+  // Orders are sorted newest-first, so this week's stats only need pages up
+  // to the first order older than 7 days - keep loading until we hit that,
+  // instead of pulling the entire order history just to add up a week's worth.
+  const oldestLoaded = allOrders[allOrders.length - 1];
+  const shouldLoadMoreForWeeklyStats =
+    !!orders.hasNextPage && (!oldestLoaded || isThisWeek(oldestLoaded.created_at));
+
+  useEffect(() => {
+    if (shouldLoadMoreForWeeklyStats) {
+      orders.fetchNextPage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldLoadMoreForWeeklyStats]);
+
   const todaysOrders = allOrders.filter((o) => isToday(o.created_at));
-  const todaysValue = todaysOrders.reduce((sum, o) => sum + o.total, 0);
-  const pendingApprovals = allOrders.filter((o) => o.status === "pending");
-  const awaitingDelivery = allOrders.filter((o) => o.status === "loaded");
+  const thisWeekOrders = allOrders.filter((o) => isThisWeek(o.created_at));
+  const weeklyValue = thisWeekOrders.reduce((sum, o) => sum + o.total, 0);
+  const allCustomers = customers.data?.items ?? [];
+  const activeCustomers = allCustomers.filter((c) => c.status === "active").length;
+
+  const customerName = (customerId: string) =>
+    allCustomers.find((c) => c.id === customerId)?.business_name ?? "Customer";
 
   const recentOrders = [...allOrders]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 6);
+    .slice(0, 8);
 
-  const sellableByProduct = new Map<string, number>();
-  for (const row of inventory.data ?? []) {
-    sellableByProduct.set(
-      row.product_id,
-      (sellableByProduct.get(row.product_id) ?? 0) + row.sellable_stock
-    );
-  }
-  const lowStockProducts = (stock.data?.items ?? [])
-    .filter((p) => p.status === "active")
-    .map((p) => ({ ...p, sellable: sellableByProduct.get(p.id) ?? 0 }))
-    .filter((p) => p.sellable <= p.minimum_stock)
-    .sort((a, b) => a.sellable - b.sellable);
-
-  const summaryLoading = orders.isLoading;
+  const isLoading = orders.isLoading;
 
   return (
     <div>
-      <TopBar title="Dashboard" />
+      <TopBar title="Home" subtitle="Dashboard Overview" />
 
-      {/* Desktop: full summary. Mobile: quick actions only (per UI/UX brief). */}
-      <div className="hidden flex-col gap-6 p-6 sm:flex">
+      <div className="flex flex-col gap-6 p-4 sm:p-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Total Orders"
+            value={String(totalOrders)}
+            hint={todaysOrders.length > 0 ? `+${todaysOrders.length} today` : undefined}
+            tone="blue"
+            Icon={CartIcon}
+            isLoading={isLoading}
+          />
+          <StatCard
+            label="Total Customers"
+            value={String(allCustomers.length)}
+            hint={activeCustomers > 0 ? `${activeCustomers} active` : undefined}
+            tone="green"
+            Icon={PeopleIcon}
+            isLoading={customers.isLoading}
+          />
+          <StatCard
+            label="This Week's Order Amount"
+            value={formatCurrency(weeklyValue)}
+            tone="purple"
+            Icon={WalletIcon}
+            isLoading={isLoading}
+          />
+        </div>
+
         <div>
-          <p className="text-sm text-ink-muted">
-            {new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "2-digit", month: "long" }).format(
-              TODAY
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-ink">Latest Orders</h2>
+            <Link href="/admin/orders" className="text-sm font-medium text-primary hover:text-primary-hover">
+              View All
+            </Link>
+          </div>
+
+          <Card className="overflow-hidden rounded-2xl p-0">
+            {isLoading ? (
+              <div className="flex flex-col gap-3 p-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : orders.isError ? (
+              <p className="p-6 text-center text-sm text-red-600">Couldn&apos;t load orders.</p>
+            ) : recentOrders.length === 0 ? (
+              <p className="p-6 text-center text-sm text-ink-muted">No orders placed yet.</p>
+            ) : (
+              <div className="divide-y divide-border/70">
+                {recentOrders.map((o) => (
+                  <OrderRow key={o.id} order={o} customerName={customerName(o.customer_id)} />
+                ))}
+              </div>
             )}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard
-            label="Today's orders"
-            value={String(todaysOrders.length)}
-            hint={todaysOrders.length > 0 ? formatCurrency(todaysValue) : undefined}
-            isLoading={summaryLoading}
-          />
-          <StatCard
-            label="Pending approvals"
-            value={String(pendingApprovals.length)}
-            hint="Waiting on you"
-            isLoading={summaryLoading}
-            tone={pendingApprovals.length > 0 ? "warning" : "neutral"}
-          />
-          <StatCard
-            label="Awaiting delivery"
-            value={String(awaitingDelivery.length)}
-            hint="Loaded, not dispatched"
-            isLoading={summaryLoading}
-          />
-          <StatCard
-            label="Low stock alerts"
-            value={String(lowStockProducts.length)}
-            hint="At or below minimum"
-            isLoading={stock.isLoading || inventory.isLoading}
-            tone={lowStockProducts.length > 0 ? "danger" : "neutral"}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <div className="xl:col-span-2">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-ink">Recent orders</h2>
-              <Link href="/admin/orders" className="text-sm font-medium text-primary hover:text-primary-hover">
-                View all
-              </Link>
-            </div>
-            <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-              {orders.isLoading ? (
-                <div className="flex flex-col gap-3 p-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
-                </div>
-              ) : orders.isError ? (
-                <p className="p-6 text-center text-sm text-red-600">Couldn&apos;t load orders.</p>
-              ) : (
-                <Table<SalesOrderResponse>
-                  rowKey={(o) => o.id}
-                  rows={recentOrders}
-                  emptyMessage="No orders placed yet."
-                  columns={[
-                    {
-                      header: "Order",
-                      render: (o) => (
-                        <Link
-                          href={`/admin/orders/${o.id}`}
-                          className="font-mono text-xs font-medium text-ink hover:text-primary"
-                        >
-                          {o.order_number}
-                        </Link>
-                      ),
-                    },
-                    { header: "Status", render: (o) => <OrderStatusBadge status={o.status} /> },
-                    { header: "Total", render: (o) => formatCurrency(o.total) },
-                    {
-                      header: "Placed",
-                      render: (o) =>
-                        new Intl.DateTimeFormat("en-IN", { hour: "2-digit", minute: "2-digit" }).format(
-                          new Date(o.created_at)
-                        ),
-                    },
-                  ]}
-                />
-              )}
-            </div>
-          </div>
-
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-ink">Low stock</h2>
-              <Link href="/admin/inventory" className="text-sm font-medium text-primary hover:text-primary-hover">
-                View all
-              </Link>
-            </div>
-            <Card className="p-0">
-              {stock.isLoading || inventory.isLoading ? (
-                <div className="flex flex-col gap-3 p-4">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
-                </div>
-              ) : lowStockProducts.length === 0 ? (
-                <p className="p-6 text-center text-sm text-ink-muted">
-                  All active products are above their minimum stock.
-                </p>
-              ) : (
-                <ul className="divide-y divide-border/70">
-                  {lowStockProducts.slice(0, 6).map((p) => (
-                    <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-ink">{p.name}</p>
-                        <p className="font-mono text-xs text-ink-muted">{p.sku}</p>
-                      </div>
-                      <Badge tone={p.sellable <= 0 ? "danger" : "warning"}>
-                        {p.sellable} left
-                      </Badge>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile: quick actions replace the dashboard, per UI/UX brief. */}
-      <div className="flex flex-col gap-4 p-4 sm:hidden">
-        {pendingApprovals.length > 0 && (
-          <Card className="flex items-center justify-between gap-3 border-amber-200 bg-amber-50">
-            <div>
-              <p className="text-sm font-semibold text-ink">{pendingApprovals.length} order{pendingApprovals.length === 1 ? "" : "s"} waiting</p>
-              <p className="text-xs text-ink-muted">Needs your approval</p>
-            </div>
-            <Link href="/admin/orders" className="text-sm font-medium text-primary">
-              Review
-            </Link>
           </Card>
-        )}
-        <div className="grid grid-cols-2 gap-3">
-          {QUICK_ACTIONS.map((action) => (
-            <Link key={action.href} href={action.href}>
-              <Card className="flex flex-col gap-1">
-                <p className="text-sm font-semibold text-ink">{action.label}</p>
-                <p className="text-xs text-ink-muted">{action.hint}</p>
-              </Card>
-            </Link>
-          ))}
         </div>
       </div>
     </div>

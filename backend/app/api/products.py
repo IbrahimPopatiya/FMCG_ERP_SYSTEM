@@ -33,6 +33,9 @@ def list_products(
     price_list_id = principal.customer.price_list_id if principal.type == "customer" else None
 
     products = product_service.list_active_products(db)
+    prices = price_list_service.get_effective_prices(
+        db, price_list_id, [(p.id, p.selling_price) for p in products]
+    )
     return [
         ProductCatalogResponse(
             id=p.id,
@@ -43,9 +46,7 @@ def list_products(
             unit=p.unit,
             packing=p.packing,
             mrp=p.mrp,
-            effective_price=price_list_service.get_effective_price(
-                db, price_list_id, p.id, p.selling_price
-            ),
+            effective_price=prices[p.id],
             gst_rate=p.gst_rate,
             image=p.image,
         )
@@ -74,7 +75,7 @@ def create_product(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        return product_service.create_product(db, data)
+        return product_service.create_product(db, data, current_user.id)
     except DuplicateProductError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 

@@ -1,21 +1,26 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Select } from "@/components/ui/Select";
 import { CustomerProductCard } from "@/components/products/CustomerProductCard";
+import { MenuButton } from "@/components/customer/CustomerMenu";
 import { AccountAvatar } from "@/components/customer/AccountAvatar";
-import { SearchIcon } from "@/components/customer/icons";
+import { SearchIcon, FilterIcon, CategoryAllIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCategories } from "@/lib/hooks/useCategories";
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useProducts } from "@/lib/hooks/useProducts";
+import type { ProductCatalogResponse } from "@/types/product";
 
 type SortOption = "popular" | "price_low" | "price_high" | "name";
 
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-3 gap-3 p-4 md:grid-cols-4 md:p-8 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4 md:p-8 lg:grid-cols-5">
       {Array.from({ length: 9 }).map((_, i) => (
         <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
       ))}
@@ -34,6 +39,7 @@ export default function ProductsPage() {
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [categoryId, setCategoryId] = useState<string | null>(searchParams.get("category"));
   const [sort, setSort] = useState<SortOption>("popular");
 
@@ -41,13 +47,25 @@ function ProductsPageContent() {
   const categories = useCategories();
   const { getQty, addItem, setQty } = useCart();
 
+  // Depends only on the cart functions, not on `filtered` - stays the same
+  // reference across search/sort/category changes, so memoized product
+  // cards can skip re-rendering while the user is just typing/filtering.
+  const handleQtyChange = useCallback(
+    (product: ProductCatalogResponse, qty: number) => {
+      if (qty === 0) setQty(product.id, 0);
+      else if (getQty(product.id) === 0) addItem(product, qty);
+      else setQty(product.id, qty);
+    },
+    [setQty, getQty, addItem]
+  );
+
   const activeCategories = useMemo(() => {
     const usedIds = new Set((products.data ?? []).map((p) => p.category_id).filter(Boolean));
     return (categories.data ?? []).filter((c) => usedIds.has(c.id));
   }, [products.data, categories.data]);
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = debouncedSearch.trim().toLowerCase();
     const list = (products.data ?? []).filter((p) => {
       if (categoryId && p.category_id !== categoryId) return false;
       if (!query) return true;
@@ -58,59 +76,79 @@ function ProductsPageContent() {
     else if (sort === "price_high") sorted.sort((a, b) => b.effective_price - a.effective_price);
     else if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
     return sorted;
-  }, [products.data, search, categoryId, sort]);
+  }, [products.data, debouncedSearch, categoryId, sort]);
 
   return (
     <div className="flex flex-col">
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-3 md:px-8">
-        <div className="flex items-center gap-3">
-          <div className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-4 py-2.5">
-            <p className="text-xs text-ink-muted">Browsing</p>
-            <p className="truncate text-sm font-semibold text-ink">All Products</p>
+        <div className="flex items-center gap-2">
+          <MenuButton />
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-bold text-ink">Products</p>
+            <p className="text-xs text-ink-muted">Shop from 1000+ items</p>
           </div>
           <AccountAvatar />
         </div>
 
-        <div className="flex items-center gap-2 rounded-xl border border-border px-3.5">
-          <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
-          <input
-            type="search"
-            placeholder="Search…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-11 w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none md:max-w-md"
-          />
+        <div className="flex items-center gap-2">
+          <div className="flex h-11 flex-1 items-center gap-2 rounded-xl border border-border px-3.5">
+            <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
+            <input
+              type="search"
+              placeholder="Search for products, brands and more…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-full w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            aria-label="Filter"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-ink-muted hover:bg-surface"
+          >
+            <FilterIcon className="h-4 w-4" />
+          </button>
         </div>
 
-        {activeCategories.length > 0 && (
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-            <button
-              type="button"
-              onClick={() => setCategoryId(null)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                categoryId === null
-                  ? "border-primary bg-primary text-white"
-                  : "border-border text-ink-muted hover:bg-surface"
+        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+          <button
+            type="button"
+            onClick={() => setCategoryId(null)}
+            className="flex shrink-0 flex-col items-center gap-1.5"
+          >
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors ${
+                categoryId === null ? "bg-primary text-white" : "bg-primary-soft text-primary"
               }`}
             >
-              All
-            </button>
-            {activeCategories.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setCategoryId(c.id)}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                  categoryId === c.id
-                    ? "border-primary bg-primary text-white"
-                    : "border-border text-ink-muted hover:bg-surface"
+              <CategoryAllIcon className="h-5 w-5" />
+            </div>
+            <p className={`text-xs font-medium ${categoryId === null ? "text-primary" : "text-ink-muted"}`}>All</p>
+          </button>
+          {activeCategories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setCategoryId(c.id)}
+              className="flex shrink-0 flex-col items-center gap-1.5"
+            >
+              <div
+                className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl text-sm font-semibold transition-colors ${
+                  categoryId === c.id ? "bg-primary text-white" : "bg-primary-soft text-primary"
                 }`}
               >
+                {c.image ? (
+                  <Image src={c.image} alt={c.name} fill sizes="48px" className="object-cover" />
+                ) : (
+                  c.name.charAt(0).toUpperCase()
+                )}
+              </div>
+              <p className={`w-14 truncate text-center text-xs font-medium ${categoryId === c.id ? "text-primary" : "text-ink-muted"}`}>
                 {c.name}
-              </button>
-            ))}
-          </div>
-        )}
+              </p>
+            </button>
+          ))}
+        </div>
       </header>
 
       {products.isLoading && <SkeletonGrid />}
@@ -149,17 +187,13 @@ function ProductsPageContent() {
       )}
 
       {!products.isLoading && !products.isError && filtered.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 p-4 pb-6 md:grid-cols-4 md:p-8 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 p-4 pb-6 md:grid-cols-4 md:p-8 lg:grid-cols-5">
           {filtered.map((product) => (
             <CustomerProductCard
               key={product.id}
               product={product}
               qty={getQty(product.id)}
-              onQtyChange={(qty) => {
-                if (qty === 0) setQty(product.id, 0);
-                else if (getQty(product.id) === 0) addItem(product, qty);
-                else setQty(product.id, qty);
-              }}
+              onQtyChange={handleQtyChange}
             />
           ))}
         </div>

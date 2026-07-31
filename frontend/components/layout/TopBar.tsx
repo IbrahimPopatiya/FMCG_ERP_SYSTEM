@@ -4,8 +4,16 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearSession } from "@/lib/auth/session";
 import { useCurrentUser } from "@/lib/hooks/useUsers";
+import { BackArrowIcon, BellIcon } from "@/components/admin/icons";
 
-export function TopBar({ title }: { title: string }) {
+interface TopBarProps {
+  title: string;
+  subtitle?: string;
+  backHref?: string;
+  onBack?: () => void;
+}
+
+export function TopBar({ title, subtitle, backHref, onBack }: TopBarProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentUser = useCurrentUser();
@@ -16,28 +24,51 @@ export function TopBar({ title }: { title: string }) {
     router.push("/login");
   }
 
+  function handleBack() {
+    if (onBack) return onBack();
+    if (backHref) return router.push(backHref);
+    router.back();
+  }
+
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-white px-4">
-      <h1 className="text-base font-semibold text-ink">{title}</h1>
-      <div className="flex items-center gap-3">
-        {currentUser.data && (
-          <span className="flex items-center gap-1.5 text-sm font-medium text-green-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
-            {currentUser.data.full_name}
-          </span>
-        )}
+    <header className="flex items-center justify-between gap-3 border-b border-border bg-white px-4 py-3.5 sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        {(backHref || onBack) ? (
+          <button
+            type="button"
+            onClick={handleBack}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink transition-colors hover:bg-surface"
+            aria-label="Go back"
+          >
+            <BackArrowIcon className="h-5 w-5" />
+          </button>
+        ) : null}
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold tracking-tight text-ink">{title}</h1>
+          {subtitle && <p className="truncate text-sm text-ink-muted">{subtitle}</p>}
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2">
+        <span className="hidden h-5 w-24 items-center gap-1.5 text-sm font-medium text-ink-muted sm:flex">
+          {currentUser.data ? (
+            currentUser.data.full_name
+          ) : (
+            <span className="h-3.5 w-full animate-pulse rounded bg-surface" />
+          )}
+        </span>
+        <button
+          type="button"
+          className="relative flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+          aria-label="Notifications"
+        >
+          <BellIcon className="h-5 w-5" />
+        </button>
         <button
           type="button"
           onClick={handleLogout}
-          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+          className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-surface hover:text-ink"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path
-              d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
           Logout
         </button>
       </div>

@@ -1,23 +1,35 @@
+import { memo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { DiscountBadge } from "@/components/customer/DiscountBadge";
+import { CartIcon } from "@/components/customer/icons";
 import { formatCurrency } from "@/lib/utils/format";
 import type { ProductCatalogResponse } from "@/types/product";
 
 interface CustomerProductCardProps {
   product: ProductCatalogResponse;
   qty: number;
-  onQtyChange: (qty: number) => void;
+  // Takes the product itself (not just its id) so the parent's callback
+  // doesn't need to depend on the current filtered/sorted list just to look
+  // the product back up - that would change identity on every keystroke in
+  // search and defeat memoization below.
+  onQtyChange: (product: ProductCatalogResponse, qty: number) => void;
 }
 
-export function CustomerProductCard({ product, qty, onQtyChange }: CustomerProductCardProps) {
+function CustomerProductCardBase({ product, qty, onQtyChange }: CustomerProductCardProps) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md">
       <Link href={`/products/${product.id}`} className="relative block">
-        <div className="flex aspect-square items-center justify-center bg-primary-soft">
+        <div className="relative flex aspect-square items-center justify-center bg-primary-soft">
           {product.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(min-width: 640px) 200px, 50vw"
+              className="object-cover"
+            />
           ) : (
             <span className="text-xs font-medium text-primary/60">{product.unit}</span>
           )}
@@ -26,31 +38,36 @@ export function CustomerProductCard({ product, qty, onQtyChange }: CustomerProdu
           <DiscountBadge mrp={product.mrp} effectivePrice={product.effective_price} />
         </div>
       </Link>
-      <div className="flex flex-1 flex-col gap-2 p-3">
+      <div className="flex flex-1 flex-col gap-1.5 p-3">
         <Link href={`/products/${product.id}`}>
           <p className="line-clamp-2 text-sm font-medium leading-snug text-ink">{product.name}</p>
         </Link>
         <p className="text-xs text-ink-muted">{product.packing}</p>
-        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-          <div>
-            <p className="text-sm font-semibold text-ink">{formatCurrency(product.effective_price)}</p>
-            {product.mrp > product.effective_price && (
-              <p className="text-xs text-ink-muted line-through">{formatCurrency(product.mrp)}</p>
-            )}
-          </div>
+        <p className="text-sm">
+          <span className="font-semibold text-ink">{formatCurrency(product.effective_price)}</span>
+          {product.mrp > product.effective_price && (
+            <span className="ml-1.5 text-xs text-ink-muted line-through">{formatCurrency(product.mrp)}</span>
+          )}
+        </p>
+        <div className="mt-auto pt-1.5">
           {qty === 0 ? (
             <button
               type="button"
-              onClick={() => onQtyChange(1)}
-              className="h-9 rounded-lg bg-primary px-3 text-xs font-semibold text-white transition-colors hover:bg-primary-hover"
+              onClick={() => onQtyChange(product, 1)}
+              className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-primary-soft text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
             >
-              Add
+              <CartIcon className="h-3.5 w-3.5" />
+              Add to Cart
             </button>
           ) : (
-            <QtyStepper qty={qty} onChange={onQtyChange} size="sm" />
+            <div className="flex justify-center">
+              <QtyStepper qty={qty} onChange={(next) => onQtyChange(product, next)} size="sm" />
+            </div>
           )}
         </div>
       </div>
     </div>
   );
 }
+
+export const CustomerProductCard = memo(CustomerProductCardBase);

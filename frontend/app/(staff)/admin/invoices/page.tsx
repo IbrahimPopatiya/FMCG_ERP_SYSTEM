@@ -12,6 +12,7 @@ import { PaymentStatusBadge } from "@/components/invoices/PaymentStatusBadge";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
 import { useInvoicesManage } from "@/lib/hooks/useInvoices";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
+import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { InvoiceListItem, PaymentStatus } from "@/types/invoices";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -50,9 +51,13 @@ export default function InvoicesPage() {
   const customers = useCustomerDirectorySample();
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+  const isDesktop = useIsDesktop();
 
-  const customerName = (customerId: string) =>
-    customers.data?.items.find((c) => c.id === customerId)?.business_name ?? "Customer";
+  const customerNameById = useMemo(
+    () => new Map((customers.data?.items ?? []).map((c) => [c.id, c.business_name])),
+    [customers.data]
+  );
+  const customerName = (customerId: string) => customerNameById.get(customerId) ?? "Customer";
 
   const total = data?.pages[0]?.total ?? 0;
   const filtered = useMemo(() => {
@@ -102,7 +107,7 @@ export default function InvoicesPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length === 0 && (
+      {!isLoading && !isError && filtered.length === 0 && !hasNextPage && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No invoices here</p>
           <p className="text-sm text-ink-muted">
@@ -113,9 +118,10 @@ export default function InvoicesPage() {
         </div>
       )}
 
-      {!isLoading && !isError && filtered.length > 0 && (
+      {!isLoading && !isError && (filtered.length > 0 || hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
+          {isDesktop && (
           <div className="hidden sm:block">
             <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm">
               <Table<InvoiceListItem>
@@ -142,8 +148,10 @@ export default function InvoicesPage() {
               />
             </div>
           </div>
+          )}
 
           {/* Mobile: simplified card list */}
+          {isDesktop === false && (
           <div className="flex flex-col gap-3 sm:hidden">
             {filtered.map((inv) => (
               <Link key={inv.id} href={`/admin/invoices/${inv.id}`}>
@@ -158,6 +166,7 @@ export default function InvoicesPage() {
               </Link>
             ))}
           </div>
+          )}
 
           <div ref={sentinelRef} className="flex justify-center py-6">
             {isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}

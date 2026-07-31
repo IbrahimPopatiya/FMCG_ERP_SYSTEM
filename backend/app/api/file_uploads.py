@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi.concurrency import run_in_threadpool
 
 from app.core.deps import Principal, get_current_principal
 from app.schemas.file_upload import FileUploadResponse
@@ -18,5 +19,8 @@ async def upload_file(
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE_BYTES:
         raise HTTPException(status_code=413, detail="File too large - maximum size is 10MB")
-    file_url = save_file(contents, file.filename, category)
+    # save_file() does a blocking network call to Supabase Storage - running it
+    # directly here would freeze every other in-flight request on the event loop
+    # until the upload finishes, so it runs in a worker thread instead.
+    file_url = await run_in_threadpool(save_file, contents, file.filename, category)
     return FileUploadResponse(file_url=file_url)

@@ -17,10 +17,10 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
   const nav = role ? getRoleNav(role) : ROLE_NAV.admin;
 
   return (
-    <div className="flex flex-1 overflow-hidden">
+    <div className="staff-theme flex flex-1 overflow-hidden bg-background">
       <DesktopSidebar items={nav.desktop} />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto bg-background">{children}</main>
         <MobileBottomNav items={nav.mobile} />
       </div>
     </div>
