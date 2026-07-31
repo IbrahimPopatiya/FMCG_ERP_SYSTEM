@@ -9,9 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { FreeDeliveryProgress } from "@/components/customer/FreeDeliveryProgress";
-import { MenuButton } from "@/components/customer/CustomerMenu";
-import { AccountAvatar } from "@/components/customer/AccountAvatar";
-import { TrashIcon } from "@/components/customer/icons";
+import { TrashIcon, CartIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCreateOrder } from "@/lib/hooks/useOrderMutations";
 import { formatCurrency } from "@/lib/utils/format";
@@ -50,18 +48,23 @@ export default function CartPage() {
   }
 
   return (
-    <div className="flex flex-col">
-      {/* <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-white px-4 py-3 md:px-8">
-        <MenuButton />
-        <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold text-ink">My Cart</p>
-          <p className="text-xs text-ink-muted">{items.length} {items.length === 1 ? "Item" : "Items"}</p>
+    <div className="flex min-h-full flex-col">
+      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3 md:px-8">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <CartIcon className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-2xl font-extrabold tracking-tight text-ink">My Cart</p>
+            <p className="text-xs text-ink-muted">
+              {items.length} {items.length === 1 ? "Item" : "Items"}
+            </p>
+          </div>
         </div>
-        <AccountAvatar />
-      </header> */}
+      </header>
 
       {items.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 px-4 py-20 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path

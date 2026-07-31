@@ -39,6 +39,38 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {process.env.NODE_ENV !== "production" && (
+          // Dev builds change chunk hashes on nearly every restart. A
+          // service worker + cache left over from a previous session (e.g.
+          // an earlier `next build && next start`) can keep serving stale,
+          // now-404ing chunks and blank-screen every reload before our own
+          // JS ever gets a chance to run. This has to run inline, before any
+          // hashed chunk is requested, and force one reload so the browser
+          // stops being controlled by the old worker right away.
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(){
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    if (!regs.length) return;
+    Promise.all(regs.map(function(r) { return r.unregister(); })).then(function() {
+      if ('caches' in window) {
+        caches.keys().then(function(keys) {
+          keys.forEach(function(k) { caches.delete(k); });
+        });
+      }
+      if (!sessionStorage.getItem('dms-sw-cleared')) {
+        sessionStorage.setItem('dms-sw-cleared', '1');
+        location.reload();
+      }
+    });
+  });
+})();`,
+            }}
+          />
+        )}
+      </head>
       <body className="flex h-dvh flex-col overflow-hidden">
         <ServiceWorkerProvider>
           <InstallAppBannerLazy />

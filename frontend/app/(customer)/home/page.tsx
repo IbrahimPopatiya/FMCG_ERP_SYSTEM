@@ -1,33 +1,31 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { QtyStepper } from "@/components/ui/QtyStepper";
+import { FilterDrawer } from "@/components/customer/FilterDrawer";
 import {
-  BellIcon,
   CartIcon,
   HeartIcon,
   BookmarkIcon,
   ShareIcon,
-  BackArrowIcon,
-  CategoryAllIcon,
   CloseIcon,
   TagIcon,
   SparkleIcon,
   BoxIcon,
+  SettingsIcon,
+  SearchIcon,
 } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useProducts } from "@/lib/hooks/useProducts";
 import { usePosts } from "@/lib/hooks/usePosts";
 import { useCategories } from "@/lib/hooks/useCategories";
-import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { formatCurrency } from "@/lib/utils/format";
 import { dummyProductImage } from "@/lib/utils/dummyProductImage";
 import type { ProductCatalogResponse } from "@/types/product";
 import type { PostResponse } from "@/types/post";
-import type { CategoryResponse } from "@/types/categories";
 
 // A post is a promoted listing referencing a real product — render it in the
 // same reel using the product's real id/fields so "Add to bag" etc. still
@@ -51,71 +49,6 @@ function postToFeedItem(post: PostResponse): ProductCatalogResponse {
 
 const FEED_COUNT = 8;
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
-}
-
-function CategoryBar({
-  categories,
-  selectedId,
-  onSelect,
-}: {
-  categories: CategoryResponse[];
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
-}) {
-  return (
-    <div className="flex gap-4 overflow-x-auto px-4 pb-3 pt-1 scrollbar-none">
-      <button
-        type="button"
-        onClick={() => onSelect(null)}
-        className="flex shrink-0 flex-col items-center gap-1.5"
-      >
-        <span
-          className={`flex h-12 w-12 items-center justify-center rounded-full bg-white text-ink transition-all ${
-            selectedId === null ? "ring-2 ring-[#d12626] ring-offset-2 ring-offset-ink" : ""
-          }`}
-        >
-          <CategoryAllIcon className="h-5 w-5" />
-        </span>
-        <span className={`text-xs font-medium ${selectedId === null ? "text-[#d12626]" : "text-white/70"}`}>
-          All
-        </span>
-      </button>
-
-      {categories.map((category) => {
-        const active = selectedId === category.id;
-        return (
-          <button
-            key={category.id}
-            type="button"
-            onClick={() => onSelect(category.id)}
-            className="flex shrink-0 flex-col items-center gap-1.5"
-          >
-            <span
-              className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white text-ink transition-all ${
-                active ? "ring-2 ring-[#d12626] ring-offset-2 ring-offset-ink" : ""
-              }`}
-            >
-              {category.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={category.image} alt={category.name} className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-sm font-bold">{initials(category.name)}</span>
-              )}
-            </span>
-            <span className={`max-w-[64px] truncate text-xs font-medium ${active ? "text-[#d12626]" : "text-white/70"}`}>
-              {category.name}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 // Deterministic pseudo-counts so the same product always shows the same
 // like/save numbers across renders, without needing real backend fields.
 function fakeCount(seed: string, base: number, spread: number): number {
@@ -124,33 +57,13 @@ function fakeCount(seed: string, base: number, spread: number): number {
   return base + (hash % spread);
 }
 
-function RailButton({
-  active,
-  onClick,
-  children,
-  label,
-}: {
-  active?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition-colors ${
-        active ? "bg-primary text-white" : "bg-black/35 text-white hover:bg-black/50"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
 // Product detail bottom sheet, opened by tapping the product name or the
 // reel image — mirrors a native "slide up from the bottom" product card.
+// Must match the `duration-300` Tailwind class used below — Tailwind needs a
+// static class name to generate the CSS, so this constant only drives the JS
+// timer, not the class itself.
+const SHEET_TRANSITION_MS = 300;
+
 function ProductDetailSheet({
   product,
   qty,
@@ -163,22 +76,44 @@ function ProductDetailSheet({
   onConfirm: (qty: number) => void;
 }) {
   const [pendingQty, setPendingQty] = useState(qty > 0 ? qty : 1);
+  // Starts off-screen/transparent, flips true a frame after mount so the
+  // transition actually animates in, and flips back false on close so the
+  // slide-down plays before the parent unmounts this component.
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  function handleClose() {
+    setVisible(false);
+    setTimeout(onClose, SHEET_TRANSITION_MS);
+  }
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col justify-end">
+    <div
+      className={`absolute inset-0 z-30 flex flex-col justify-end transition-colors duration-300 ${
+        visible ? "bg-black/40" : "bg-black/0"
+      }`}
+    >
       <button
         type="button"
         aria-label="Close product details"
-        onClick={onClose}
+        onClick={handleClose}
         className="absolute inset-0"
       />
 
-      <div className="relative flex max-h-[70%] flex-col rounded-t-3xl bg-white p-5 pb-6 shadow-2xl">
+      <div
+        className={`relative flex max-h-[70%] flex-col rounded-t-3xl bg-white p-5 pb-6 shadow-2xl transition-transform duration-300 ease-out ${
+          visible ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
         <div className="mx-auto mb-1 h-1 w-10 shrink-0 rounded-full bg-border" />
         <button
           type="button"
           aria-label="Close"
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-surface text-ink-muted hover:bg-border"
         >
           <CloseIcon className="h-4 w-4" />
@@ -237,7 +172,7 @@ function ProductDetailSheet({
             onClick={() => onConfirm(pendingQty)}
             className="flex h-12 w-full items-center justify-center rounded-xl bg-[#d12626] text-sm font-semibold text-white transition-colors hover:bg-red-700"
           >
-            Confirm
+            Add to Cart
           </button>
         </div>
       </div>
@@ -254,7 +189,6 @@ function ReelSlide({
   onToggleSave,
   onShare,
   onOpenBag,
-  onBack,
 }: {
   product: ProductCatalogResponse;
   liked: boolean;
@@ -264,10 +198,9 @@ function ReelSlide({
   onToggleSave: () => void;
   onShare: () => void;
   onOpenBag: () => void;
-  onBack: () => void;
 }) {
   return (
-    <section className="relative h-full w-full shrink-0 snap-start snap-always overflow-hidden bg-ink">
+    <section className="relative h-full w-full shrink-0 snap-start snap-always overflow-hidden bg-white">
       <div className="absolute inset-0 h-full w-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -277,81 +210,52 @@ function ReelSlide({
         />
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent" />
 
-      <button
-        type="button"
-        aria-label="Back"
-        onClick={onBack}
-        className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm hover:bg-black/50"
-      >
-        <BackArrowIcon className="h-4 w-4" />
-      </button>
-
-      {/* Right action rail */}
-      <div className="absolute bottom-24 right-3 flex flex-col items-end gap-5">
-        {/* Like Card */}
-        <button
-          type="button"
-          aria-label="Like"
-          onClick={onToggleLike}
-          className={`flex h-[72px] w-[50px] flex-col items-center justify-between py-2 rounded-2xl border backdrop-blur-md transition-all ${
-            liked
-              ? "bg-[#d12626]/80 border-[#d12626] text-white"
-              : "bg-black/35 border-white/10 text-white hover:bg-black/50"
-          }`}
-        >
-          <HeartIcon className="h-5 w-5 mt-1" filled={liked} />
-          <span className="text-[10px] font-semibold mb-0.5">
+      {/* Right action rail — icons float directly on the photo, no card behind them */}
+      <div className="absolute bottom-24 right-3 flex flex-col items-center gap-5">
+        <button type="button" aria-label="Like" onClick={onToggleLike} className="flex flex-col items-center gap-1">
+          <HeartIcon
+            className={`h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] ${liked ? "text-[#d12626]" : "text-white"}`}
+            filled={liked}
+          />
+          <span className="text-[12px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
             {fakeCount(product.id, 40, 260) + (liked ? 1 : 0)}
           </span>
         </button>
 
-        {/* Save Card */}
-        <button
-          type="button"
-          aria-label="Save"
-          onClick={onToggleSave}
-          className={`flex h-[72px] w-[50px] flex-col items-center justify-between py-2 rounded-2xl border backdrop-blur-md transition-all ${
-            saved
-              ? "bg-[#d12626]/80 border-[#d12626] text-white"
-              : "bg-black/35 border-white/10 text-white hover:bg-black/50"
-          }`}
-        >
-          <BookmarkIcon className="h-5 w-5 mt-1" filled={saved} />
-          <span className="text-[10px] font-semibold mb-0.5">
+        <button type="button" aria-label="Save" onClick={onToggleSave} className="flex flex-col items-center gap-1">
+          <BookmarkIcon
+            className={`h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] ${saved ? "text-[#d12626]" : "text-white"}`}
+            filled={saved}
+          />
+          <span className="text-[12px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
             {fakeCount(product.id + "s", 10, 120) + (saved ? 1 : 0)}
           </span>
         </button>
 
-        {/* Share Card */}
-        <button
-          type="button"
-          aria-label="Share"
-          onClick={onShare}
-          className="flex h-[72px] w-[50px] flex-col items-center justify-between py-2 rounded-2xl border border-white/10 bg-black/35 text-white backdrop-blur-md transition-all hover:bg-black/50"
-        >
-          <ShareIcon className="h-5 w-5 mt-1" />
-          <span className="text-[10px] font-semibold mb-0.5">Share</span>
+        <button type="button" aria-label="Share" onClick={onShare} className="flex items-center justify-center">
+          <ShareIcon className="h-8 w-8 text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]" />
         </button>
 
         <button
           type="button"
           aria-label={qty > 0 ? "Edit bag quantity" : "Add to bag"}
           onClick={onOpenBag}
-          className={`flex h-[72px] w-[50px] flex-col items-center justify-between py-2 rounded-2xl border backdrop-blur-md transition-all ${
-            qty > 0
-              ? "bg-[#d12626]/80 border-[#d12626] text-white"
-              : "border-white/10 bg-black/35 text-white hover:bg-black/50"
-          }`}
+          className="flex flex-col items-center gap-1"
         >
-          <CartIcon className="h-5 w-5 mt-1" />
-          <span className="text-[10px] font-semibold mb-0.5">{qty > 0 ? qty : "Add"}</span>
+          <CartIcon
+            className={`h-8 w-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] ${qty > 0 ? "text-[#d12626]" : "text-white"}`}
+          />
+          {qty > 0 && (
+            <span className="text-[12px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">{qty}</span>
+          )}
         </button>
       </div>
 
-      {/* Bottom-left product name */}
-      <div className="absolute inset-x-0 bottom-0 p-4 pr-24 pointer-events-none">
+      {/* Top-left product name */}
+      <div className="absolute inset-x-0 top-0 p-4 pr-24 pointer-events-none">
         <span className="truncate block text-left text-[20px] font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
           {product.name}
         </span>
@@ -361,31 +265,42 @@ function ReelSlide({
 }
 
 export default function HomePage() {
-  const router = useRouter();
   const products = useProducts();
   const posts = usePosts();
   const categories = useCategories();
-  const currentCustomer = useCurrentCustomer();
   const { addItem, getQty, setQty } = useCart();
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [openProductId, setOpenProductId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
 
   // Posts (newest first, from the API) lead the feed, followed by the
   // regular product catalog — products already referenced by a post are
   // skipped from the catalog tail so the same item doesn't show up twice.
   // Picking a category filters the whole feed down to that category; "All"
-  // (selectedCategoryId === null) shows everything, capped to FEED_COUNT.
+  // (selectedCategoryId === null) shows everything, capped to FEED_COUNT
+  // unless a search/category narrows it down.
   const feedProducts = useMemo(() => {
     const postItems = (posts.data ?? []).map(postToFeedItem);
     const postedProductIds = new Set(postItems.map((p) => p.id));
     const catalogItems = (products.data ?? []).filter((p) => !postedProductIds.has(p.id));
-    const combined = [...postItems, ...catalogItems];
+    let combined = [...postItems, ...catalogItems];
 
-    if (selectedCategoryId === null) return combined.slice(0, FEED_COUNT);
-    return combined.filter((p) => p.category_id === selectedCategoryId);
-  }, [posts.data, products.data, selectedCategoryId]);
+    if (selectedCategoryId !== null) {
+      combined = combined.filter((p) => p.category_id === selectedCategoryId);
+    }
+
+    const query = debouncedSearch.trim().toLowerCase();
+    if (query) {
+      combined = combined.filter((p) => p.name.toLowerCase().includes(query));
+    }
+
+    if (selectedCategoryId === null && !query) return combined.slice(0, FEED_COUNT);
+    return combined;
+  }, [posts.data, products.data, selectedCategoryId, debouncedSearch]);
   const openProduct = feedProducts.find((p) => p.id === openProductId) ?? null;
   const isLoading = products.isLoading || posts.isLoading;
 
@@ -407,36 +322,40 @@ export default function HomePage() {
     }
   }
 
-  const businessName = currentCustomer.data?.business_name ?? "";
-
   return (
-    <div className="relative flex h-full flex-col bg-ink">
-      <div className="shrink-0 border-b border-white/5 bg-ink pt-3">
-        <div className="flex items-center justify-between px-4 pb-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">
-              {businessName ? initials(businessName) : ""}
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-white">{businessName || "Welcome"}</p>
-              <p className="truncate text-xs text-white/50">Wholesale &amp; Distribution</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white"
-          >
-            <BellIcon className="h-4.5 w-4.5" />
-          </button>
+    <div className="relative flex h-full flex-col bg-white">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border bg-white px-4 py-3">
+        <div className="flex h-11 flex-1 items-center gap-2 rounded-xl border border-border px-3.5">
+          <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
+          <input
+            type="search"
+            placeholder="Search products…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-full w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
+          />
         </div>
 
-        <CategoryBar
-          categories={categories.data ?? []}
-          selectedId={selectedCategoryId}
-          onSelect={setSelectedCategoryId}
-        />
+        <button
+          type="button"
+          aria-label="Filters"
+          onClick={() => setIsFilterOpen(true)}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary transition-colors hover:brightness-95"
+        >
+          <SettingsIcon className="h-[18px] w-[18px]" />
+        </button>
       </div>
+
+      <FilterDrawer
+        open={isFilterOpen}
+        categories={categories.data ?? []}
+        selectedCategoryId={selectedCategoryId}
+        onApply={(id) => {
+          setSelectedCategoryId(id);
+          setIsFilterOpen(false);
+        }}
+        onClose={() => setIsFilterOpen(false)}
+      />
 
       {isLoading && (
         <div className="flex flex-1 flex-col gap-2 p-3">
@@ -445,13 +364,13 @@ export default function HomePage() {
       )}
 
       {!isLoading && feedProducts.length === 0 && (
-        <p className="flex flex-1 items-center justify-center px-4 text-center text-sm text-white/60">
-          {selectedCategoryId ? "No products in this category yet." : "No products to show yet."}
+        <p className="flex flex-1 items-center justify-center px-4 text-center text-sm text-ink-muted">
+          {search.trim() || selectedCategoryId ? "No products match your filters." : "No products to show yet."}
         </p>
       )}
 
       {!isLoading && feedProducts.length > 0 && (
-        <div className="flex-1 snap-y snap-mandatory overflow-y-auto scroll-smooth">
+        <div className="flex-1 snap-y snap-mandatory overflow-y-auto overscroll-y-contain">
           {feedProducts.map((product) => (
             <ReelSlide
               key={product.id}
@@ -463,7 +382,6 @@ export default function HomePage() {
               onToggleSave={() => setSaved((prev) => ({ ...prev, [product.id]: !prev[product.id] }))}
               onShare={() => handleShare(product)}
               onOpenBag={() => setOpenProductId(product.id)}
-              onBack={() => router.back()}
             />
           ))}
         </div>

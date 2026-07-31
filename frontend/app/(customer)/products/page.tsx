@@ -1,17 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import { Suspense, useCallback, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Select } from "@/components/ui/Select";
 import { CustomerProductCard } from "@/components/products/CustomerProductCard";
-import { MenuButton } from "@/components/customer/CustomerMenu";
-import { AccountAvatar } from "@/components/customer/AccountAvatar";
-import { SearchIcon, FilterIcon, CategoryAllIcon } from "@/components/customer/icons";
+import { SearchIcon, BoxIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
-import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useProductsFeed } from "@/lib/hooks/useProducts";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
@@ -41,10 +37,9 @@ function ProductsPageContent() {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
-  const [categoryId, setCategoryId] = useState<string | null>(searchParams.get("category"));
+  const categoryId = searchParams.get("category");
   const [sort, setSort] = useState<SortOption>("popular");
 
-  const categories = useCategories();
   const { getQty, addItem, setQty } = useCart();
 
   const {
@@ -76,74 +71,26 @@ function ProductsPageContent() {
 
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-3 md:px-8">
-        <div className="flex items-center gap-2">
-          <MenuButton />
-          <div className="min-w-0 flex-1">
-            <p className="text-lg font-bold text-ink">Products</p>
+      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3 md:px-8">
+        <div className="mb-3 flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <BoxIcon className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-2xl font-extrabold tracking-tight text-ink">Products</p>
             <p className="text-xs text-ink-muted">Shop from our full catalog</p>
           </div>
-          <AccountAvatar />
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex h-11 flex-1 items-center gap-2 rounded-xl border border-border px-3.5">
-            <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
-            <input
-              type="search"
-              placeholder="Search for products, brands and more…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-full w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
-            />
-          </div>
-          <button
-            type="button"
-            aria-label="Filter"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-ink-muted hover:bg-surface"
-          >
-            <FilterIcon className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-          <button
-            type="button"
-            onClick={() => setCategoryId(null)}
-            className="flex shrink-0 flex-col items-center gap-1.5"
-          >
-            <div
-              className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors ${
-                categoryId === null ? "bg-primary text-white" : "bg-primary-soft text-primary"
-              }`}
-            >
-              <CategoryAllIcon className="h-5 w-5" />
-            </div>
-            <p className={`text-xs font-medium ${categoryId === null ? "text-primary" : "text-ink-muted"}`}>All</p>
-          </button>
-          {(categories.data ?? []).map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setCategoryId(c.id)}
-              className="flex shrink-0 flex-col items-center gap-1.5"
-            >
-              <div
-                className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl text-sm font-semibold transition-colors ${
-                  categoryId === c.id ? "bg-primary text-white" : "bg-primary-soft text-primary"
-                }`}
-              >
-                {c.image ? (
-                  <Image src={c.image} alt={c.name} fill sizes="48px" className="object-cover" />
-                ) : (
-                  c.name.charAt(0).toUpperCase()
-                )}
-              </div>
-              <p className={`w-14 truncate text-center text-xs font-medium ${categoryId === c.id ? "text-primary" : "text-ink-muted"}`}>
-                {c.name}
-              </p>
-            </button>
-          ))}
+        <div className="flex h-11 items-center gap-2 rounded-xl border border-border px-3.5">
+          <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
+          <input
+            type="search"
+            placeholder="Search for products, brands and more…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-full w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
+          />
         </div>
       </header>
 

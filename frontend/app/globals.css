@@ -8,6 +8,32 @@
   display: none;
 }
 
+/* Shimmering loading placeholder - a highlight sweeps across the base tint,
+   reads as "actively loading" instead of the flatter animate-pulse blink. */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--color-border) 65%, transparent);
+}
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-surface) 90%, white),
+    transparent
+  );
+  animation: skeleton-shimmer-sweep 1.6s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /*
  * Brand tokens. DMS is a distribution/logistics tool — the palette is a
  * five-stop blue ramp (light sky -> deep navy) from final_docs/image.png:
