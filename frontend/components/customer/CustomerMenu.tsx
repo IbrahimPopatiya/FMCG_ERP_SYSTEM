@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { CUSTOMER_MENU_ITEMS } from "@/components/customer/navItems";
-import { MenuIcon, CloseIcon, LogoutIcon } from "@/components/customer/icons";
+import { MenuIcon, CloseIcon, LogoutIcon, StoreIcon } from "@/components/customer/icons";
 import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
 import { clearSession } from "@/lib/auth/session";
 
@@ -48,14 +48,19 @@ export function CustomerMenuProvider({ children }: { children: React.ReactNode }
           }`}
           style={{ paddingTop: "env(safe-area-inset-top)" }}
         >
-          <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-5">
-            <div className="min-w-0">
-              <p className="truncate text-2xl font-extrabold tracking-tight text-ink">
-                {customer.data?.business_name ?? "Your store"}
-              </p>
-              <p className="truncate text-xs text-ink-muted">
-                {customer.data ? `${customer.data.city}, ${customer.data.state}` : "Wholesale ordering"}
-              </p>
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-5">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                <StoreIcon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[15px] font-semibold text-ink">
+                  {customer.data?.business_name ?? "Your store"}
+                </p>
+                <p className="truncate text-xs text-ink-muted">
+                  {customer.data ? `${customer.data.city}, ${customer.data.state}` : "Wholesale ordering"}
+                </p>
+              </div>
             </div>
             <button
               type="button"

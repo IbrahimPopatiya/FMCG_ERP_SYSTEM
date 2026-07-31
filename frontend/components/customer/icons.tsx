@@ -326,3 +326,16 @@ export function BoxIcon({ className = "h-5 w-5" }: IconProps) {
     </svg>
   );
 }
+
+export function StoreIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path
+        d="M4 9l1.2-4h13.6L20 9M4 9v10a1 1 0 001 1h14a1 1 0 001-1V9M4 9h16"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M9 20v-6h6v6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
