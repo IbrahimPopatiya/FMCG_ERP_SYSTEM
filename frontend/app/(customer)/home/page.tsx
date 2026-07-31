@@ -255,11 +255,26 @@ function ReelSlide({
         </button>
       </div>
 
-      {/* Top-left product name */}
-      <div className="absolute inset-x-0 top-0 p-4 pr-24 pointer-events-none">
-        <span className="truncate block text-left text-[20px] font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
-          {product.name}
-        </span>
+      {/* Top-left product name + price + packing — glassy chip over the photo */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 p-4 pr-24">
+        <div className="inline-flex max-w-full flex-col gap-0.5 rounded-2xl border border-white/40 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-md">
+          <span className="truncate text-left text-[18px] font-bold leading-snug text-black">
+            {product.name}
+          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm font-semibold text-black">
+              {formatCurrency(product.effective_price)}
+            </span>
+            {product.mrp > product.effective_price && (
+              <span className="text-xs text-black/55 line-through">
+                {formatCurrency(product.mrp)}
+              </span>
+            )}
+          </div>
+          {product.packing && (
+            <span className="truncate text-xs font-medium text-black/70">{product.packing}</span>
+          )}
+        </div>
       </div>
     </section>
   );
