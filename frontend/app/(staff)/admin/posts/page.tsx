@@ -1,10 +1,7 @@
 "use client";
 
-<<<<<<< HEAD
 import { useMemo, useState } from "react";
-=======
 import Image from "next/image";
->>>>>>> abcf48e78cfa5bcceb7f4c159bc0c9cec3758462
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -57,10 +54,9 @@ function PostRow({ post }: { post: PostResponse }) {
 
   return (
     <Card className="flex items-center gap-4">
-      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
+      <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
         {post.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.image} alt={post.product_name} className="h-full w-full object-cover" />
+          <Image src={post.image} alt={post.product_name} fill sizes="64px" className="object-cover" />
         ) : (
           <span className="text-xs font-medium text-ink-muted">No image</span>
         )}
@@ -159,32 +155,7 @@ export default function AdminPostsPage() {
       {!isLoading && !isError && posts.length > 0 && (
         <div className="flex flex-col gap-3 p-4 sm:p-6">
           {posts.map((post) => (
-<<<<<<< HEAD
             <PostRow key={post.id} post={post} />
-=======
-            <Card key={post.id} className="flex items-center gap-4">
-              <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
-                {post.image ? (
-                  <Image src={post.image} alt={post.product_name} fill sizes="64px" className="object-cover" />
-                ) : (
-                  <span className="text-xs font-medium text-ink-muted">No image</span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-ink">{post.product_name}</p>
-                <p className="mt-0.5 text-sm text-ink-muted">
-                  {formatCurrency(post.price)}{" "}
-                  {post.mrp > post.price && (
-                    <span className="ml-1 text-ink-muted/70 line-through">{formatCurrency(post.mrp)}</span>
-                  )}
-                </p>
-                <p className="mt-0.5 text-xs text-ink-muted">Box of {post.quantity_in_box}</p>
-              </div>
-              <Badge tone={post.is_active ? "success" : "neutral"}>
-                {post.is_active ? "Active" : "Inactive"}
-              </Badge>
-            </Card>
->>>>>>> abcf48e78cfa5bcceb7f4c159bc0c9cec3758462
           ))}
         </div>
       )}
