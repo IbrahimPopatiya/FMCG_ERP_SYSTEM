@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getReturn, listReturns } from "@/lib/api/returns";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function useReturnsManage() {
   return useInfiniteQuery({

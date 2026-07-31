@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getCreditNote, listCreditNotes } from "@/lib/api/creditNotes";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function useCreditNotesManage() {
   return useInfiniteQuery({

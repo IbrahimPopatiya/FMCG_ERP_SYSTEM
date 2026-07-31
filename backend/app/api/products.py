@@ -98,7 +98,7 @@ def list_products_feed(
 @router.get("/manage", response_model=Page[ProductResponse])
 def list_products_for_management(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     search: Optional[str] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

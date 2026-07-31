@@ -60,7 +60,7 @@ def get_inventory(
     warehouse_id: Optional[uuid.UUID] = Query(default=None),
     product_id: Optional[uuid.UUID] = Query(default=None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

@@ -39,7 +39,7 @@ def list_posts(
 @router.get("/admin", response_model=Page[PostResponse])
 def list_all_posts(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     search: Optional[str] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),

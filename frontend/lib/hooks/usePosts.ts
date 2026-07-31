@@ -8,7 +8,7 @@ export function usePosts() {
   });
 }
 
-const ADMIN_POSTS_PAGE_SIZE = 20;
+const ADMIN_POSTS_PAGE_SIZE = 10;
 
 // Admin-only listing — includes inactive posts, for the Posts management screen.
 export function useAdminPosts(search: string) {

@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getPurchase, listPurchases } from "@/lib/api/purchases";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function usePurchasesManage() {
   return useInfiniteQuery({

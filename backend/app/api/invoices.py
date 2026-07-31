@@ -49,7 +49,7 @@ def _to_list_item(row: tuple) -> InvoiceListItem:
 @router.get("/invoices", response_model=Page[InvoiceListItem])
 def list_invoices(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ):

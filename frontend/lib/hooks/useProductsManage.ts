@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { listProductsForManagement } from "@/lib/api/products";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 // Powers the staff product list's scrollable infinite loading — each page
 // is fetched as the user nears the bottom of the list (see ProductsPage).

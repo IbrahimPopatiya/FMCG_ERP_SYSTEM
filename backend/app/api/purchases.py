@@ -29,7 +29,7 @@ router = APIRouter(prefix="/purchases", tags=["purchases"])
 @router.get("", response_model=Page[PurchaseResponse])
 def list_purchases(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

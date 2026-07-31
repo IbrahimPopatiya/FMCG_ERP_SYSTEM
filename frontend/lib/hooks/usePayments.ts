@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getPayment, listPayments } from "@/lib/api/payments";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function usePaymentsManage() {
   return useInfiniteQuery({

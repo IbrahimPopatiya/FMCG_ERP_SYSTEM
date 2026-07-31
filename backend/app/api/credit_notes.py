@@ -17,7 +17,7 @@ router = APIRouter(prefix="/credit-notes", tags=["credit-notes"])
 @router.get("", response_model=Page[CreditNoteResponse])
 def list_credit_notes(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ):

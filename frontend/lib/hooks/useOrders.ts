@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getOrder, listOrders } from "@/lib/api/salesOrders";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function useOrders() {
   return useInfiniteQuery({

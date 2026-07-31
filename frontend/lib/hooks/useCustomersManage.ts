@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { listCustomers } from "@/lib/api/customers";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function useCustomersManage(search: string) {
   return useInfiniteQuery({

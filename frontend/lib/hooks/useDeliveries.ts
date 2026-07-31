@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getDelivery, listDeliveries } from "@/lib/api/deliveries";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function useDeliveriesManage() {
   return useInfiniteQuery({

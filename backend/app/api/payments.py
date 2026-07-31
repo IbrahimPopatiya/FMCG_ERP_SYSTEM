@@ -47,7 +47,7 @@ def _to_list_item(row: tuple) -> PaymentListItem:
 @router.get("", response_model=Page[PaymentListItem])
 def list_payments(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ):

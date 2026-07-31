@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getInvoice, listInvoices } from "@/lib/api/invoices";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function useInvoicesManage() {
   return useInfiniteQuery({

@@ -52,7 +52,7 @@ def create_order(
 @router.get("", response_model=Page[SalesOrderResponse])
 def list_orders(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):

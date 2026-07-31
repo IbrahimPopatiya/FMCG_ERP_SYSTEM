@@ -57,7 +57,7 @@ def _to_list_item(row: tuple) -> DeliveryListItem:
 @router.get("", response_model=Page[DeliveryListItem])
 def list_deliveries(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ):
