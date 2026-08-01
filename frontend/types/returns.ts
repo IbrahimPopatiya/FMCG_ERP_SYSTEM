@@ -4,6 +4,7 @@ export type ReturnReason = "damaged" | "expired" | "wrong_item" | "not_needed";
 export interface ReturnItemResponse {
   id: string;
   product_id: string;
+  product_name: string;
   quantity: number;
   reason: string;
 }

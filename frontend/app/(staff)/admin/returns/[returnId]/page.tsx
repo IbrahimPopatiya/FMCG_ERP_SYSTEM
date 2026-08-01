@@ -14,7 +14,6 @@ import { TopBar } from "@/components/layout/TopBar";
 import { ReturnStatusBadge } from "@/components/returns/ReturnStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useCreditNoteSample } from "@/lib/hooks/useCreditNotes";
-import { useProducts } from "@/lib/hooks/useProducts";
 import { useReturn } from "@/lib/hooks/useReturns";
 import { useApproveReturn, useCompleteReturn, useRejectReturn } from "@/lib/hooks/useReturnMutations";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
@@ -34,7 +33,6 @@ export default function ReturnDetailPage() {
   const { returnId } = useParams<{ returnId: string }>();
   const ret = useReturn(returnId);
   const customer = useCustomer(ret.data?.customer_id ?? "");
-  const products = useProducts();
   const warehouses = useWarehouses();
   const creditNotes = useCreditNoteSample();
   const approveReturn = useApproveReturn(returnId);
@@ -48,8 +46,6 @@ export default function ReturnDetailPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [rejectError, setRejectError] = useState<string | null>(null);
 
-  const productName = (productId: string) =>
-    products.data?.find((p) => p.id === productId)?.name ?? "Product";
   const warehouseName = (warehouseId: string) =>
     warehouses.data?.find((w) => w.id === warehouseId)?.name ?? "—";
   const creditNote = creditNotes.data?.items.find((cn) => cn.return_id === returnId);
@@ -156,7 +152,7 @@ export default function ReturnDetailPage() {
             <div className="flex flex-col divide-y divide-border">
               {ret.data.items.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                  <p className="text-sm text-ink">{productName(item.product_id)}</p>
+                  <p className="text-sm text-ink">{item.product_name}</p>
                   <p className="text-sm font-medium text-ink">Qty {item.quantity}</p>
                 </div>
               ))}

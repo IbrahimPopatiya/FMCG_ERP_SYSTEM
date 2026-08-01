@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.core.enums import ReturnReason, ReturnStatus
 
@@ -30,10 +30,25 @@ class ReturnRejectRequest(BaseModel):
 class ReturnItemResponse(BaseModel):
     id: uuid.UUID
     product_id: uuid.UUID
+    product_name: str = "Product"
     quantity: Decimal
     reason: str
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def inject_product_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            return data
+        product = getattr(data, "product", None)
+        return {
+            "id": data.id,
+            "product_id": data.product_id,
+            "product_name": product.name if product is not None else "Product",
+            "quantity": data.quantity,
+            "reason": data.reason,
+        }
 
 
 class ReturnResponse(BaseModel):

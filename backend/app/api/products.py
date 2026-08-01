@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import Principal, get_current_principal, get_current_user
+from app.core.enums import ProductStatus
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.common import Page
@@ -121,6 +122,38 @@ def create_product(
         return product_service.create_product(db, data, current_user.id)
     except DuplicateProductError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+
+@router.get("/{product_id}/catalog", response_model=ProductCatalogResponse)
+def get_catalog_product(
+    product_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Single-product catalog view for the customer PDP — same price resolution
+    as `GET /products` / `GET /products/feed`, without downloading the full catalog."""
+    product = product_service.get_product(db, product_id)
+    if product is None or product.status != ProductStatus.ACTIVE:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+
+    price_list_id = principal.customer.price_list_id if principal.type == "customer" else None
+    prices = price_list_service.get_effective_prices(
+        db, price_list_id, [(product.id, product.selling_price)]
+    )
+    return ProductCatalogResponse(
+        id=product.id,
+        sku=product.sku,
+        name=product.name,
+        category_id=product.category_id,
+        brand_id=product.brand_id,
+        unit=product.unit,
+        packing=product.packing,
+        units_per_box=product.units_per_box,
+        mrp=product.mrp,
+        effective_price=prices[product.id],
+        gst_rate=product.gst_rate,
+        image=product.image,
+    )
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

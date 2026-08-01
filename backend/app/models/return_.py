@@ -29,3 +29,5 @@ class ReturnItem(Base, UUIDPKMixin, TimestampMixin):
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
     quantity = Column(Numeric(12, 2), nullable=False, default=0)
     reason = Column(String(255), nullable=False)
+
+    product = relationship("Product")

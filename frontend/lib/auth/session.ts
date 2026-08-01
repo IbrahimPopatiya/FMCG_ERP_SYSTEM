@@ -12,10 +12,9 @@ const TOKEN_KEY = "dms_token";
 const ROLE_KEY = "dms_role";
 const STAFF_ROLE_KEY = "dms_staff_role";
 
-// Stored as plain (non-httpOnly) cookies so both the browser (axios) and
-// proxy.ts (route guarding) can read them.
-// TODO: move token issuance behind a Next.js route handler that sets an
-// httpOnly cookie before going to production.
+// Stored as plain (non-httpOnly) cookies so both the browser (axios Bearer
+// header) and proxy.ts (route guarding) can read them. Secure is set on HTTPS.
+// Full httpOnly requires a same-origin BFF that forwards the cookie to FastAPI.
 
 function readCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
@@ -24,7 +23,12 @@ function readCookie(name: string): string | null {
 }
 
 function writeCookie(name: string, value: string) {
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
+  // Keep cookies JS-readable so axios can attach Bearer and proxy.ts can
+  // guard routes. Secure is set on HTTPS. Full httpOnly needs a BFF proxy
+  // (axios cannot read httpOnly cookies against a cross-origin API).
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:" ? "; secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax${secure}`;
 }
 
 function deleteCookie(name: string) {

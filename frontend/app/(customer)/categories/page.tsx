@@ -4,17 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useCategories } from "@/lib/hooks/useCategories";
-import { useProducts } from "@/lib/hooks/useProducts";
-import { useMemo } from "react";
 
 export default function CategoriesPage() {
   const categories = useCategories();
-  const products = useProducts();
-
-  const activeCategories = useMemo(() => {
-    const usedIds = new Set((products.data ?? []).map((p) => p.category_id).filter(Boolean));
-    return (categories.data ?? []).filter((c) => usedIds.has(c.id));
-  }, [products.data, categories.data]);
+  const items = categories.data ?? [];
 
   return (
     <div className="flex flex-col">
@@ -32,13 +25,26 @@ export default function CategoriesPage() {
           </div>
         )}
 
-        {!categories.isLoading && activeCategories.length === 0 && (
+        {categories.isError && (
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <p className="text-sm text-ink-muted">Couldn&apos;t load categories.</p>
+            <button
+              type="button"
+              onClick={() => categories.refetch()}
+              className="text-sm font-medium text-primary hover:text-primary-hover"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        {!categories.isLoading && !categories.isError && items.length === 0 && (
           <p className="py-16 text-center text-sm text-ink-muted">No categories available yet.</p>
         )}
 
-        {!categories.isLoading && activeCategories.length > 0 && (
+        {!categories.isLoading && !categories.isError && items.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-            {activeCategories.map((c) => (
+            {items.map((c) => (
               <Link
                 key={c.id}
                 href={`/products?category=${c.id}`}

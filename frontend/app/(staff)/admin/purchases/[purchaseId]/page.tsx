@@ -11,7 +11,6 @@ import { TopBar } from "@/components/layout/TopBar";
 import { PurchaseStatusBadge } from "@/components/purchases/PurchaseStatusBadge";
 import { usePurchase } from "@/lib/hooks/usePurchases";
 import { useCancelPurchase, useReceivePurchase } from "@/lib/hooks/usePurchaseMutations";
-import { useProducts } from "@/lib/hooks/useProducts";
 import { useSuppliers } from "@/lib/hooks/useSuppliers";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -30,7 +29,6 @@ export default function PurchaseDetailPage() {
 
   const { purchaseId } = useParams<{ purchaseId: string }>();
   const purchase = usePurchase(purchaseId);
-  const products = useProducts();
   const suppliers = useSuppliers();
   const warehouses = useWarehouses();
   const receivePurchase = useReceivePurchase(purchaseId);
@@ -41,8 +39,6 @@ export default function PurchaseDetailPage() {
   const [confirmReceive, setConfirmReceive] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
 
-  const productName = (productId: string) =>
-    products.data?.find((p) => p.id === productId)?.name ?? "Product";
   const supplierName = (supplierId: string) =>
     suppliers.data?.find((s) => s.id === supplierId)?.name ?? "—";
   const warehouseName = (warehouseId: string) =>
@@ -124,7 +120,7 @@ export default function PurchaseDetailPage() {
                     className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-ink">{productName(item.product_id)}</p>
+                      <p className="truncate text-sm font-medium text-ink">{item.product_name}</p>
                       <p className="text-xs text-ink-muted">
                         {item.quantity} × {formatCurrency(item.purchase_price)}
                       </p>

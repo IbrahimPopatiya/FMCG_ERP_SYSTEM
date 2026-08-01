@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class PurchaseItemCreate(BaseModel):
@@ -48,6 +48,7 @@ class PurchaseCancel(BaseModel):
 class PurchaseItemResponse(BaseModel):
     id: uuid.UUID
     product_id: uuid.UUID
+    product_name: str = "Product"
     quantity: Decimal
     purchase_price: Decimal
     gst_rate: Decimal
@@ -57,6 +58,25 @@ class PurchaseItemResponse(BaseModel):
     total: Decimal
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def inject_product_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            return data
+        product = getattr(data, "product", None)
+        return {
+            "id": data.id,
+            "product_id": data.product_id,
+            "product_name": product.name if product is not None else "Product",
+            "quantity": data.quantity,
+            "purchase_price": data.purchase_price,
+            "gst_rate": data.gst_rate,
+            "cgst": data.cgst,
+            "sgst": data.sgst,
+            "igst": data.igst,
+            "total": data.total,
+        }
 
 
 class PurchaseResponse(BaseModel):

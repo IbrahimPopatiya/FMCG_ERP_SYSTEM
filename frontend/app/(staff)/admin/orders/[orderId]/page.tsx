@@ -17,7 +17,6 @@ import { useGenerateInvoice } from "@/lib/hooks/useInvoiceMutations";
 import { useInvoiceSample } from "@/lib/hooks/useInvoices";
 import { useOrder } from "@/lib/hooks/useOrders";
 import { useApproveOrder, useCancelOrder, useLoadOrder } from "@/lib/hooks/useOrderMutations";
-import { useProducts } from "@/lib/hooks/useProducts";
 import { formatCurrency, formatDate, toTitleCase } from "@/lib/utils/format";
 import type { SalesOrderItemResponse } from "@/types/salesOrder";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
@@ -36,7 +35,6 @@ export default function AdminOrderDetailPage() {
   const router = useRouter();
   const order = useOrder(orderId);
   const customer = useCustomer(order.data?.customer_id ?? "");
-  const products = useProducts();
   const invoices = useInvoiceSample();
   const approveOrder = useApproveOrder(orderId);
   const loadOrder = useLoadOrder(orderId);
@@ -46,8 +44,6 @@ export default function AdminOrderDetailPage() {
   const [qtyByItem, setQtyByItem] = useState<Record<string, string>>({});
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
-
-  const product = (productId: string) => products.data?.find((p) => p.id === productId);
 
   // Default each qty input to ordered/approved qty until the staff member
   // overrides it — avoids seeding state from a query result in an effect.
@@ -192,19 +188,26 @@ export default function AdminOrderDetailPage() {
                 </div>
                 <div className="flex flex-col divide-y divide-border">
                   {data.items.map((item: SalesOrderItemResponse) => {
-                    const p = product(item.product_id);
                     return (
                       <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                         <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface">
-                          {p?.image ? (
-                            <Image src={p.image} alt={p.name} fill sizes="48px" className="object-cover" />
+                          {item.image ? (
+                            <Image
+                              src={item.image}
+                              alt={item.product_name}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
                           ) : (
-                            <span className="text-xs font-medium text-ink-muted">{(p?.unit ?? "PR").slice(0, 2)}</span>
+                            <span className="text-xs font-medium text-ink-muted">
+                              {(item.unit ?? "PR").slice(0, 2)}
+                            </span>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-ink">{p?.name ?? "Product"}</p>
-                          {p?.packing && <p className="text-xs text-ink-muted">{p.packing}</p>}
+                          <p className="truncate text-sm font-medium text-ink">{item.product_name}</p>
+                          {item.packing && <p className="text-xs text-ink-muted">{item.packing}</p>}
                           {editableStatus ? (
                             <label className="mt-1 flex items-center gap-2 text-xs text-ink-muted">
                               {data.status === "pending" ? "Approve qty" : "Loaded qty"}

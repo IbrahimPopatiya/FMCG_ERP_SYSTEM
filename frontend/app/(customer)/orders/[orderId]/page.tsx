@@ -9,19 +9,14 @@ import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTrackingStepper } from "@/components/orders/OrderTrackingStepper";
 import { useOrder } from "@/lib/hooks/useOrders";
 import { useCancelOrder } from "@/lib/hooks/useOrderMutations";
-import { useProducts } from "@/lib/hooks/useProducts";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
   const order = useOrder(orderId);
-  const products = useProducts();
   const cancelOrder = useCancelOrder();
   const [confirmCancel, setConfirmCancel] = useState(false);
-
-  const productName = (productId: string) =>
-    products.data?.find((p) => p.id === productId)?.name ?? "Product";
 
   return (
     <div className="flex flex-col">
@@ -82,7 +77,7 @@ export default function OrderDetailPage() {
               {order.data.items.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">{productName(item.product_id)}</p>
+                    <p className="truncate text-sm font-medium text-ink">{item.product_name}</p>
                     <p className="text-xs text-ink-muted">
                       {item.ordered_qty} × {formatCurrency(item.price)}
                     </p>

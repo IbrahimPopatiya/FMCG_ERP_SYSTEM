@@ -45,6 +45,13 @@ export function getProduct(productId: string) {
   return api.get<ProductResponse>(`/products/${productId}`).then((res) => res.data);
 }
 
+/** Customer PDP — price-list-aware catalog shape, without the full catalog. */
+export function getCatalogProduct(productId: string) {
+  return api
+    .get<ProductCatalogResponse>(`/products/${productId}/catalog`)
+    .then((res) => res.data);
+}
+
 export function createProduct(data: ProductCreate) {
   return api.post<ProductResponse>("/products", data).then((res) => res.data);
 }

@@ -38,3 +38,5 @@ class PurchaseItem(Base, UUIDPKMixin, TimestampMixin):
     sgst = Column(Numeric(12, 2), nullable=False, default=0)
     igst = Column(Numeric(12, 2), nullable=False, default=0)
     total = Column(Numeric(12, 2), nullable=False, default=0)
+
+    product = relationship("Product")

@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.core.enums import OrderSource, OrderStatus
 
@@ -28,6 +28,10 @@ class SalesOrderUpdate(BaseModel):
 class SalesOrderItemResponse(BaseModel):
     id: uuid.UUID
     product_id: uuid.UUID
+    product_name: str = "Product"
+    image: Optional[str] = None
+    packing: Optional[str] = None
+    unit: Optional[str] = None
     ordered_qty: Decimal
     approved_qty: Decimal
     loaded_qty: Decimal
@@ -39,6 +43,30 @@ class SalesOrderItemResponse(BaseModel):
     line_total: Decimal
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def inject_product_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            return data
+        product = getattr(data, "product", None)
+        return {
+            "id": data.id,
+            "product_id": data.product_id,
+            "product_name": product.name if product is not None else "Product",
+            "image": product.image if product is not None else None,
+            "packing": product.packing if product is not None else None,
+            "unit": product.unit if product is not None else None,
+            "ordered_qty": data.ordered_qty,
+            "approved_qty": data.approved_qty,
+            "loaded_qty": data.loaded_qty,
+            "price": data.price,
+            "gst_rate": data.gst_rate,
+            "cgst": data.cgst,
+            "sgst": data.sgst,
+            "igst": data.igst,
+            "line_total": data.line_total,
+        }
 
 
 class SalesOrderResponse(BaseModel):

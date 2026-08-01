@@ -195,6 +195,30 @@ def test_get_product_without_token_returns_401_or_403(client):
     assert response.status_code in (401, 403)
 
 
+# ---------- GET /products/{id}/catalog ----------
+
+def test_get_catalog_product_returns_effective_price(client):
+    headers = auth_headers(client)
+    product = client.post("/api/v1/products", json=product_payload(), headers=headers).json()
+
+    response = client.get(f"/api/v1/products/{product['id']}/catalog", headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["sku"] == "SKU-1001"
+    assert "effective_price" in body
+    assert body["effective_price"] == product["selling_price"]
+
+
+def test_get_catalog_product_not_found_returns_404(client):
+    headers = auth_headers(client)
+    fake_id = uuid.uuid4()
+
+    response = client.get(f"/api/v1/products/{fake_id}/catalog", headers=headers)
+
+    assert response.status_code == 404
+
+
 # ---------- GET /products/manage (staff, paginated, all statuses) ----------
 
 def test_list_products_for_management_returns_paginated_envelope(client):

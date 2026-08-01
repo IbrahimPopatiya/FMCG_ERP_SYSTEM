@@ -164,9 +164,12 @@ def create_sales_order(db: Session, data: SalesOrderCreate, principal: Principal
 
 
 def get_sales_order(db: Session, order_id: uuid.UUID) -> SalesOrder | None:
-    return db.query(SalesOrder).filter(
-        SalesOrder.id == order_id, SalesOrder.deleted_at.is_(None)
-    ).first()
+    return (
+        db.query(SalesOrder)
+        .options(selectinload(SalesOrder.items).selectinload(SalesOrderItem.product))
+        .filter(SalesOrder.id == order_id, SalesOrder.deleted_at.is_(None))
+        .first()
+    )
 
 
 def _authorize_order_access(db: Session, order: SalesOrder, principal: Principal) -> bool:
@@ -327,7 +330,7 @@ def list_orders_for_principal(
 
     total = query.count()
     items = (
-        query.options(selectinload(SalesOrder.items))
+        query.options(selectinload(SalesOrder.items).selectinload(SalesOrderItem.product))
         .order_by(SalesOrder.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)

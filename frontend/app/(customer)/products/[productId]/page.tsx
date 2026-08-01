@@ -8,16 +8,16 @@ import { QtyStepper } from "@/components/ui/QtyStepper";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { DiscountBadge } from "@/components/customer/DiscountBadge";
 import { useCart } from "@/components/cart/CartProvider";
-import { useProducts } from "@/lib/hooks/useProducts";
+import { useCatalogProduct } from "@/lib/hooks/useCatalogProduct";
 import { formatCurrency } from "@/lib/utils/format";
 
 export default function ProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
   const router = useRouter();
-  const products = useProducts();
+  const productQuery = useCatalogProduct(productId);
   const { getQty, addItem, setQty } = useCart();
 
-  const product = products.data?.find((p) => p.id === productId);
+  const product = productQuery.data;
   const qty = getQty(productId);
 
   return (
@@ -36,7 +36,7 @@ export default function ProductDetailPage() {
         <h1 className="text-base font-semibold text-ink">Product details</h1>
       </header>
 
-      {products.isLoading && (
+      {productQuery.isLoading && (
         <div className="flex flex-col gap-4 p-4">
           <Skeleton className="aspect-square w-full rounded-xl" />
           <Skeleton className="h-6 w-2/3" />
@@ -44,7 +44,20 @@ export default function ProductDetailPage() {
         </div>
       )}
 
-      {!products.isLoading && !product && (
+      {productQuery.isError && (
+        <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
+          <p className="text-sm font-medium text-ink">Couldn&apos;t load this product</p>
+          <button
+            type="button"
+            onClick={() => productQuery.refetch()}
+            className="text-sm font-medium text-primary hover:text-primary-hover"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {!productQuery.isLoading && !productQuery.isError && !product && (
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">Product not found</p>
           <Link href="/products" className="text-sm font-medium text-primary hover:text-primary-hover">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { QtyStepper } from "@/components/ui/QtyStepper";
@@ -19,7 +19,7 @@ import {
   SearchIcon,
 } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
-import { useProducts } from "@/lib/hooks/useProducts";
+import { useProductsFeed } from "@/lib/hooks/useProducts";
 import { usePosts } from "@/lib/hooks/usePosts";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
@@ -184,6 +184,8 @@ function ProductDetailSheet({
 
 function ReelSlide({
   product,
+  index,
+  active,
   liked,
   saved,
   qty,
@@ -191,8 +193,11 @@ function ReelSlide({
   onToggleSave,
   onShare,
   onOpenBag,
+  onVisible,
 }: {
   product: ProductCatalogResponse;
+  index: number;
+  active: boolean;
   liked: boolean;
   saved: boolean;
   qty: number;
@@ -200,16 +205,46 @@ function ReelSlide({
   onToggleSave: () => void;
   onShare: () => void;
   onOpenBag: () => void;
+  onVisible: (index: number) => void;
 }) {
+  const sectionRef = useRef<HTMLElement>(null);
+  // Mount image for the active slide and its neighbors only — avoids decoding
+  // every reel image up front when the feed is long.
+  const shouldLoadImage = active;
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+          onVisible(index);
+        }
+      },
+      { threshold: [0.55] }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [index, onVisible]);
+
+  const imageSrc = product.image || dummyProductImage(product.name, product.id);
+
   return (
-    <section className="relative h-full w-full shrink-0 snap-start snap-always overflow-hidden bg-white">
-      <div className="absolute inset-0 h-full w-full">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={product.image || dummyProductImage(product.name, product.id)}
-          alt={product.name}
-          className="h-full w-full object-contain"
-        />
+    <section
+      ref={sectionRef}
+      className="relative h-full w-full shrink-0 snap-start snap-always overflow-hidden bg-white"
+    >
+      <div className="absolute inset-0 h-full w-full bg-surface">
+        {shouldLoadImage && (
+          <Image
+            src={imageSrc}
+            alt={product.name}
+            fill
+            sizes="100vw"
+            priority={index === 0}
+            className="object-contain"
+          />
+        )}
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
@@ -284,7 +319,14 @@ function ReelSlide({
 }
 
 export default function HomePage() {
-  const products = useProducts();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+
+  const products = useProductsFeed({
+    search: debouncedSearch.trim() || undefined,
+    categoryId: selectedCategoryId,
+  });
   const posts = usePosts();
   const categories = useCategories();
   const { addItem, getQty, setQty } = useCart();
@@ -293,11 +335,9 @@ export default function HomePage() {
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [openProductId, setOpenProductId] = useState<string | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   // Top-bar search icon (layout) reveals this row; focus once it mounts.
   useEffect(() => {
@@ -308,21 +348,24 @@ export default function HomePage() {
     if (isSearchOpen) searchInputRef.current?.focus();
   }, [isSearchOpen]);
 
-  // Posts (newest first, from the API) lead the feed, followed by the
-  // regular product catalog — products already referenced by a post are
-  // skipped from the catalog tail so the same item doesn't show up twice.
-  // Picking a category filters the whole feed down to that category; "All"
-  // (selectedCategoryId === null) shows everything, capped to FEED_COUNT
-  // unless a search/category narrows it down.
+  // Posts (newest first) lead the feed, followed by a page of the catalog
+  // feed API — products already referenced by a post are skipped so the same
+  // item doesn't show twice. Default reel is capped to FEED_COUNT.
   const feedProducts = useMemo(() => {
     const postItems = (posts.data ?? []).map(postToFeedItem);
     const postedProductIds = new Set(postItems.map((p) => p.id));
-    const catalogItems = (products.data ?? []).filter((p) => !postedProductIds.has(p.id));
-    let combined = [...postItems, ...catalogItems];
+    const catalogItems = (products.data?.pages.flatMap((page) => page.items) ?? []).filter(
+      (p) => !postedProductIds.has(p.id)
+    );
 
+    // Posts don't carry category_id; when a category is selected, only show
+    // catalog items that match (posts stay in the unfiltered default reel).
+    let leading = postItems;
     if (selectedCategoryId !== null) {
-      combined = combined.filter((p) => p.category_id === selectedCategoryId);
+      leading = [];
     }
+
+    let combined = [...leading, ...catalogItems];
 
     const query = debouncedSearch.trim().toLowerCase();
     if (query) {
@@ -332,8 +375,14 @@ export default function HomePage() {
     if (selectedCategoryId === null && !query) return combined.slice(0, FEED_COUNT);
     return combined;
   }, [posts.data, products.data, selectedCategoryId, debouncedSearch]);
+
   const openProduct = feedProducts.find((p) => p.id === openProductId) ?? null;
   const isLoading = products.isLoading || posts.isLoading;
+  const isError = products.isError || posts.isError;
+
+  const handleVisible = useCallback((index: number) => {
+    setActiveIndex(index);
+  }, []);
 
   async function handleShare(product: ProductCatalogResponse) {
     const url = `${window.location.origin}/products/${product.id}`;
@@ -409,18 +458,36 @@ export default function HomePage() {
         </div>
       )}
 
-      {!isLoading && feedProducts.length === 0 && (
+      {!isLoading && isError && (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+          <p className="text-sm text-ink-muted">Couldn&apos;t load the feed.</p>
+          <button
+            type="button"
+            onClick={() => {
+              void products.refetch();
+              void posts.refetch();
+            }}
+            className="text-sm font-medium text-primary hover:text-primary-hover"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !isError && feedProducts.length === 0 && (
         <p className="flex flex-1 items-center justify-center px-4 text-center text-sm text-ink-muted">
           {search.trim() || selectedCategoryId ? "No products match your filters." : "No products to show yet."}
         </p>
       )}
 
-      {!isLoading && feedProducts.length > 0 && (
+      {!isLoading && !isError && feedProducts.length > 0 && (
         <div className="flex-1 snap-y snap-mandatory overflow-y-auto overscroll-y-contain">
-          {feedProducts.map((product) => (
+          {feedProducts.map((product, index) => (
             <ReelSlide
               key={product.id}
               product={product}
+              index={index}
+              active={Math.abs(index - activeIndex) <= 1}
               liked={!!liked[product.id]}
               saved={!!saved[product.id]}
               qty={getQty(product.id)}
@@ -428,6 +495,7 @@ export default function HomePage() {
               onToggleSave={() => setSaved((prev) => ({ ...prev, [product.id]: !prev[product.id] }))}
               onShare={() => handleShare(product)}
               onOpenBag={() => setOpenProductId(product.id)}
+              onVisible={handleVisible}
             />
           ))}
         </div>

@@ -46,3 +46,5 @@ class SalesOrderItem(Base, UUIDPKMixin, TimestampMixin):
     sgst = Column(Numeric(12, 2), nullable=False, default=0)
     igst = Column(Numeric(12, 2), nullable=False, default=0)
     line_total = Column(Numeric(12, 2), nullable=False, default=0)
+
+    product = relationship("Product")

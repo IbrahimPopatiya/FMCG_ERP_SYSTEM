@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.enums import CreditNoteStatus, MovementType, ReturnReason, ReturnStatus
 from app.models.credit_note import CreditNote
@@ -74,6 +74,7 @@ def list_returns(
     order_number alongside each return - a bare Return row only carries ids."""
     query = (
         db.query(Return, Invoice.invoice_number, SalesOrder.customer_id, SalesOrder.order_number)
+        .options(selectinload(Return.items).selectinload(ReturnItem.product))
         .join(Invoice, Invoice.id == Return.invoice_id)
         .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
         .filter(Return.deleted_at.is_(None))
@@ -89,6 +90,7 @@ def get_return_with_context(
 ) -> tuple[Return, str, uuid.UUID, str] | None:
     return (
         db.query(Return, Invoice.invoice_number, SalesOrder.customer_id, SalesOrder.order_number)
+        .options(selectinload(Return.items).selectinload(ReturnItem.product))
         .join(Invoice, Invoice.id == Return.invoice_id)
         .join(SalesOrder, SalesOrder.id == Invoice.sales_order_id)
         .filter(Return.id == return_id, Return.deleted_at.is_(None))

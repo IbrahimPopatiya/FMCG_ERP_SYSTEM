@@ -14,6 +14,10 @@ export interface SalesOrderCreate {
 export interface SalesOrderItemResponse {
   id: string;
   product_id: string;
+  product_name: string;
+  image: string | null;
+  packing: string | null;
+  unit: string | null;
   ordered_qty: number;
   approved_qty: number;
   loaded_qty: number;

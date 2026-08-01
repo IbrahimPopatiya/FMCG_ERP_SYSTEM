@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useInvoiceSample } from "@/lib/hooks/useInvoices";
 import { useOrder } from "@/lib/hooks/useOrders";
-import { useProducts } from "@/lib/hooks/useProducts";
 import { useWarehouses } from "@/lib/hooks/useWarehouses";
 import { formatCurrency } from "@/lib/utils/format";
 import type { ReturnCreate, ReturnReason } from "@/types/returns";
@@ -34,7 +33,6 @@ interface ReturnFormProps {
 export function ReturnForm({ onSubmit, onSuccess }: ReturnFormProps) {
   const invoices = useInvoiceSample();
   const warehouses = useWarehouses();
-  const products = useProducts();
 
   const [invoiceId, setInvoiceId] = useState("");
   const [warehouseId, setWarehouseId] = useState("");
@@ -46,9 +44,6 @@ export function ReturnForm({ onSubmit, onSuccess }: ReturnFormProps) {
 
   const selectedInvoice = invoices.data?.items.find((inv) => inv.id === invoiceId);
   const order = useOrder(selectedInvoice?.sales_order_id ?? "");
-
-  const productName = (productId: string) =>
-    products.data?.find((p) => p.id === productId)?.name ?? "Product";
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
@@ -139,7 +134,7 @@ export function ReturnForm({ onSubmit, onSuccess }: ReturnFormProps) {
             {order.data?.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between gap-3 px-3 py-2">
                 <div className="min-w-0">
-                  <p className="truncate text-sm text-ink">{productName(item.product_id)}</p>
+                  <p className="truncate text-sm text-ink">{item.product_name}</p>
                   <p className="text-xs text-ink-muted">Ordered {item.ordered_qty}</p>
                 </div>
                 <input

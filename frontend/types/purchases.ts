@@ -3,6 +3,7 @@ export type PurchaseStatus = "draft" | "received" | "cancelled";
 export interface PurchaseItemResponse {
   id: string;
   product_id: string;
+  product_name: string;
   quantity: number;
   purchase_price: number;
   gst_rate: number;

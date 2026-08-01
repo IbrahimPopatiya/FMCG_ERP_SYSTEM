@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.enums import MovementType, PurchaseStatus
 from app.db.mixins import generate_uuid7
@@ -90,6 +90,7 @@ def create_purchase(db: Session, data: PurchaseCreate, user_id: uuid.UUID) -> Pu
 def list_purchases(db: Session, page: int, page_size: int) -> tuple[list[Purchase], int]:
     query = (
         db.query(Purchase)
+        .options(selectinload(Purchase.items).selectinload(PurchaseItem.product))
         .filter(Purchase.deleted_at.is_(None))
         .order_by(Purchase.purchase_date.desc())
     )
@@ -99,9 +100,12 @@ def list_purchases(db: Session, page: int, page_size: int) -> tuple[list[Purchas
 
 
 def get_purchase(db: Session, purchase_id: uuid.UUID) -> Purchase | None:
-    return db.query(Purchase).filter(
-        Purchase.id == purchase_id, Purchase.deleted_at.is_(None)
-    ).first()
+    return (
+        db.query(Purchase)
+        .options(selectinload(Purchase.items).selectinload(PurchaseItem.product))
+        .filter(Purchase.id == purchase_id, Purchase.deleted_at.is_(None))
+        .first()
+    )
 
 
 def update_purchase(
