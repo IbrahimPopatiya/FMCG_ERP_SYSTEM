@@ -89,7 +89,7 @@ function AdminProductCardBase({
             <span className="ml-1.5 text-xs text-ink-muted line-through">{formatCurrency(product.mrp)}</span>
           )}
         </p>
-        {!selectMode && (
+        {/* {!selectMode && (
           <div className="mt-auto flex gap-1.5 pt-1.5">
             <Link
               href={`/admin/products/${product.id}`}
@@ -108,7 +108,7 @@ function AdminProductCardBase({
               {product.status === "active" ? "Delete" : "Restore"}
             </button>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

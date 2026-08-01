@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { clearSession } from "@/lib/auth/session";
-import { useCurrentUser } from "@/lib/hooks/useUsers";
+import Link from "next/link";
 import { BackArrowIcon } from "@/components/admin/icons";
-import { AccountIcon, LogoutIcon } from "@/components/customer/icons";
+import { AccountIcon } from "@/components/customer/icons";
 import { AdminMenuButton } from "@/components/layout/AdminMenu";
 
 interface TopBarProps {
@@ -17,62 +14,14 @@ interface TopBarProps {
 }
 
 function ProfileMenu() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const currentUser = useCurrentUser();
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
-
-  function handleLogout() {
-    clearSession();
-    queryClient.clear();
-    router.push("/login");
-  }
-
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        aria-label="Profile"
-        aria-expanded={open}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary transition-colors hover:brightness-95"
-      >
-        <AccountIcon className="h-5 w-5" />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-11 z-20 w-56 overflow-hidden rounded-xl border border-border bg-white shadow-lg">
-          <div className="border-b border-border px-4 py-3">
-            <p className="truncate text-sm font-semibold text-ink">
-              {currentUser.data ? currentUser.data.full_name : "—"}
-            </p>
-            {currentUser.data?.role && (
-              <p className="truncate text-xs capitalize text-ink-muted">{currentUser.data.role}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-ink-muted transition-colors hover:bg-surface hover:text-ink"
-          >
-            <LogoutIcon className="h-4 w-4" />
-            Log out
-          </button>
-        </div>
-      )}
-    </div>
+    <Link
+      href="/admin/profile"
+      aria-label="Profile"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary transition-colors hover:brightness-95"
+    >
+      <AccountIcon className="h-5 w-5" />
+    </Link>
   );
 }
 

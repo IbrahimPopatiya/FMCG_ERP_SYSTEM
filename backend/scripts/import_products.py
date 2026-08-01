@@ -1,0 +1,192 @@
+"""Bulk-imports products (with images) from a CSV file, going through the
+real service layer so every product gets the same validation, duplicate
+checks, and customer-feed post as one created manually via the API.
+
+CSV columns (header row required):
+    sku, barcode, name, category, brand, unit, packing, units_per_box,
+    mrp, selling_price, gst_rate, minimum_stock, image_filename, status
+
+- category / brand are names, not IDs - looked up by name, created
+  automatically if they don't exist yet.
+- image_filename is the filename of a local image sitting in --images-dir
+  (e.g. "maggi_2min.jpg"). Leave it blank for no image. The file is
+  uploaded to Supabase Storage and the resulting public URL is stored on
+  the product.
+- units_per_box and minimum_stock default to 1 and 0 if left blank.
+- status defaults to "active" if left blank.
+
+Run with:
+    cd backend
+    source venv/bin/activate
+    python -m scripts.import_products products.csv --images-dir ./product_images --created-by <admin-user-id>
+
+Use --dry-run to validate the CSV and image files without writing to the
+database or uploading anything.
+"""
+
+import argparse
+import csv
+import sys
+import uuid
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
+
+from app.db.session import SessionLocal
+from app.models.brand import Brand
+from app.models.category import Category
+from app.models.user import User
+from app.schemas.product import ProductCreate
+from app.services import file_upload as file_upload_service
+from app.services import product as product_service
+from app.services.product import DuplicateProductError
+
+REQUIRED_COLUMNS = {
+    "sku", "barcode", "name", "unit", "packing", "mrp", "selling_price", "gst_rate",
+}
+
+
+def _get_or_create_category(db, cache: dict, name: str) -> uuid.UUID | None:
+    name = name.strip()
+    if not name:
+        return None
+    if name in cache:
+        return cache[name]
+
+    category = db.query(Category).filter(Category.name.ilike(name), Category.deleted_at.is_(None)).first()
+    if category is None:
+        category = Category(name=name)
+        db.add(category)
+        db.commit()
+        db.refresh(category)
+        print(f"  created category: {name}")
+
+    cache[name] = category.id
+    return category.id
+
+
+def _get_or_create_brand(db, cache: dict, name: str) -> uuid.UUID | None:
+    name = name.strip()
+    if not name:
+        return None
+    if name in cache:
+        return cache[name]
+
+    brand = db.query(Brand).filter(Brand.name.ilike(name), Brand.deleted_at.is_(None)).first()
+    if brand is None:
+        brand = Brand(name=name)
+        db.add(brand)
+        db.commit()
+        db.refresh(brand)
+        print(f"  created brand: {name}")
+
+    cache[name] = brand.id
+    return brand.id
+
+
+def _upload_image(images_dir: Path, filename: str, dry_run: bool) -> str | None:
+    filename = filename.strip()
+    if not filename:
+        return None
+
+    image_path = images_dir / filename
+    if not image_path.is_file():
+        raise FileNotFoundError(f"image file not found: {image_path}")
+
+    if dry_run:
+        return f"<dry-run: would upload {image_path}>"
+
+    file_bytes = image_path.read_bytes()
+    return file_upload_service.save_file(file_bytes, filename, category="products")
+
+
+def _parse_row(row: dict) -> dict:
+    return {
+        "sku": row["sku"].strip(),
+        "barcode": row["barcode"].strip(),
+        "name": row["name"].strip(),
+        "unit": row["unit"].strip(),
+        "packing": row["packing"].strip(),
+        "units_per_box": int(row.get("units_per_box") or 1),
+        "mrp": Decimal(row["mrp"]),
+        "selling_price": Decimal(row["selling_price"]),
+        "gst_rate": Decimal(row["gst_rate"]),
+        "minimum_stock": int(row.get("minimum_stock") or 0),
+        "status": (row.get("status") or "active").strip(),
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("csv_path", type=Path, help="Path to the products CSV file")
+    parser.add_argument("--images-dir", type=Path, default=Path("."), help="Folder containing the product image files")
+    parser.add_argument("--created-by", type=str, help="User ID to record as the creator (defaults to the first admin user)")
+    parser.add_argument("--dry-run", action="store_true", help="Validate everything without writing to the DB or uploading images")
+    args = parser.parse_args()
+
+    if not args.csv_path.is_file():
+        print(f"CSV file not found: {args.csv_path}", file=sys.stderr)
+        sys.exit(1)
+
+    with args.csv_path.open(newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        missing = REQUIRED_COLUMNS - set(reader.fieldnames or [])
+        if missing:
+            print(f"CSV is missing required columns: {', '.join(sorted(missing))}", file=sys.stderr)
+            sys.exit(1)
+        rows = list(reader)
+
+    if not rows:
+        print("CSV has no data rows.", file=sys.stderr)
+        sys.exit(1)
+
+    db = SessionLocal()
+    try:
+        if args.created_by:
+            created_by = uuid.UUID(args.created_by)
+        else:
+            admin = db.query(User).filter(User.role == "admin", User.deleted_at.is_(None)).first()
+            if admin is None:
+                print("No admin user found - pass --created-by <user-id> explicitly.", file=sys.stderr)
+                sys.exit(1)
+            created_by = admin.id
+
+        category_cache: dict[str, uuid.UUID] = {}
+        brand_cache: dict[str, uuid.UUID] = {}
+
+        created, skipped = 0, 0
+        for i, row in enumerate(rows, start=2):  # row 1 is the header
+            sku = row.get("sku", "").strip() or f"<row {i}>"
+            try:
+                fields = _parse_row(row)
+                category_id = _get_or_create_category(db, category_cache, row.get("category", ""))
+                brand_id = _get_or_create_brand(db, brand_cache, row.get("brand", ""))
+                image_url = _upload_image(args.images_dir, row.get("image_filename", ""), args.dry_run)
+
+                data = ProductCreate(
+                    **fields,
+                    category_id=category_id,
+                    brand_id=brand_id,
+                    image=image_url,
+                )
+
+                if args.dry_run:
+                    print(f"[dry-run OK] {sku}: {fields['name']}")
+                else:
+                    product_service.create_product(db, data, created_by)
+                    print(f"[created] {sku}: {fields['name']}")
+                created += 1
+
+            except DuplicateProductError:
+                print(f"[skipped] {sku}: duplicate sku/barcode")
+                skipped += 1
+            except (FileNotFoundError, KeyError, InvalidOperation, ValueError) as exc:
+                print(f"[skipped] {sku}: {exc}")
+                skipped += 1
+
+        print(f"\nDone. {created} products {'validated' if args.dry_run else 'created'}, {skipped} skipped.")
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()

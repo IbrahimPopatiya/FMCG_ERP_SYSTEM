@@ -2,11 +2,9 @@
 
 import { createContext, useContext, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { clearSession } from "@/lib/auth/session";
+import { usePathname } from "next/navigation";
 import { NAV_ICON_BY_HREF } from "@/components/admin/icons";
-import { MenuIcon, CloseIcon, LogoutIcon } from "@/components/customer/icons";
+import { MenuIcon, CloseIcon, AccountIcon } from "@/components/customer/icons";
 import type { NavItem } from "@/lib/nav/roleNav";
 
 // Mobile slide-out drawer for the admin/staff area — the bottom bar only
@@ -24,15 +22,6 @@ export function AdminMenuProvider({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  function handleLogout() {
-    clearSession();
-    queryClient.clear();
-    setIsOpen(false);
-    router.push("/login");
-  }
 
   return (
     <AdminMenuContext.Provider value={{ open: () => setIsOpen(true) }}>
@@ -90,14 +79,14 @@ export function AdminMenuProvider({
             className="shrink-0 border-t border-border px-4 py-4"
             style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
           >
-            <button
-              type="button"
-              onClick={handleLogout}
+            <Link
+              href="/admin/profile"
+              onClick={() => setIsOpen(false)}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border text-sm font-bold text-ink-muted transition-colors hover:bg-surface hover:text-ink"
             >
-              <LogoutIcon className="h-4 w-4" />
-              Log out
-            </button>
+              <AccountIcon className="h-4 w-4" />
+              Profile
+            </Link>
           </div>
         </div>
       </div>

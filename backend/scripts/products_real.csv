@@ -1,0 +1,51 @@
+sku,barcode,name,category,brand,unit,packing,units_per_box,mrp,selling_price,gst_rate,minimum_stock,image_filename,status
+SKU-0001,8901234560001,Super Jelly LABUBU,Candy & Jelly,R.L. Confectionery,piece,525g (50pcs),24,100.00,89.00,18,40,super_jelly_labubu.jpeg,active
+SKU-0002,8901234560002,Zara Ros Paan,Candy & Jelly,A.D. Confeexonss,piece,350g,24,5.00,4.50,18,60,zara_ros_paan.jpeg,active
+SKU-0003,8901234560003,Joy Gum Mouth Freshener,Confectionery,Joy,piece,1 x 100pcs,24,5.00,4.50,18,60,joy_gum.jpeg,active
+SKU-0004,8901234560004,Khatti Mithi Imli Chutney,Namkeen,iFly Food Products,piece,1 x 100pcs,24,1.00,0.90,12,80,khatti_mithi_imli_chutney.jpeg,active
+SKU-0005,8901234560005,Italy Creamy Wafer,Biscuits,iFly,box,1kg tub,12,180.00,162.00,5,40,italy_creamy_wafer.jpeg,active
+SKU-0006,8901234560006,Mint Polo Peppermint,Confectionery,Talespin,piece,1 x 100pcs,24,1.00,0.90,18,60,mint_polo_peppermint.jpeg,active
+SKU-0007,8901234560007,Bapida Khajana,Confectionery,iFly,piece,1 x 50pcs,24,5.00,4.50,18,50,bapida_khajana.jpeg,active
+SKU-0008,8901234560008,Madhuri Nut Bars,Namkeen,Dhanal Lakshmi Griha Udyog,piece,500g,24,120.00,108.00,5,40,madhuri_nut_bars.jpeg,active
+SKU-0009,8901234560009,Dazzy Choco Orange,Chocolates,Dazzy,piece,1 x 24pcs,24,60.00,54.00,18,40,dazzy_choco_orange.jpeg,active
+SKU-0010,8901234560010,Dazzy Double Strawberry,Chocolates,Dazzy,piece,1 x 24pcs,24,60.00,54.00,18,40,dazzy_double_strawberry.jpeg,active
+SKU-0011,8901234560011,Dazzy Double Mango Centerfills,Confectionery,Dazzy,piece,1 x 24pcs,24,60.00,54.00,18,40,dazzy_double_mango.jpeg,active
+SKU-0012,8901234560012,Dazzy Double Cokonat,Confectionery,Dazzy,piece,1 x 24pcs,24,60.00,54.00,18,40,dazzy_double_cokonat.jpeg,active
+SKU-0013,8901234560013,Dazzy Double Kaccha Aam,Confectionery,Dazzy,piece,1 x 24pcs,24,60.00,54.00,18,40,dazzy_double_kaccha_aam.jpeg,active
+SKU-0014,8901234560014,Dazzy Double Paan Banarasi,Confectionery,Dazzy,piece,1 x 24pcs,24,60.00,54.00,18,40,dazzy_double_paan_banarasi.jpeg,active
+SKU-0015,8901234560015,Darry D'Love Chocolate,Chocolates,Darry,box,large gift box,6,350.00,315.00,18,20,darry_dlove_chocolate.jpeg,active
+SKU-0016,8901234560016,Stacy Finest Chocolates Minis,Chocolates,Stacy,piece,1 x 2pcs pack,24,5.00,4.50,18,50,stacy_finest_chocolates.jpeg,active
+SKU-0017,8901234560017,Dazzy King Kong Hello Cholo,Chocolates,Dazzy,box,6pcs box,12,90.00,81.00,18,30,dazzy_king_kong_chocolate.jpeg,active
+SKU-0018,8901234560018,Dazzy Dr Teddy,Chocolates,Dazzy,box,6pcs box,12,90.00,81.00,18,30,dazzy_dr_teddy.jpeg,active
+SKU-0019,8901234560019,D'Love Cream Fills,Chocolates,Keymur Foods,piece,144g,24,110.00,99.00,18,40,dlove_cream_fills.jpeg,active
+SKU-0020,8901234560020,Dazzy D-Bon Fruity Assorted,Candy & Jelly,Dazzy,piece,1 x 100pcs,24,2.00,1.80,18,60,dazzy_dbon_fruity_assorted.jpeg,active
+SKU-0021,8901234560021,Dazzy D-Bon Malai Debon Candy,Candy & Jelly,Dazzy,piece,1 x 100pcs,24,2.00,1.80,18,60,dazzy_dbon_malai.jpeg,active
+SKU-0022,8901234560022,Dazzy D-Bon Paan Debon Candy,Candy & Jelly,Dazzy,piece,1 x 100pcs,24,2.00,1.80,18,60,dazzy_dbon_paan.jpeg,active
+SKU-0023,8901234560023,D'Love Gold Coated Chocolate,Chocolates,Dazzy,piece,400g (25pcs),24,110.00,99.00,18,30,dlove_gold_coated_chocolate.jpeg,active
+SKU-0024,8901234560024,Dazzy Stix Assorted (Milk/Kri-Kat/Choco),Biscuits,Dazzy,piece,3pcs pack,24,5.00,4.50,12,50,dazzy_stix_assorted.jpeg,active
+SKU-0025,8901234560025,Dazzy Soffiti Frutose Mix Fruits,Candy & Jelly,Dazzy,piece,1 x 100pcs,24,2.00,1.80,18,60,dazzy_soffiti_frutose.jpeg,active
+SKU-0026,8901234560026,Dazzy Kri-Kat Creme Stix,Biscuits,Dazzy,piece,3pcs pack,24,5.00,4.50,12,50,dazzy_krikat_creme_stix.jpeg,active
+SKU-0027,8901234560027,Dazzy Dairy Kiss Milk Chocolate Bar,Chocolates,Dazzy,box,33pcs box,12,165.00,148.50,18,25,dazzy_dairy_kiss.jpeg,active
+SKU-0028,8901234560028,Dazzy Big Rolle with Fills,Chocolates,Dazzy,piece,3pcs pack,24,15.00,13.50,18,40,dazzy_big_rolle.jpeg,active
+SKU-0029,8901234560029,Dazzy Gold Chocolate Truffles,Chocolates,Dazzy,piece,jar 500g,12,250.00,225.00,18,25,dazzy_gold_chocolate_truffles.jpeg,active
+SKU-0030,8901234560030,Dazzy Malai Kulfi,Confectionery,Dazzy,piece,1 x 100pcs,24,2.00,1.80,18,60,dazzy_malai_kulfi.jpeg,active
+SKU-0031,8901234560031,Dazzy De Gold Milk Mithai,Confectionery,Dazzy,box,assorted box,12,150.00,135.00,18,30,dazzy_de_gold_milk_mithai.jpeg,active
+SKU-0032,8901234560032,Dazzy D-Bon Nimbu Pani Debon Candy,Candy & Jelly,Dazzy,piece,1 x 100pcs,24,2.00,1.80,18,60,dazzy_dbon_nimbu_pan.jpeg,active
+SKU-0033,8901234560033,Stacy Smooth & Rich Chocolate Tub,Chocolates,Stacy,piece,345g tub,12,180.00,162.00,18,25,stacy_smooth_rich_chocolate.jpeg,active
+SKU-0034,8901234560034,Dazzy D-Bon Cola Debon Candy,Candy & Jelly,Dazzy,piece,1 x 100pcs,24,2.00,1.80,18,60,dazzy_dbon_cola.jpeg,active
+SKU-0035,8901234560035,Dazzy Pan Rolle,Confectionery,Dazzy,piece,3pcs pack,24,15.00,13.50,18,40,dazzy_pan_rolle.jpeg,active
+SKU-0036,8901234560036,Neo Breakos Wafer Tub,Biscuits,Neo,piece,tub pack,12,180.00,162.00,12,30,neo_breakos_tub.jpeg,active
+SKU-0037,8901234560037,Neo Kachaa Aam Jar,Candy & Jelly,Neo,piece,jar pack,24,120.00,108.00,18,40,neo_kachaa_aam_jar.jpeg,active
+SKU-0038,8901234560038,Dazzy 3 Pan Rolle Original,Confectionery,Dazzy,piece,3pcs pack,24,5.00,4.50,18,50,dazzy_3_pan_rolle.jpeg,active
+SKU-0039,8901234560039,Neo Kachaa Aam Mist Center Filled Candy,Candy & Jelly,Neo,piece,1 x 100pcs,24,2.00,1.80,18,60,neo_kachaa_aam_mist.jpeg,active
+SKU-0040,8901234560040,Neo Exotica Creamy Wafer Assorted,Biscuits,Neo,piece,tub pack,12,150.00,135.00,5,40,neo_exotica_wafer_assorted.jpeg,active
+SKU-0041,8901234560041,Neo Twinkle Star Choco Wafer,Biscuits,Neo,piece,tub pack,12,187.00,168.00,5,40,neo_twinkle_star.jpeg,active
+SKU-0042,8901234560042,Neo Breakos Chocolate Crunch,Biscuits,Neo,box,box pack,12,90.00,81.00,12,40,neo_breakos_choco_crunch.jpeg,active
+SKU-0043,8901234560043,Neo Choco Yorker,Chocolates,Neo,box,box pack,24,50.00,45.00,18,50,neo_choco_yorker.jpeg,active
+SKU-0044,8901234560044,Neo Mania Creme Wafer Assorted,Biscuits,Neo,piece,jar pack,12,140.00,126.00,5,40,neo_mania_creme_wafer.jpeg,active
+SKU-0045,8901234560045,Neo Choco Arena Strawberry,Chocolates,Neo,box,box pack,12,100.00,90.00,18,35,neo_choco_arena_strawberry.jpeg,active
+SKU-0046,8901234560046,Neo Breakos Strawberry Cream Wafer,Biscuits,Neo,box,box pack,12,90.00,81.00,12,40,neo_breakos_strawberry.jpeg,active
+SKU-0047,8901234560047,Neo 4Buddies Coated Balls,Confectionery,Neo,piece,jar pack,24,110.00,99.00,18,40,neo_4buddies_coated_balls.jpeg,active
+SKU-0048,8901234560048,Neo Hi Panda Coated Biscuit Balls,Biscuits,Neo,piece,jar pack,24,110.00,99.00,12,40,neo_hi_panda_biscuit_balls.jpeg,active
+SKU-0049,8901234560049,Neo Kidz Joy Choco with Toy,Chocolates,Neo,box,box pack,12,120.00,108.00,18,35,neo_kidz_joy.jpeg,active
+SKU-0050,8901234560050,Neo Hi Panda Choco Scoops,Chocolates,Neo,piece,jar pack,24,110.00,99.00,18,40,neo_hi_panda_choco_scoops.jpeg,active
