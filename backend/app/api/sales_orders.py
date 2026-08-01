@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import Principal, get_current_principal, require_role, require_staff
 from app.core.enums import UserRole
+from app.core.logging import get_logger, log_event
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.common import Page
@@ -31,6 +32,7 @@ from app.services.sales_order import (
 )
 
 router = APIRouter(prefix="/orders", tags=["sales-orders"])
+logger = get_logger(__name__)
 
 
 @router.post("", response_model=SalesOrderResponse, status_code=status.HTTP_201_CREATED)
@@ -40,13 +42,22 @@ def create_order(
     principal: Principal = Depends(get_current_principal),
 ):
     try:
-        return sales_order_service.create_sales_order(db, data, principal)
+        order = sales_order_service.create_sales_order(db, data, principal)
     except (CustomerNotFoundError, ProductNotFoundError) as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except NotAuthorizedForCustomerError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except NoFulfillingWarehouseError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+    log_event(
+        logger,
+        "order.created",
+        order_id=str(order.id),
+        order_number=order.order_number,
+        principal_type=principal.type,
+    )
+    return order
 
 
 @router.get("", response_model=Page[SalesOrderResponse])
@@ -109,6 +120,13 @@ def approve_order(
 
     if order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    log_event(
+        logger,
+        "order.approved",
+        order_id=str(order.id),
+        user_id=str(current_user.id),
+    )
     return order
 
 
@@ -128,6 +146,13 @@ def load_order(
 
     if order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    log_event(
+        logger,
+        "order.loaded",
+        order_id=str(order.id),
+        user_id=str(current_user.id),
+    )
     return order
 
 
@@ -144,4 +169,11 @@ def cancel_order(
 
     if order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    log_event(
+        logger,
+        "order.cancelled",
+        order_id=str(order.id),
+        principal_type=principal.type,
+    )
     return order

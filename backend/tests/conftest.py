@@ -23,9 +23,14 @@ from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
+from app.core.logging import setup_logging
 from app.db.session import Base, get_db
 import app.models  # noqa: F401 - registers all models on Base.metadata
 from main import app
+
+# So logs during tests use the same formatters even when TestClient
+# doesn't enter the app lifespan context.
+setup_logging()
 
 TEST_DATABASE_URL = settings.test_database_url
 SQL_ECHO = os.getenv("TEST_SQL_ECHO", "").strip() in {"1", "true", "True", "yes"}

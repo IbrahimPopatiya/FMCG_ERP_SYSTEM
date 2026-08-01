@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     supabase_service_role_key: str
     supabase_storage_bucket: str = "fmcg_products"
 
+    # Logging — stdout only (not DB). Use ENVIRONMENT=production on deploy
+    # so LOG_FORMAT=auto switches to JSON for log drains.
+    environment: str = "development"
+    log_level: str = "INFO"
+    # auto | json | text — auto picks json in production, text otherwise
+    log_format: str = "auto"
+
     @property
     def cors_extra_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_extra_origins.split(",") if origin.strip()]
