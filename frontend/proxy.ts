@@ -14,6 +14,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isLoginRoute = pathname.startsWith("/login");
+  const isRoot = pathname === "/";
   const isStaffRoute = pathname.startsWith("/admin");
   const isCustomerOnlyRoute =
     pathname.startsWith("/cart") || pathname.startsWith("/account");
@@ -22,7 +23,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (token && isLoginRoute) {
+  // "/" itself renders nothing (app/page.tsx returns null) - it only exists
+  // as the PWA's start_url. An unauthenticated visit already gets redirected
+  // to /login by the rule above; this covers the authenticated case, which
+  // otherwise falls through to a blank page every time the installed app is
+  // relaunched while already logged in.
+  if (token && (isLoginRoute || isRoot)) {
     return NextResponse.redirect(
       new URL(principalType === "customer" ? CUSTOMER_HOME : STAFF_HOME, request.url)
     );
