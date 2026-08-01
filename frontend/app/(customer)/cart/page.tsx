@@ -31,14 +31,15 @@ export default function CartPage() {
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const estimatedTax = items.reduce((sum, i) => sum + (i.price * i.qty * i.gstRate) / 100, 0);
   const removalItem = items.find((i) => i.productId === pendingRemoval);
 
   async function handlePlaceOrder() {
     setError(null);
     try {
       const order = await createOrder.mutateAsync({
-        items: items.map((i) => ({ product_id: i.productId, ordered_qty: i.qty })),
+        // `qty` on a cart item is the number of boxes the customer picked;
+        // the backend prices/reserves stock per piece, so convert here.
+        items: items.map((i) => ({ product_id: i.productId, ordered_qty: i.qty * i.unitsPerBox })),
       });
       clear();
       router.push(`/orders/${order.id}`);
@@ -119,10 +120,17 @@ export default function CartPage() {
                       <TrashIcon className="h-4 w-4" />
                     </button>
                   </div>
-                  <p className="mt-0.5 text-sm font-semibold text-ink">{formatCurrency(item.price)}</p>
+                  <p className="mt-0.5 text-sm font-semibold text-ink">
+                    {formatCurrency(item.price)}
+                    <span className="ml-0.5 text-xs font-normal text-ink-muted">
+                      /pc · {item.unitsPerBox} pcs/box
+                    </span>
+                  </p>
                   <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                     <QtyStepper qty={item.qty} onChange={(qty) => setQty(item.productId, qty)} size="sm" />
-                    <span className="text-sm font-semibold text-ink">{formatCurrency(item.price * item.qty)}</span>
+                    <span className="text-sm font-semibold text-ink">
+                      {formatCurrency(item.price * item.unitsPerBox * item.qty)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -134,13 +142,9 @@ export default function CartPage() {
               <span>Subtotal ({items.length} {items.length === 1 ? "Item" : "Items"})</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
-            <div className="flex items-center justify-between text-sm text-ink-muted">
-              <span>Estimated Tax</span>
-              <span>{formatCurrency(estimatedTax)}</span>
-            </div>
             <div className="mt-1 flex items-center justify-between border-t border-border pt-2 text-base font-semibold text-ink">
               <span>Total Amount</span>
-              <span className="text-primary">{formatCurrency(subtotal + estimatedTax)}</span>
+              <span className="text-primary">{formatCurrency(subtotal)}</span>
             </div>
             <p className="text-xs text-ink-muted">Final total is confirmed by the distributor on approval.</p>
           </div>

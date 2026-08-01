@@ -45,6 +45,7 @@ function CustomerProductCardBase({ product, qty, onQtyChange }: CustomerProductC
         <p className="text-xs text-ink-muted">{product.packing}</p>
         <p className="text-sm">
           <span className="font-semibold text-ink">{formatCurrency(product.effective_price)}</span>
+          <span className="ml-0.5 text-xs text-ink-muted">/pc</span>
           {product.mrp > product.effective_price && (
             <span className="ml-1.5 text-xs text-ink-muted line-through">{formatCurrency(product.mrp)}</span>
           )}

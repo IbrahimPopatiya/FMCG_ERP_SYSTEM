@@ -85,6 +85,7 @@ export default function ProductDetailPage() {
             <div>
               <p className="text-2xl font-semibold tracking-tight text-ink">
                 {formatCurrency(product.effective_price)}
+                <span className="ml-1 text-sm font-normal text-ink-muted">/ pc</span>
               </p>
               {product.mrp > product.effective_price && (
                 <p className="text-sm text-ink-muted line-through">{formatCurrency(product.mrp)}</p>
@@ -96,16 +97,24 @@ export default function ProductDetailPage() {
           <div>
             {qty === 0 ? (
               <Button type="button" className="w-full" onClick={() => addItem(product, 1)}>
-                Add to order
+                Add 1 Box ({product.units_per_box} pcs)
               </Button>
             ) : (
-              <div className="flex items-center justify-between gap-3">
-                <QtyStepper qty={qty} onChange={(next) => setQty(product.id, next)} />
-                <Link href="/cart" className="flex-1">
-                  <Button type="button" className="w-full">
-                    Go to cart
-                  </Button>
-                </Link>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <QtyStepper qty={qty} onChange={(next) => setQty(product.id, next)} />
+                  <Link href="/cart" className="flex-1">
+                    <Button type="button" className="w-full">
+                      Go to cart
+                    </Button>
+                  </Link>
+                </div>
+                <p className="text-right text-xs text-ink-muted">
+                  {qty} box{qty === 1 ? "" : "es"} × {product.units_per_box} pcs ={" "}
+                  <span className="font-medium text-ink">
+                    {formatCurrency(product.effective_price * product.units_per_box * qty)}
+                  </span>
+                </p>
               </div>
             )}
           </div>

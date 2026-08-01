@@ -19,6 +19,7 @@ export interface ProductFormValues {
   brand_id: string;
   unit: string;
   packing: string;
+  units_per_box: string;
   mrp: string;
   selling_price: string;
   gst_rate: string;
@@ -35,6 +36,7 @@ export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   brand_id: "",
   unit: "",
   packing: "",
+  units_per_box: "1",
   mrp: "",
   selling_price: "",
   gst_rate: "",
@@ -52,6 +54,7 @@ function toPayload(values: ProductFormValues, image: string | null): ProductCrea
     brand_id: values.brand_id || null,
     unit: values.unit.trim(),
     packing: values.packing.trim(),
+    units_per_box: Number(values.units_per_box),
     mrp: Number(values.mrp),
     selling_price: Number(values.selling_price),
     gst_rate: Number(values.gst_rate),
@@ -199,6 +202,17 @@ export function ProductForm({
             placeholder="e.g. 12 x 500ml"
             value={values.packing}
             onChange={(e) => set("packing", e.target.value)}
+            required
+          />
+          <Input
+            id="units_per_box"
+            label="Units per box"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="e.g. 12"
+            value={values.units_per_box}
+            onChange={(e) => set("units_per_box", e.target.value)}
             required
           />
         </div>

@@ -16,6 +16,7 @@ class ProductCreate(BaseModel):
     brand_id: Optional[uuid.UUID] = None
     unit: str
     packing: str
+    units_per_box: int = 1
     mrp: Decimal
     selling_price: Decimal
     gst_rate: Decimal
@@ -31,6 +32,7 @@ class ProductUpdate(BaseModel):
     brand_id: Optional[uuid.UUID] = None
     unit: Optional[str] = None
     packing: Optional[str] = None
+    units_per_box: Optional[int] = None
     mrp: Optional[Decimal] = None
     selling_price: Optional[Decimal] = None
     gst_rate: Optional[Decimal] = None
@@ -51,6 +53,7 @@ class ProductResponse(BaseModel):
     brand_id: Optional[uuid.UUID]
     unit: str
     packing: str
+    units_per_box: int
     mrp: Decimal
     selling_price: Decimal
     gst_rate: Decimal
@@ -70,6 +73,7 @@ class ProductCatalogResponse(BaseModel):
     brand_id: Optional[uuid.UUID]
     unit: str
     packing: str
+    units_per_box: int
     mrp: Decimal
     effective_price: Decimal
     gst_rate: Decimal

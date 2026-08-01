@@ -15,6 +15,10 @@ class Product(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     brand_id = Column(UUID(as_uuid=True), ForeignKey("brands.id"), nullable=True)
     unit = Column(String(50), nullable=False)
     packing = Column(String(50), nullable=False)
+    # How many individual pieces make up one box/carton - customers order in
+    # boxes, but price is quoted per piece, so this is what turns "2 boxes"
+    # into the actual piece count used for pricing and stock.
+    units_per_box = Column(Integer, nullable=False, default=1)
     mrp = Column(Numeric(12, 2), nullable=False)
     selling_price = Column(Numeric(12, 2), nullable=False)
     gst_rate = Column(Numeric(5, 2), nullable=False)

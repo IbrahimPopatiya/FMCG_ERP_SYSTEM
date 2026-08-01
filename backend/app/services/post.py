@@ -30,6 +30,7 @@ def _create_product_for_post(db: Session, data: PostCreate) -> Product:
         name=data.product_name,
         unit="piece",
         packing=f"Box of {data.quantity_in_box}",
+        units_per_box=data.quantity_in_box,
         mrp=data.mrp,
         selling_price=data.price,
         gst_rate=Decimal("0"),
@@ -41,18 +42,6 @@ def _create_product_for_post(db: Session, data: PostCreate) -> Product:
     return product
 
 
-def _extract_box_quantity(packing: str) -> int:
-    """Best-effort parse of a leading count out of a packing string like
-    "12 x 500ml" -> 12. Falls back to 1 when nothing parseable is found."""
-    leading_digits = ""
-    for char in packing.strip():
-        if char.isdigit():
-            leading_digits += char
-        else:
-            break
-    return int(leading_digits) if leading_digits else 1
-
-
 def create_post_for_product(db: Session, product: Product, created_by: uuid.UUID) -> Post:
     """Auto-creates a promoted post for a product an admin just added, so new
     products immediately surface at the top of the customer Home feed too."""
@@ -62,7 +51,7 @@ def create_post_for_product(db: Session, product: Product, created_by: uuid.UUID
         product_name=product.name,
         price=product.selling_price,
         mrp=product.mrp,
-        quantity_in_box=_extract_box_quantity(product.packing),
+        quantity_in_box=product.units_per_box,
         created_by=created_by,
     )
     db.add(post)

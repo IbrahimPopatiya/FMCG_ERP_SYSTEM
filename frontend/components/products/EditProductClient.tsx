@@ -21,6 +21,7 @@ function toFormValues(product: ProductResponse): ProductFormValues {
     brand_id: product.brand_id ?? "",
     unit: product.unit,
     packing: product.packing,
+    units_per_box: String(product.units_per_box),
     mrp: String(product.mrp),
     selling_price: String(product.selling_price),
     gst_rate: String(product.gst_rate),

@@ -16,14 +16,6 @@ import { useCreatePost } from "@/lib/hooks/usePostMutations";
 import type { ProductResponse } from "@/types/product";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
-// Mirrors the backend's own leading-digit parse (app/services/post.py
-// _extract_box_quantity) so a post's box quantity lines up with the
-// product's packing string, e.g. "12 x 500ml" -> 12.
-function extractBoxQuantity(packing: string): number {
-  const match = packing.trim().match(/^\d+/);
-  return match ? Number(match[0]) : 1;
-}
-
 function SkeletonRows() {
   return (
     <div className="flex flex-col gap-3 p-4 sm:p-6">
@@ -119,7 +111,7 @@ export default function AdminProductsPage() {
           product_name: p.name,
           price: p.selling_price,
           mrp: p.mrp,
-          quantity_in_box: extractBoxQuantity(p.packing),
+          quantity_in_box: p.units_per_box,
         })
       )
     );

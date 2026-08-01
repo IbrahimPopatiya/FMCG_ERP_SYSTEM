@@ -41,6 +41,7 @@ function postToFeedItem(post: PostResponse): ProductCatalogResponse {
     brand_id: null,
     unit: "",
     packing: `Box of ${post.quantity_in_box}`,
+    units_per_box: post.quantity_in_box,
     mrp: post.mrp,
     effective_price: post.price,
     gst_rate: 0,

@@ -64,6 +64,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             unit: product.unit,
             packing: product.packing,
             price: product.effective_price,
+            unitsPerBox: product.units_per_box,
             gstRate: product.gst_rate,
             image: product.image,
             qty,
@@ -94,7 +95,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return {
       items,
       totalQty: items.reduce((sum, i) => sum + i.qty, 0),
-      subtotal: items.reduce((sum, i) => sum + i.qty * i.price, 0),
+      // qty is boxes, price is per-piece - the real line total needs the
+      // box size multiplied in.
+      subtotal: items.reduce((sum, i) => sum + i.qty * i.unitsPerBox * i.price, 0),
       getQty,
       addItem,
       setQty,
