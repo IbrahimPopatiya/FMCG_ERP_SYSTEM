@@ -40,17 +40,21 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        {process.env.NODE_ENV !== "production" && (
-          // Dev builds change chunk hashes on nearly every restart. A
-          // service worker + cache left over from a previous session (e.g.
-          // an earlier `next build && next start`) can keep serving stale,
-          // now-404ing chunks and blank-screen every reload before our own
-          // JS ever gets a chance to run. This has to run inline, before any
-          // hashed chunk is requested, and force one reload so the browser
-          // stops being controlled by the old worker right away.
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `(function(){
+        {/* Dev builds change chunk hashes on nearly every restart. A service
+            worker + cache left over from a previous session (e.g. an earlier
+            `next build && next start`) can keep serving stale, now-404ing
+            chunks and blank-screen every reload before our own JS ever gets
+            a chance to run. This has to run inline, before any hashed chunk
+            is requested, and force one reload so the browser stops being
+            controlled by the old worker right away.
+            The dev/prod check is baked into the script body (not a JSX
+            `{cond && <script>}` branch) so the tag itself always renders
+            identically on server and client - only the inlined boolean
+            literal can differ, which can't cause a hydration mismatch. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  if (${JSON.stringify(process.env.NODE_ENV !== "production")} !== true) return;
   if (!('serviceWorker' in navigator)) return;
   navigator.serviceWorker.getRegistrations().then(function(regs) {
     if (!regs.length) return;
@@ -67,11 +71,10 @@ export default function RootLayout({
     });
   });
 })();`,
-            }}
-          />
-        )}
+          }}
+        />
       </head>
-      <body className="flex h-dvh flex-col overflow-hidden">
+      <body className="flex h-dvh flex-col overflow-hidden" suppressHydrationWarning>
         <ServiceWorkerProvider>
           <InstallAppBannerLazy />
           <QueryProvider>{children}</QueryProvider>

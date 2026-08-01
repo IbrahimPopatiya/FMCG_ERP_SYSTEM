@@ -10,6 +10,7 @@ import { useProduct } from "@/lib/hooks/useProduct";
 import { useSetProductStatus, useUpdateProduct } from "@/lib/hooks/useProductMutations";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 import type { ProductResponse } from "@/types/product";
+import { BackArrowIcon } from "@/components/admin/icons";
 
 function toFormValues(product: ProductResponse): ProductFormValues {
   return {
@@ -41,9 +42,11 @@ export function EditProductClient({ productId }: { productId: string }) {
     <div>
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
         <div>
-          <Link href="/admin/products" className="text-sm font-medium text-ink-muted hover:text-ink">
-            ← Products
+          <div className="pb-4">
+            <Link href="/admin/products" className="text-sm font-medium text-ink-muted hover:text-ink">
+            <BackArrowIcon className="h-6 w-6" />
           </Link>
+          </div>
           <div className="mt-1 flex items-center gap-2.5">
             <h1 className="text-lg font-semibold tracking-tight text-ink">
               {product ? product.name : "Edit product"}

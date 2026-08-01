@@ -7,9 +7,12 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
 import { TopBar } from "@/components/layout/TopBar";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { SearchIcon, FilterIcon, PersonIcon, BoxIcon, ChevronRightIcon } from "@/components/admin/icons";
+import { CalendarIcon } from "@/components/customer/icons";
 import { useCustomerDirectorySample } from "@/lib/hooks/useCustomerDirectorySample";
 import { useOrders } from "@/lib/hooks/useOrders";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
@@ -27,6 +30,26 @@ const STATUS_FILTERS: { value: OrderStatus | "all"; label: string }[] = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
+// Local (not UTC) yyyy-mm-dd, matching what <input type="date"> reads/writes.
+function toDateInputValue(d: Date) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isSameDate(iso: string, dateValue: string) {
+  return toDateInputValue(new Date(iso)) === dateValue;
+}
+
+function formatDateLabel(dateValue: string) {
+  return new Date(`${dateValue}T00:00:00`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 function SkeletonRows() {
   return (
     <div className="flex flex-col gap-3 p-4 sm:p-6">
@@ -43,6 +66,9 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [dateModalOpen, setDateModalOpen] = useState(false);
+  const [draftDate, setDraftDate] = useState("");
   const {
     data,
     isLoading,
@@ -73,6 +99,7 @@ export default function AdminOrdersPage() {
     const term = search.trim().toLowerCase();
     return allLoaded
       .filter((o) => statusFilter === "all" || o.status === statusFilter)
+      .filter((o) => !selectedDate || isSameDate(o.created_at, selectedDate))
       .filter((o) => {
         if (!term) return true;
         return (
@@ -81,7 +108,22 @@ export default function AdminOrdersPage() {
         );
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allLoaded, statusFilter, search, customers.data]);
+  }, [allLoaded, statusFilter, selectedDate, search, customers.data]);
+
+  function openDateModal() {
+    setDraftDate(selectedDate ?? toDateInputValue(new Date()));
+    setDateModalOpen(true);
+  }
+
+  function applyDateFilter() {
+    setSelectedDate(draftDate || null);
+    setDateModalOpen(false);
+  }
+
+  function clearDateFilter() {
+    setSelectedDate(null);
+    setDateModalOpen(false);
+  }
 
   return (
     <div>
@@ -108,6 +150,17 @@ export default function AdminOrdersPage() {
             aria-label="Filter orders by status"
           >
             <FilterIcon className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={openDateModal}
+            className={`flex h-11 shrink-0 items-center gap-1.5 rounded-xl border px-3.5 text-sm font-medium transition-colors ${
+              selectedDate ? "border-primary bg-primary-soft text-primary" : "border-border text-ink-muted hover:bg-surface"
+            }`}
+            aria-label="Filter orders by date"
+          >
+            <CalendarIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">{selectedDate ? formatDateLabel(selectedDate) : "Date"}</span>
           </button>
         </div>
         {showFilters && (
@@ -147,7 +200,9 @@ export default function AdminOrdersPage() {
         <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
           <p className="text-sm font-medium text-ink">No orders here</p>
           <p className="text-sm text-ink-muted">
-            {statusFilter === "all" && !search ? "No orders have been placed yet." : "Try a different search or filter."}
+            {statusFilter === "all" && !search && !selectedDate
+              ? "No orders have been placed yet."
+              : "Try a different search or filter."}
           </p>
         </div>
       )}
@@ -222,6 +277,28 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       )}
+
+      <Modal open={dateModalOpen} onClose={() => setDateModalOpen(false)} title="Filter by date">
+        <div className="flex flex-col gap-4">
+          <Input
+            type="date"
+            label="Order date"
+            value={draftDate}
+            onChange={(e) => setDraftDate(e.target.value)}
+            max={toDateInputValue(new Date())}
+          />
+          <div className="flex items-center gap-3">
+            {selectedDate && (
+              <Button type="button" variant="secondary" className="flex-1" onClick={clearDateFilter}>
+                Clear
+              </Button>
+            )}
+            <Button type="button" className="flex-1" onClick={applyDateFilter} disabled={!draftDate}>
+              Apply
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

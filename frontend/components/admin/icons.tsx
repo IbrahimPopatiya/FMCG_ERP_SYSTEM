@@ -112,7 +112,6 @@ export const NAV_ICON_BY_HREF: Record<string, ComponentType<IconProps>> = {
   "/admin/dashboard": HomeIcon,
   "/admin/orders": CartIcon,
   "/admin/customers": PeopleIcon,
-  "/admin/posts": DocumentIcon,
   "/admin/products": GridIcon,
   "/admin/deliveries": TruckIcon,
   "/admin/payments": WalletIcon,
