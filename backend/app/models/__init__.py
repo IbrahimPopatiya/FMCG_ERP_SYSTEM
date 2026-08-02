@@ -25,6 +25,7 @@ from app.models.return_ import Return, ReturnItem
 from app.models.credit_note import CreditNote
 from app.models.audit_log import AuditLog
 from app.models.post import Post
+from app.models.saved_product import SavedProduct
 
 __all__ = [
     "User",

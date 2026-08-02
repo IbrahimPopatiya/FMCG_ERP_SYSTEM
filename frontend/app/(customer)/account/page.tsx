@@ -25,6 +25,7 @@ const ACCOUNT_ROWS: AccountRow[] = [
   { label: "User Profile", description: "Manage personal information" },
   { label: "Delivery Addresses", description: "Manage delivery addresses" },
   { label: "Payment Methods", description: "Manage payment options" },
+  { label: "Saved Products", description: "Products you've bookmarked", href: "/saved-products" },
   { label: "Credit & Invoices", description: "View bills and credit history", href: "/dues" },
   { label: "Notifications", description: "Manage your notifications" },
   { label: "Settings", description: "App preferences and settings" },

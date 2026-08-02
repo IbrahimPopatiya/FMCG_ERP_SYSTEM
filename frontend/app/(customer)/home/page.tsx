@@ -21,6 +21,7 @@ import {
 import { useCart } from "@/components/cart/CartProvider";
 import { useProductsFeed } from "@/lib/hooks/useProducts";
 import { usePosts } from "@/lib/hooks/usePosts";
+import { useSavedProducts, useToggleSavedProduct } from "@/lib/hooks/useSavedProducts";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { formatCurrency, formatPackingLabel } from "@/lib/utils/format";
@@ -329,15 +330,21 @@ export default function HomePage() {
   });
   const posts = usePosts();
   const categories = useCategories();
+  const savedProducts = useSavedProducts();
+  const { toggle: toggleSavedProduct } = useToggleSavedProduct();
   const { addItem, getQty, setQty } = useCart();
   const { register: registerHomeSearch } = useHomeSearch();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
-  const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const savedProductIds = useMemo(
+    () => new Set((savedProducts.data ?? []).map((s) => s.product.id)),
+    [savedProducts.data]
+  );
   const [openProductId, setOpenProductId] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [shareToast, setShareToast] = useState(false);
 
   // Top-bar search icon (layout) reveals this row; focus once it mounts.
   useEffect(() => {
@@ -350,7 +357,8 @@ export default function HomePage() {
 
   // Posts (newest first) lead the feed, followed by a page of the catalog
   // feed API — products already referenced by a post are skipped so the same
-  // item doesn't show twice. Default reel is capped to FEED_COUNT.
+  // item doesn't show twice. All posts are shown; the catalog fallback is
+  // capped to FEED_COUNT so the default reel doesn't fetch the whole catalog.
   const feedProducts = useMemo(() => {
     const postItems = (posts.data ?? []).map(postToFeedItem);
     const postedProductIds = new Set(postItems.map((p) => p.id));
@@ -365,15 +373,13 @@ export default function HomePage() {
       leading = [];
     }
 
-    let combined = [...leading, ...catalogItems];
-
     const query = debouncedSearch.trim().toLowerCase();
     if (query) {
-      combined = combined.filter((p) => p.name.toLowerCase().includes(query));
+      return [...leading, ...catalogItems].filter((p) => p.name.toLowerCase().includes(query));
     }
 
-    if (selectedCategoryId === null && !query) return combined.slice(0, FEED_COUNT);
-    return combined;
+    if (selectedCategoryId === null) return [...leading, ...catalogItems.slice(0, FEED_COUNT)];
+    return [...leading, ...catalogItems];
   }, [posts.data, products.data, selectedCategoryId, debouncedSearch]);
 
   const openProduct = feedProducts.find((p) => p.id === openProductId) ?? null;
@@ -396,6 +402,8 @@ export default function HomePage() {
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(url);
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 2000);
       }
     } catch {
       // User cancelled the share sheet — nothing to do.
@@ -489,10 +497,10 @@ export default function HomePage() {
               index={index}
               active={Math.abs(index - activeIndex) <= 1}
               liked={!!liked[product.id]}
-              saved={!!saved[product.id]}
+              saved={savedProductIds.has(product.id)}
               qty={getQty(product.id)}
               onToggleLike={() => setLiked((prev) => ({ ...prev, [product.id]: !prev[product.id] }))}
-              onToggleSave={() => setSaved((prev) => ({ ...prev, [product.id]: !prev[product.id] }))}
+              onToggleSave={() => toggleSavedProduct(product, savedProductIds.has(product.id))}
               onShare={() => handleShare(product)}
               onOpenBag={() => setOpenProductId(product.id)}
               onVisible={handleVisible}
@@ -515,6 +523,14 @@ export default function HomePage() {
             setOpenProductId(null);
           }}
         />
+      )}
+
+      {shareToast && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-6 z-40 flex justify-center px-4">
+          <div className="rounded-full bg-ink px-4 py-2 text-xs font-medium text-white shadow-lg">
+            Link copied to clipboard
+          </div>
+        </div>
       )}
     </div>
   );

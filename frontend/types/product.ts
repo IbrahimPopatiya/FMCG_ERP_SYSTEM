@@ -54,3 +54,11 @@ export interface ProductCatalogResponse {
   gst_rate: number;
   image: string | null;
 }
+
+// What GET /saved-products returns — a customer's bookmarked products, newest
+// saved first, each carrying the full catalog view of the underlying product.
+export interface SavedProductResponse {
+  id: string;
+  product: ProductCatalogResponse;
+  created_at: string;
+}
