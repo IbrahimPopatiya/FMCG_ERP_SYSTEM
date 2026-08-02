@@ -86,7 +86,7 @@ export default function CartPage() {
           </Link>
         </div>
       ) : (
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-6 md:p-8">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-28 md:p-8">
           
 
           <div className="flex flex-col gap-3">
