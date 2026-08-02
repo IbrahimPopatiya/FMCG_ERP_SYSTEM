@@ -18,7 +18,7 @@ import os
 import re
 
 import pytest
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 
@@ -58,6 +58,10 @@ def setup_test_database():
     # create_all alone never alters existing tables.
     print("[pytest] Resetting schema (drop_all → create_all)…")
     Base.metadata.drop_all(bind=engine)
+    # products.embedding is a pgvector column - the extension must exist
+    # before create_all defines it.
+    with engine.begin() as connection:
+        connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
     Base.metadata.create_all(bind=engine)
     print("[pytest] Tables ready — running tests\n")
     yield

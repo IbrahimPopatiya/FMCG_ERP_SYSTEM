@@ -8,6 +8,8 @@ source of truth; this function is safe to keep running alongside Alembic
 since it won't touch tables that already exist.
 """
 
+from sqlalchemy import text
+
 from app.db.session import Base, engine
 
 # Importing app.models registers every table on Base.metadata.
@@ -15,4 +17,8 @@ import app.models  # noqa: F401
 
 
 def create_all_tables() -> None:
+    # products.embedding is a pgvector column - the extension must exist
+    # before create_all defines it.
+    with engine.begin() as connection:
+        connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
     Base.metadata.create_all(bind=engine)

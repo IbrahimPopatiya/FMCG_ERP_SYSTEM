@@ -8,6 +8,11 @@ from app.core.enums import ProductStatus
 from app.models.brand import Brand
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductUpdate
+from app.services import embedding as embedding_service
+
+# Product fields that feed into the embedded text (see
+# embedding.build_product_text) - only these should trigger a re-embed.
+EMBEDDING_RELEVANT_FIELDS = {"name", "packing", "category_id", "brand_id"}
 
 
 class DuplicateProductError(Exception):
@@ -86,6 +91,7 @@ def list_all_products(
 
 def create_product(db: Session, data: ProductCreate, created_by: uuid.UUID) -> Product:
     product = Product(**data.model_dump())
+    embedding_service.embed_product(db, product)
     db.add(product)
     try:
         db.commit()
@@ -111,6 +117,9 @@ def update_product(db: Session, product_id: uuid.UUID, data: ProductUpdate) -> P
     updates = data.model_dump(exclude_unset=True)
     for field, value in updates.items():
         setattr(product, field, value)
+
+    if EMBEDDING_RELEVANT_FIELDS & updates.keys():
+        embedding_service.embed_product(db, product)
 
     try:
         db.commit()

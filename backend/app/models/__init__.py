@@ -25,6 +25,7 @@ from app.models.return_ import Return, ReturnItem
 from app.models.credit_note import CreditNote
 from app.models.audit_log import AuditLog
 from app.models.post import Post
+from app.models.feed_impression import FeedImpression
 
 __all__ = [
     "User",
@@ -51,4 +52,6 @@ __all__ = [
     "ReturnItem",
     "CreditNote",
     "AuditLog",
+    "Post",
+    "FeedImpression",
 ]

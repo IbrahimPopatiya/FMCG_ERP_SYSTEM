@@ -20,36 +20,22 @@ import {
 } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useProductsFeed } from "@/lib/hooks/useProducts";
-import { usePosts } from "@/lib/hooks/usePosts";
+import { useForYouFeed } from "@/lib/hooks/useRecommendations";
+import { postImpressions } from "@/lib/api/recommendations";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { formatCurrency, formatPackingLabel } from "@/lib/utils/format";
 import { dummyProductImage } from "@/lib/utils/dummyProductImage";
 import type { ProductCatalogResponse } from "@/types/product";
-import type { PostResponse } from "@/types/post";
 
-// A post is a promoted listing referencing a real product — render it in the
-// same reel using the product's real id/fields so "Add to bag" etc. still
-// work against the underlying product, just with the post's promo image/copy
-// layered on top.
-function postToFeedItem(post: PostResponse): ProductCatalogResponse {
-  return {
-    id: post.product_id,
-    sku: "",
-    name: post.product_name,
-    category_id: null,
-    brand_id: null,
-    unit: "",
-    packing: `Box of ${post.quantity_in_box}`,
-    units_per_box: post.quantity_in_box,
-    mrp: post.mrp,
-    effective_price: post.price,
-    gst_rate: 0,
-    image: post.image,
-  };
-}
+// Posts (promoted listings) are temporarily off the Home reel while we focus
+// on the personalized feed - re-enable by bringing `usePosts`/`postToFeedItem`
+// back once "repost to top" is built. The Post model/API/admin UI are
+// untouched, just not rendered here for now.
 
-const FEED_COUNT = 8;
+// How many reel slides from the end to trigger loading the next page - high
+// enough that the fetch resolves before the customer scrolls into the gap.
+const NEAR_END_THRESHOLD = 4;
 
 // Deterministic pseudo-counts so the same product always shows the same
 // like/save numbers across renders, without needing real backend fields.
@@ -323,11 +309,17 @@ export default function HomePage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
 
+  const isFiltered = selectedCategoryId !== null || debouncedSearch.trim() !== "";
+
+  // Personalized picks drive the default reel; the category/search feed API
+  // only takes over once a filter is actually applied (recommendations
+  // aren't category/search-aware).
   const products = useProductsFeed({
     search: debouncedSearch.trim() || undefined,
     categoryId: selectedCategoryId,
   });
-  const posts = usePosts();
+  const forYou = useForYouFeed();
+  const activeFeed = isFiltered ? products : forYou;
   const categories = useCategories();
   const { addItem, getQty, setQty } = useCart();
   const { register: registerHomeSearch } = useHomeSearch();
@@ -348,41 +340,52 @@ export default function HomePage() {
     if (isSearchOpen) searchInputRef.current?.focus();
   }, [isSearchOpen]);
 
-  // Posts (newest first) lead the feed, followed by a page of the catalog
-  // feed API — products already referenced by a post are skipped so the same
-  // item doesn't show twice. Default reel is capped to FEED_COUNT.
-  const feedProducts = useMemo(() => {
-    const postItems = (posts.data ?? []).map(postToFeedItem);
-    const postedProductIds = new Set(postItems.map((p) => p.id));
-    const catalogItems = (products.data?.pages.flatMap((page) => page.items) ?? []).filter(
-      (p) => !postedProductIds.has(p.id)
-    );
+  // Unfiltered: every page of the personalized feed fetched so far, in
+  // order - not capped, so the customer can keep scrolling until every
+  // active product has come up. Filtered: the matching page(s) of the plain
+  // category/search catalog feed instead.
+  const feedProducts = useMemo(
+    () => activeFeed.data?.pages.flatMap((page) => page.items) ?? [],
+    [activeFeed.data]
+  );
 
-    // Posts don't carry category_id; when a category is selected, only show
-    // catalog items that match (posts stay in the unfiltered default reel).
-    let leading = postItems;
-    if (selectedCategoryId !== null) {
-      leading = [];
+  // "Seen" = returned by /for-me and rendered into this customer's feed -
+  // no viewport/scroll tracking for v1 (see recommendation engine plan).
+  // Only the newest page is posted each time - forYou.data grows by one page
+  // per fetchNextPage, and re-posting every prior page's ids again on each
+  // fetch would just be wasted requests (the upsert is a no-op for them).
+  const postedPageCountRef = useRef(0);
+  useEffect(() => {
+    const pages = forYou.data?.pages ?? [];
+    const newPages = pages.slice(postedPageCountRef.current);
+    if (newPages.length === 0) return;
+    postedPageCountRef.current = pages.length;
+
+    const ids = newPages.flatMap((page) => page.items.map((p) => p.id));
+    if (ids.length > 0) {
+      postImpressions(ids).catch(() => {
+        // Best-effort - a failed impression write shouldn't disrupt browsing.
+      });
     }
-
-    let combined = [...leading, ...catalogItems];
-
-    const query = debouncedSearch.trim().toLowerCase();
-    if (query) {
-      combined = combined.filter((p) => p.name.toLowerCase().includes(query));
-    }
-
-    if (selectedCategoryId === null && !query) return combined.slice(0, FEED_COUNT);
-    return combined;
-  }, [posts.data, products.data, selectedCategoryId, debouncedSearch]);
+  }, [forYou.data]);
 
   const openProduct = feedProducts.find((p) => p.id === openProductId) ?? null;
-  const isLoading = products.isLoading || posts.isLoading;
-  const isError = products.isError || posts.isError;
+  const isLoading = activeFeed.isLoading;
+  const isError = activeFeed.isError;
 
-  const handleVisible = useCallback((index: number) => {
-    setActiveIndex(index);
-  }, []);
+  const handleVisible = useCallback(
+    (index: number) => {
+      setActiveIndex(index);
+      if (
+        activeFeed.hasNextPage &&
+        !activeFeed.isFetchingNextPage &&
+        feedProducts.length - index <= NEAR_END_THRESHOLD
+      ) {
+        void activeFeed.fetchNextPage();
+      }
+    },
+    [activeFeed, feedProducts.length]
+  );
 
   async function handleShare(product: ProductCatalogResponse) {
     const url = `${window.location.origin}/products/${product.id}`;
@@ -464,8 +467,7 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => {
-              void products.refetch();
-              void posts.refetch();
+              void activeFeed.refetch();
             }}
             className="text-sm font-medium text-primary hover:text-primary-hover"
           >

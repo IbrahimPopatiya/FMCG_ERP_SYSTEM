@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Integer, Numeric, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
+from pgvector.sqlalchemy import Vector
 
 from app.db.session import Base
 from app.db.mixins import UUIDPKMixin, TimestampMixin, SoftDeleteMixin
@@ -25,3 +26,6 @@ class Product(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     minimum_stock = Column(Integer, nullable=False, default=0)
     image = Column(String(255), nullable=True)
     status = Column(String(20), nullable=False, default="active")  # active, inactive
+    # Embedding of name/category/brand text, used for similarity-based
+    # recommendations - see app/services/embedding.py.
+    embedding = Column(Vector(384), nullable=True)
