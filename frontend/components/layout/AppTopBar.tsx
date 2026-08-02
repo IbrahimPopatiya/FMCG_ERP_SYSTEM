@@ -8,7 +8,7 @@ export function AppTopBar({
   leading,
   trailing,
 }: {
-  title: string;
+  title: React.ReactNode;
   leading?: React.ReactNode;
   trailing?: React.ReactNode;
 }) {

@@ -4,6 +4,7 @@ import { SubmitEvent, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useLogin, loginErrorMessage } from "@/lib/hooks/useLogin";
+import { Logo } from "@/components/ui/Logo";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
@@ -26,12 +27,10 @@ export default function LoginPage() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-col items-center gap-3 text-center">
-        <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold tracking-tight text-white">
-          DMS
-          <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-surface bg-accent" />
-        </div>
-        <div>
+      <div className="mb-8 flex flex-col items-center gap-1.5 text-center">
+        <Logo className="h-16 w-auto" />
+        <p className="text-base font-bold tracking-tight text-ink">Zaid Traders</p>
+        <div className="mt-3">
           <h1 className="text-xl font-semibold tracking-tight text-ink">Welcome back</h1>
           <p className="mt-1 text-sm text-ink-muted">Log in to your distribution account</p>
         </div>

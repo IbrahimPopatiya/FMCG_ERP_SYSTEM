@@ -47,6 +47,12 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|icon-.*\\.png).*)",
+    // Everything under /public (logos, icons, manifest, ...) is a static
+    // file served by name, not a route - none of it should hit the auth
+    // redirect. This matters beyond just "don't 404 on assets": Next's image
+    // optimizer fetches local images via an internal, cookie-less request,
+    // so an unexcluded asset silently gets redirected to /login and renders
+    // as a broken image instead of failing loudly.
+    "/((?!api|_next/static|_next/image|.*\\.(?:ico|js|png|jpg|jpeg|svg|webp|webmanifest)$).*)",
   ],
 };
