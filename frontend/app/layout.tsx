@@ -16,12 +16,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DMS",
+  title: "Zaid Traders",
   description: "Distribution Management System",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "DMS",
+    title: "Zaid Traders",
   },
 };
 

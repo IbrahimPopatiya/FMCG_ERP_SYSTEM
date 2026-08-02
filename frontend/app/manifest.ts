@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "DMS - Distribution Management System",
-    short_name: "DMS",
+    name: "Zaid Traders - Distribution Management System",
+    short_name: "ZT",
     description: "Distribution Management System",
     start_url: "/",
     display: "standalone",

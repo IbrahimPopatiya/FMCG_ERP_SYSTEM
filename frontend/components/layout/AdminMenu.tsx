@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ICON_BY_HREF } from "@/components/admin/icons";
 import { MenuIcon, CloseIcon, AccountIcon } from "@/components/customer/icons";
+import { Logo } from "@/components/ui/Logo";
 import type { NavItem } from "@/lib/nav/roleNav";
 
 // Mobile slide-out drawer for the admin/staff area — the bottom bar only
@@ -44,7 +45,10 @@ export function AdminMenuProvider({
           style={{ paddingTop: "env(safe-area-inset-top)" }}
         >
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-5">
-            <p className="truncate text-lg font-bold tracking-tight text-ink">Zaid Traders</p>
+            <p className="flex min-w-0 items-center gap-2 truncate text-lg font-bold tracking-tight text-ink">
+              <Logo className="h-7 w-auto" />
+              Zaid Traders
+            </p>
             <button
               type="button"
               aria-label="Close menu"

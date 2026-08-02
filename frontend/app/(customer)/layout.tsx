@@ -9,6 +9,7 @@ import { CustomerMenuProvider, MenuButton } from "@/components/customer/Customer
 import { AccountAvatar } from "@/components/customer/AccountAvatar";
 import { HomeSearchProvider, HomeSearchButton } from "@/components/customer/HomeSearch";
 import { CUSTOMER_NAV_ITEMS } from "@/components/customer/navItems";
+import { Logo } from "@/components/ui/Logo";
 
 // Mobile-first shell for shopkeepers: bottom nav on phones, a persistent
 // left sidebar on desktop — both driven by the same CUSTOMER_NAV_ITEMS list.
@@ -36,7 +37,12 @@ function CustomerTopBar() {
 
   return (
     <AppTopBar
-      title="Zaid Traders"
+      title={
+        <span className="flex items-center gap-2">
+          <Logo className="h-6 w-auto" />
+          Zaid Traders
+        </span>
+      }
       leading={<MenuButton />}
       trailing={
         <div className="flex items-center gap-1.5">

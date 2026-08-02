@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BackArrowIcon } from "@/components/admin/icons";
 import { AccountIcon } from "@/components/customer/icons";
 import { AdminMenuButton } from "@/components/layout/AdminMenu";
+import { Logo } from "@/components/ui/Logo";
 
 interface TopBarProps {
   title: string;
@@ -59,7 +60,10 @@ export function TopBar({ backHref, onBack }: TopBarProps) {
         )}
       </div>
 
-      <h1 className="truncate text-lg font-bold tracking-tight text-ink">Zaid Traders</h1>
+      <h1 className="flex min-w-0 items-center justify-center gap-2 truncate text-lg font-bold tracking-tight text-ink">
+        <Logo className="h-7 w-auto" />
+        Zaid Traders
+      </h1>
 
       <div className="flex shrink-0 items-center gap-2">
         <ProfileMenu />
