@@ -3,6 +3,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     database_url: str
+    # Migrations only — direct/session connection, not the transaction pooler.
+    # The transaction pooler doesn't guarantee Alembic's multi-statement
+    # migration transactions stay atomic, which caused a table to get created
+    # without alembic_version being updated to match. Falls back to
+    # database_url so this is opt-in per environment.
+    direct_database_url: str = ""
     # Pytest only — always local. Independent of database_url so the app can
     # point at Supabase while the suite stays on localhost.
     test_database_url: str = "postgresql://postgres@localhost:5432/dms_test_db"
@@ -23,6 +29,10 @@ class Settings(BaseSettings):
     @property
     def cors_extra_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_extra_origins.split(",") if origin.strip()]
+
+    @property
+    def migration_database_url(self) -> str:
+        return self.direct_database_url or self.database_url
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
