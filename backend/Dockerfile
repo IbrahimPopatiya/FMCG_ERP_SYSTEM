@@ -17,6 +17,7 @@ COPY . .
 
 EXPOSE 8000
 
-# host 0.0.0.0, not localhost - inside a container "localhost" only
-# refers to the container itself, other containers couldn't reach it
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# start.sh runs migrations (migrate_with_lock) before exec'ing uvicorn -
+# host 0.0.0.0, not localhost, since inside a container "localhost" only
+# refers to the container itself, other containers couldn't reach it.
+CMD ["sh", "start.sh"]
