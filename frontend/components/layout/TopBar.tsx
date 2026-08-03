@@ -6,6 +6,7 @@ import { BackArrowIcon } from "@/components/admin/icons";
 import { AccountIcon } from "@/components/customer/icons";
 import { AdminMenuButton } from "@/components/layout/AdminMenu";
 import { Logo } from "@/components/ui/Logo";
+import { BRAND } from "@/lib/branding";
 
 interface TopBarProps {
   title: string;
@@ -27,7 +28,7 @@ function ProfileMenu() {
 }
 
 // Brand app bar shown at the top of every admin/staff screen — hamburger
-// (or back arrow on detail/create screens) on the left, "Zaid Traders" in
+// (or back arrow on detail/create screens) on the left, the brand name in
 // the center, notifications + profile on the right. Per-page titles used to
 // live here; they're redundant now since every screen already carries its
 // own in-content header below this bar.
@@ -62,7 +63,7 @@ export function TopBar({ backHref, onBack }: TopBarProps) {
 
       <h1 className="flex min-w-0 items-center justify-center gap-2 truncate text-lg font-bold tracking-tight text-ink">
         <Logo className="h-7 w-auto" />
-        Zaid Traders
+        {!BRAND.logoIncludesName && BRAND.name}
       </h1>
 
       <div className="flex shrink-0 items-center gap-2">

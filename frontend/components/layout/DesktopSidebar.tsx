@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ICON_BY_HREF } from "@/components/admin/icons";
 import { Logo } from "@/components/ui/Logo";
+import { BRAND } from "@/lib/branding";
 
 interface NavItem {
   href: string;
@@ -17,7 +18,7 @@ export function DesktopSidebar({ items }: { items: NavItem[] }) {
     <aside className="hidden w-60 shrink-0 flex-col overflow-y-auto border-r border-border bg-white sm:flex">
       <div className="flex shrink-0 items-center gap-2 px-5 py-5 text-lg font-semibold tracking-tight text-ink">
         <Logo className="h-7 w-auto" />
-        Zaid Traders
+        {!BRAND.logoIncludesName && BRAND.name}
       </div>
       <nav className="flex flex-col gap-1 px-3 pb-4">
         {items.map((item) => {

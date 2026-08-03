@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useLogin, loginErrorMessage } from "@/lib/hooks/useLogin";
 import { Logo } from "@/components/ui/Logo";
+import { BRAND } from "@/lib/branding";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
@@ -29,7 +30,9 @@ export default function LoginPage() {
     <div>
       <div className="mb-8 flex flex-col items-center gap-1.5 text-center">
         <Logo className="h-16 w-auto" />
-        <p className="text-base font-bold tracking-tight text-ink">Zaid Traders</p>
+        {!BRAND.logoIncludesName && (
+          <p className="text-base font-bold tracking-tight text-ink">{BRAND.name}</p>
+        )}
         <div className="mt-3">
           <h1 className="text-xl font-semibold tracking-tight text-ink">Welcome back</h1>
           <p className="mt-1 text-sm text-ink-muted">Log in to your distribution account</p>

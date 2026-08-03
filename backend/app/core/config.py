@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     secret_key: str
     access_token_expire_minutes: int = 60
     cors_extra_origins: str = ""
+    # Matches this client's Vercel preview deploys (project-name-git-branch-*.vercel.app).
+    # Each client's Render service should set this to their own Vercel project name.
+    cors_vercel_preview_regex: str = r"https://fmcg-erp-system.*\.vercel\.app"
     supabase_url: str
     supabase_service_role_key: str
     supabase_storage_bucket: str = "fmcg_products"

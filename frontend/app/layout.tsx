@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/lib/providers/query-provider";
 import { ServiceWorkerProvider } from "@/lib/providers/service-worker-provider";
 import { InstallAppBannerLazy } from "@/components/pwa/InstallAppBannerLazy";
+import { BRAND } from "@/lib/branding";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,17 +17,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Zaid Traders",
+  title: BRAND.name,
   description: "Distribution Management System",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Zaid Traders",
+    title: BRAND.name,
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#192bc2",
+  themeColor: BRAND.themeColor,
 };
 
 export default function RootLayout({

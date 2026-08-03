@@ -10,10 +10,11 @@ import { AccountAvatar } from "@/components/customer/AccountAvatar";
 import { HomeSearchProvider, HomeSearchButton } from "@/components/customer/HomeSearch";
 import { CUSTOMER_NAV_ITEMS } from "@/components/customer/navItems";
 import { Logo } from "@/components/ui/Logo";
+import { BRAND } from "@/lib/branding";
 
 // Mobile-first shell for shopkeepers: bottom nav on phones, a persistent
 // left sidebar on desktop — both driven by the same CUSTOMER_NAV_ITEMS list.
-// The Zaid Traders top bar lives here so every storefront screen shares it.
+// The brand top bar lives here so every storefront screen shares it.
 function CustomerMobileNav() {
   const { totalQty } = useCart();
   const items = CUSTOMER_NAV_ITEMS.map((item) => ({
@@ -40,7 +41,7 @@ function CustomerTopBar() {
       title={
         <span className="flex items-center gap-2">
           <Logo className="h-6 w-auto" />
-          Zaid Traders
+          {!BRAND.logoIncludesName && BRAND.name}
         </span>
       }
       leading={<MenuButton />}
