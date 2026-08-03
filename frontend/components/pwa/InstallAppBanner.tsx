@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useInstallPrompt } from "@/lib/hooks/useInstallPrompt";
 import { Logo } from "@/components/ui/Logo";
+import { BRAND } from "@/lib/branding";
 
 const DISMISSED_KEY = "dms_install_dismissed";
 
@@ -98,7 +99,7 @@ export function InstallAppBanner() {
         </button>
       </div>
 
-      <Modal open={showIOSSteps} onClose={() => setShowIOSSteps(false)} title="Install Zaid Traders">
+      <Modal open={showIOSSteps} onClose={() => setShowIOSSteps(false)} title={`Install ${BRAND.name}`}>
         <div className="flex flex-col gap-5 py-1">
           {STEPS.map((step) => (
             <div key={step.text} className="flex items-center gap-3.5">

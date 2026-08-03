@@ -71,8 +71,9 @@ app.add_middleware(
     # Every Vercel branch/preview deploy gets its own hashed subdomain
     # (e.g. fmcg-erp-system-git-develop-<team>.vercel.app), so a static
     # allow_origins entry can't keep up - match any subdomain of this
-    # project's vercel.app instead of hand-adding one per deploy.
-    allow_origin_regex=r"https://fmcg-erp-system.*\.vercel\.app",
+    # project's vercel.app instead of hand-adding one per deploy. Configurable
+    # per client since each client's Vercel project has a different name.
+    allow_origin_regex=settings.cors_vercel_preview_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
