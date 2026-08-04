@@ -23,9 +23,11 @@ from app.models.product import Product
 from app.models.purchase import PurchaseItem
 from app.models.return_ import ReturnItem
 from app.models.sales_order import SalesOrderItem
+from app.models.saved_product import SavedProduct
 
 # Children before parent (Product) to satisfy foreign-key constraints.
 WIPE_ORDER = [
+    SavedProduct,
     ReturnItem,
     InventoryMovement,
     Inventory,
