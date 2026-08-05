@@ -67,7 +67,7 @@ export default function ProductDetailPage() {
       )}
 
       {product && (
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4 pb-6 md:p-8">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4 pb-28 md:p-8">
           <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-primary-soft md:aspect-[16/9]">
             {product.image ? (
               <Image

@@ -56,7 +56,7 @@ export default function OrdersPage() {
       )}
 
       {!orders.isLoading && !orders.isError && (sorted.length > 0 || hasNextPage) && (
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 p-4 pb-6 md:p-8">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 p-4 pb-28 md:p-8">
           {sorted.map((order) => (
             <Link
               key={order.id}

@@ -136,7 +136,7 @@ export default function AdminOrderDetailPage() {
         {order.data && (() => {
           const data = order.data;
           return (
-            <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 pb-6 sm:p-6">
+            <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 pb-28 sm:p-6">
               <div className="flex items-center justify-end">
                 <OrderStatusBadge status={data.status} />
               </div>

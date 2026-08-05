@@ -16,7 +16,7 @@ export default function CategoriesPage() {
         <p className="mt-0.5 text-sm text-ink-muted">Browse everything by category</p>
       </header>
 
-      <div className="p-4 pb-6 md:p-8">
+      <div className="p-4 pb-28 md:p-8">
         {categories.isLoading && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
             {Array.from({ length: 10 }).map((_, i) => (

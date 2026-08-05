@@ -164,7 +164,7 @@ function ProductsPageContent() {
       )}
 
       {!isLoading && !isError && (products.length > 0 || hasNextPage) && (
-        <div className="p-4 pb-6 md:p-8">
+        <div className="p-4 pb-28 md:p-8">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
             {products.map((product) => (
               <CustomerProductCard
