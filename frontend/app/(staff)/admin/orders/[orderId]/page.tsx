@@ -16,6 +16,7 @@ import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useGenerateInvoice } from "@/lib/hooks/useInvoiceMutations";
 import { useInvoiceSample } from "@/lib/hooks/useInvoices";
 import { useOrder } from "@/lib/hooks/useOrders";
+import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useApproveOrder, useCancelOrder, useLoadOrder } from "@/lib/hooks/useOrderMutations";
 import { formatCurrency, formatDate, toTitleCase } from "@/lib/utils/format";
 import type { SalesOrderItemResponse } from "@/types/salesOrder";
@@ -35,6 +36,8 @@ export default function AdminOrderDetailPage() {
   const router = useRouter();
   const order = useOrder(orderId);
   const customer = useCustomer(order.data?.customer_id ?? "");
+  const staffDirectory = useStaffDirectory();
+  const salesperson = staffDirectory.data?.find((u) => u.id === order.data?.salesman_id) ?? null;
   const invoices = useInvoiceSample();
   const approveOrder = useApproveOrder(orderId);
   const loadOrder = useLoadOrder(orderId);
@@ -180,6 +183,9 @@ export default function AdminOrderDetailPage() {
                 <p className="text-xs text-ink-muted">
                   Placed {formatDate(data.created_at)} · {toTitleCase(data.order_source)}
                 </p>
+                {salesperson && (
+                  <p className="text-xs text-ink-muted">Salesperson - {salesperson.full_name}</p>
+                )}
               </Card>
 
               <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">

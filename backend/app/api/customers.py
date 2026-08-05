@@ -13,6 +13,7 @@ from app.schemas.customer import (
     CustomerCreate,
     CustomerUpdate,
     CustomerStatusUpdate,
+    CustomerSalesmanAssign,
     CustomerLocationUpdate,
     CustomerLocationResponse,
     CustomerResponse,
@@ -24,7 +25,7 @@ from app.schemas.customer import (
 )
 from app.services import customer as customer_service
 from app.services import invoice as invoice_service
-from app.services.customer import DuplicateCustomerError
+from app.services.customer import DuplicateCustomerError, SalesmanNotFoundError
 
 router = APIRouter(prefix="/customers", tags=["customers"])
 
@@ -71,10 +72,11 @@ def list_customers(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     search: Optional[str] = Query(default=None),
+    route_id: Optional[uuid.UUID] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    items, total = customer_service.list_customers(db, page, page_size, search)
+    items, total = customer_service.list_customers(db, page, page_size, search, route_id)
     return Page(items=items, total=total, page=page, page_size=page_size)
 
 
@@ -127,6 +129,23 @@ def update_customer_status(
     current_user: User = Depends(get_current_user),
 ):
     customer = customer_service.set_customer_status(db, customer_id, data.status)
+    if customer is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+    return customer
+
+
+@router.patch("/{customer_id}/salesman", response_model=CustomerMeResponse)
+def assign_customer_salesman(
+    customer_id: uuid.UUID,
+    data: CustomerSalesmanAssign,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        customer = customer_service.assign_salesman_to_customer(db, customer_id, data.salesman_id)
+    except SalesmanNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
     if customer is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
     return customer

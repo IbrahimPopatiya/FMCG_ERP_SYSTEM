@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createCustomer, setCustomerStatus } from "@/lib/api/customers";
+import { assignCustomerSalesman, createCustomer, setCustomerStatus } from "@/lib/api/customers";
 import type { CustomerCreate, CustomerStatus } from "@/types/customers";
 
 export function useCreateCustomer() {
@@ -19,6 +19,18 @@ export function useSetCustomerStatus(customerId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers", "manage"] });
       queryClient.invalidateQueries({ queryKey: ["customers", customerId] });
+    },
+  });
+}
+
+export function useAssignCustomerSalesman(customerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (salesmanId: string) => assignCustomerSalesman(customerId, salesmanId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers", "manage"] });
+      queryClient.invalidateQueries({ queryKey: ["customers", customerId] });
+      queryClient.invalidateQueries({ queryKey: ["routes"] });
     },
   });
 }

@@ -22,9 +22,11 @@ export function getCurrentCustomerLedger() {
   return api.get<CustomerLedgerResponse>("/customers/me/ledger").then((res) => res.data);
 }
 
-export function listCustomers(page: number, pageSize: number, search?: string) {
+export function listCustomers(page: number, pageSize: number, search?: string, routeId?: string) {
   return api
-    .get<Page<CustomerListItem>>("/customers", { params: { page, page_size: pageSize, search } })
+    .get<Page<CustomerListItem>>("/customers", {
+      params: { page, page_size: pageSize, search, route_id: routeId },
+    })
     .then((res) => res.data);
 }
 
@@ -39,5 +41,11 @@ export function createCustomer(data: CustomerCreate) {
 export function setCustomerStatus(customerId: string, status: CustomerStatus) {
   return api
     .patch<CustomerCreateResponse>(`/customers/${customerId}/status`, { status })
+    .then((res) => res.data);
+}
+
+export function assignCustomerSalesman(customerId: string, salesmanId: string) {
+  return api
+    .patch<CustomerMeResponse>(`/customers/${customerId}/salesman`, { salesman_id: salesmanId })
     .then((res) => res.data);
 }

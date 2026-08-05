@@ -8,20 +8,27 @@ import type { NextRequest } from "next/server";
 const CUSTOMER_HOME = "/home";
 const STAFF_HOME = "/admin/dashboard";
 
+const SALESMAN_HOME = "/salesman/home";
+
 export function proxy(request: NextRequest) {
   const token = request.cookies.get("dms_token")?.value;
   const principalType = request.cookies.get("dms_role")?.value;
+  const staffRole = request.cookies.get("dms_staff_role")?.value;
+  const isSalesman = principalType !== "customer" && staffRole === "salesman";
   const { pathname } = request.nextUrl;
 
   const isLoginRoute = pathname.startsWith("/login");
   const isRoot = pathname === "/";
-  const isStaffRoute = pathname.startsWith("/admin");
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isSalesmanRoute = pathname.startsWith("/salesman");
   const isCustomerOnlyRoute =
     pathname.startsWith("/cart") || pathname.startsWith("/account");
 
   if (!token && !isLoginRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
+
+  const staffHome = isSalesman ? SALESMAN_HOME : STAFF_HOME;
 
   // "/" itself renders nothing (app/page.tsx returns null) - it only exists
   // as the PWA's start_url. An unauthenticated visit already gets redirected
@@ -30,16 +37,26 @@ export function proxy(request: NextRequest) {
   // relaunched while already logged in.
   if (token && (isLoginRoute || isRoot)) {
     return NextResponse.redirect(
-      new URL(principalType === "customer" ? CUSTOMER_HOME : STAFF_HOME, request.url)
+      new URL(principalType === "customer" ? CUSTOMER_HOME : staffHome, request.url)
     );
   }
 
-  if (token && principalType === "customer" && isStaffRoute) {
+  if (token && principalType === "customer" && (isAdminRoute || isSalesmanRoute)) {
     return NextResponse.redirect(new URL(CUSTOMER_HOME, request.url));
   }
 
-  if (token && principalType !== "customer" && isCustomerOnlyRoute) {
+  // A salesman gets their own storefront-style screens instead of the
+  // data-dense admin back office; every other staff role is the reverse.
+  if (token && principalType !== "customer" && isSalesman && isAdminRoute) {
+    return NextResponse.redirect(new URL(SALESMAN_HOME, request.url));
+  }
+
+  if (token && principalType !== "customer" && !isSalesman && isSalesmanRoute) {
     return NextResponse.redirect(new URL(STAFF_HOME, request.url));
+  }
+
+  if (token && principalType !== "customer" && isCustomerOnlyRoute) {
+    return NextResponse.redirect(new URL(staffHome, request.url));
   }
 
   return NextResponse.next();

@@ -4,6 +4,7 @@ import { SubmitEvent, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useLogin, loginErrorMessage } from "@/lib/hooks/useLogin";
+import { getStaffRole } from "@/lib/auth/session";
 import { Logo } from "@/components/ui/Logo";
 import { BRAND } from "@/lib/branding";
 
@@ -19,7 +20,9 @@ export default function LoginPage() {
       { identifier: identifier.trim(), password },
       {
         onSuccess: (data) => {
-          const destination = data.principal_type === "customer" ? "/home" : "/admin/dashboard";
+          let destination = "/admin/dashboard";
+          if (data.principal_type === "customer") destination = "/home";
+          else if (getStaffRole() === "salesman") destination = "/salesman/home";
           window.location.assign(destination);
         },
       }

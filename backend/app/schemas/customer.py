@@ -87,8 +87,13 @@ class CustomerMeResponse(BaseModel):
     credit_limit: Decimal
     payment_terms: int
     status: CustomerStatus
+    route_id: Optional[uuid.UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CustomerSalesmanAssign(BaseModel):
+    salesman_id: uuid.UUID
 
 
 class CustomerDeleteResponse(BaseModel):

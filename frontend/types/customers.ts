@@ -15,6 +15,7 @@ export interface CustomerMeResponse {
   credit_limit: number;
   payment_terms: number;
   status: CustomerStatus;
+  route_id: string | null;
 }
 
 // GET /customers (list) and GET /customers/{id} (detail) return the same
