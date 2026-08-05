@@ -28,6 +28,13 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: BRAND.themeColor,
+  // Lets the installed (standalone) app draw edge-to-edge behind the OS
+  // gesture bar on Android instead of just leaving blank space there - the
+  // trade-off is that anything pinned to the bottom of the screen (the
+  // MobileBottomNav) must add its own env(safe-area-inset-bottom) padding,
+  // or the gesture bar overlaps/clips it. Without viewport-fit=cover, that
+  // env() value would just resolve to 0 and do nothing.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

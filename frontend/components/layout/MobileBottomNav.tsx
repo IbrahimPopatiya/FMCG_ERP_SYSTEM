@@ -47,7 +47,10 @@ export function MobileBottomNav({
 
   if (isIsland) {
     return (
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-4 pt-2 sm:hidden">
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pt-2 sm:hidden"
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      >
         <nav
           className={`pointer-events-auto flex gap-1 rounded-full border shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl ${className}`}
         >
@@ -57,5 +60,12 @@ export function MobileBottomNav({
     );
   }
 
-  return <nav className={`flex shrink-0 border-t sm:hidden ${className}`}>{links}</nav>;
+  return (
+    <nav
+      className={`flex shrink-0 border-t sm:hidden ${className}`}
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      {links}
+    </nav>
+  );
 }
