@@ -44,6 +44,7 @@ function AdminProductCardBase({ product }: AdminProductCardProps) {
           <p className="line-clamp-2 text-sm font-medium leading-snug text-ink">{product.name}</p>
         </Link>
         <p className="text-xs text-ink-muted">{product.sku}</p>
+        <p className="text-xs text-ink-muted">LC: {product.loading_capacity}</p>
         <p className="text-sm">
           <span className="font-semibold text-ink">{formatCurrency(product.selling_price) + "/" + (product.mrp)}</span>
         </p>

@@ -23,9 +23,9 @@ import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const STATUS_FILTERS: { value: OrderStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "loaded", label: "Loaded" },
+  { value: "pending", label: "Order Placed" },
+  { value: "approved", label: "Out for Delivery" },
+  { value: "loaded", label: "Completed" },
   { value: "delivered", label: "Delivered" },
   { value: "cancelled", label: "Cancelled" },
 ];

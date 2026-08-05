@@ -402,6 +402,7 @@ def seed_products(db, categories: dict, brands: dict) -> dict:
                 selling_price=Decimal(price),
                 gst_rate=Decimal(gst),
                 minimum_stock=min_stock,
+                loading_capacity=min_stock * 10,
             ),
         )
         products[key] = product
@@ -415,6 +416,7 @@ def seed_products(db, categories: dict, brands: dict) -> dict:
             selling_price=Decimal("10.00"),
             gst_rate=Decimal("0.00"),
             minimum_stock=0,
+            loading_capacity=0,
         ),
     )
     products["loose_item"] = loose_item

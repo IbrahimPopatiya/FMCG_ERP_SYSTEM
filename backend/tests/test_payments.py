@@ -62,6 +62,7 @@ def create_product(client, headers, **overrides):
         "selling_price": 100.00,
         "gst_rate": 18.00,
         "minimum_stock": 10,
+        "loading_capacity": 100,
     }
     payload.update(overrides)
     return client.post("/api/v1/products", json=payload, headers=headers).json()

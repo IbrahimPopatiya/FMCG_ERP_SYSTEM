@@ -32,6 +32,7 @@ def product_payload(**overrides):
         "selling_price": 35.00,
         "gst_rate": 18.00,
         "minimum_stock": 50,
+        "loading_capacity": 100,
     }
     payload.update(overrides)
     return payload

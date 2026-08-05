@@ -17,6 +17,9 @@ class Product(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     # boxes, but price is quoted per piece, so this is what turns "2 boxes"
     # into the actual piece count used for pricing and stock.
     units_per_box = Column(Integer, nullable=False, default=1)
+    # Loading capacity - how many units of this product a delivery vehicle can
+    # carry per trip, used by dispatch when planning loads.
+    loading_capacity = Column(Integer, nullable=False, default=0)
     mrp = Column(Numeric(12, 2), nullable=False)
     selling_price = Column(Numeric(12, 2), nullable=False)
     gst_rate = Column(Numeric(5, 2), nullable=False)

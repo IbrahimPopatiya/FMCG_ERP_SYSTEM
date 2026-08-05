@@ -1,9 +1,9 @@
 import type { OrderStatus } from "@/types/salesOrder";
 
 const STEPS: { status: OrderStatus; label: string }[] = [
-  { status: "pending", label: "Placed" },
-  { status: "approved", label: "Approved" },
-  { status: "loaded", label: "Loaded" },
+  { status: "pending", label: "Order Placed" },
+  { status: "approved", label: "Out for Delivery" },
+  { status: "loaded", label: "Completed" },
   { status: "delivered", label: "Delivered" },
 ];
 

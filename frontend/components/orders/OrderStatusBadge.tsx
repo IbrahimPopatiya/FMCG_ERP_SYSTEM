@@ -12,6 +12,16 @@ const TONE: Record<OrderStatus, "neutral" | "success" | "warning" | "danger" | "
   cancelled: "danger",
 };
 
+// Display labels only - the underlying status values (pending/approved/loaded)
+// stay as-is everywhere else (DB, API, business logic).
+const LABEL: Record<OrderStatus, string> = {
+  pending: "Order Placed",
+  approved: "Out for Delivery",
+  loaded: "Completed",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  return <Badge tone={TONE[status]}>{toTitleCase(status)}</Badge>;
+  return <Badge tone={TONE[status]}>{LABEL[status] ?? toTitleCase(status)}</Badge>;
 }

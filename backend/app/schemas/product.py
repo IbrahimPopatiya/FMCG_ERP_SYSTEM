@@ -14,6 +14,7 @@ class ProductCreate(BaseModel):
     brand_id: Optional[uuid.UUID] = None
     unit: str
     units_per_box: int = 1
+    loading_capacity: int
     mrp: Decimal
     selling_price: Decimal
     gst_rate: Decimal = Decimal("0")
@@ -27,6 +28,7 @@ class ProductUpdate(BaseModel):
     brand_id: Optional[uuid.UUID] = None
     unit: Optional[str] = None
     units_per_box: Optional[int] = None
+    loading_capacity: Optional[int] = None
     mrp: Optional[Decimal] = None
     selling_price: Optional[Decimal] = None
     gst_rate: Optional[Decimal] = None
@@ -46,6 +48,7 @@ class ProductResponse(BaseModel):
     brand_id: Optional[uuid.UUID]
     unit: str
     units_per_box: int
+    loading_capacity: int
     mrp: Decimal
     selling_price: Decimal
     gst_rate: Decimal

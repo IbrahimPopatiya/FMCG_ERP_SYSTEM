@@ -6,6 +6,7 @@ export interface ProductCreate {
   brand_id?: string | null;
   unit: string;
   units_per_box: number;
+  loading_capacity: number;
   mrp: number;
   selling_price: number;
   gst_rate: number;
@@ -23,6 +24,7 @@ export interface ProductResponse {
   brand_id: string | null;
   unit: string;
   units_per_box: number;
+  loading_capacity: number;
   mrp: number;
   selling_price: number;
   gst_rate: number;

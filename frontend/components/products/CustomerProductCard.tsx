@@ -44,11 +44,7 @@ function CustomerProductCardBase({ product, qty, onQtyChange }: CustomerProductC
         </Link>
         <p className="text-xs text-ink-muted">{product.unit}</p>
         <p className="text-sm">
-          <span className="font-semibold text-ink">{formatCurrency(product.effective_price)}</span>
-          <span className="ml-0.5 text-xs text-ink-muted">/pc</span>
-          {product.mrp > product.effective_price && (
-            <span className="ml-1.5 text-xs text-ink-muted line-through">{formatCurrency(product.mrp)}</span>
-          )}
+          <span className="font-semibold text-ink">{formatCurrency(product.effective_price) + "/" + (product.mrp)}</span>
         </p>
         <div className="mt-auto pt-1.5">
           {qty === 0 ? (

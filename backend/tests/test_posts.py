@@ -28,6 +28,7 @@ def create_test_product(client, headers, **overrides):
         "selling_price": 35.00,
         "gst_rate": 18.00,
         "minimum_stock": 10,
+        "loading_capacity": 100,
     }
     payload.update(overrides)
     response = client.post("/api/v1/products", json=payload, headers=headers)
