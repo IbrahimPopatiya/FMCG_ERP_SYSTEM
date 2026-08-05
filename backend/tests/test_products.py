@@ -26,11 +26,8 @@ def auth_headers(client):
 
 def product_payload(**overrides):
     payload = {
-        "sku": "SKU-1001",
-        "barcode": "8901234567890",
         "name": "Coca-Cola 500ml",
         "unit": "bottle",
-        "packing": "12 x 500ml",
         "mrp": 40.00,
         "selling_price": 35.00,
         "gst_rate": 18.00,
@@ -49,7 +46,7 @@ def test_create_product_returns_201(client):
 
     assert response.status_code == 201
     body = response.json()
-    assert body["sku"] == "SKU-1001"
+    assert body["sku"].startswith("SKU-")
     assert body["name"] == "Coca-Cola 500ml"
     assert body["status"] == "active"
 
@@ -68,30 +65,15 @@ def test_create_product_missing_required_field_returns_422(client):
     assert response.status_code == 422
 
 
-def test_create_product_duplicate_sku_returns_409(client):
+def test_create_product_generates_sequential_sku(client):
     headers = auth_headers(client)
-    client.post("/api/v1/products", json=product_payload(), headers=headers)
 
-    response = client.post(
-        "/api/v1/products",
-        json=product_payload(barcode="9999999999999"),
-        headers=headers,
-    )
+    first = client.post("/api/v1/products", json=product_payload(), headers=headers).json()
+    second = client.post(
+        "/api/v1/products", json=product_payload(name="Sprite 500ml"), headers=headers
+    ).json()
 
-    assert response.status_code == 409
-
-
-def test_create_product_duplicate_barcode_returns_409(client):
-    headers = auth_headers(client)
-    client.post("/api/v1/products", json=product_payload(), headers=headers)
-
-    response = client.post(
-        "/api/v1/products",
-        json=product_payload(sku="SKU-OTHER"),
-        headers=headers,
-    )
-
-    assert response.status_code == 409
+    assert first["sku"] != second["sku"]
 
 
 # ---------- PATCH /products/{id} ----------
@@ -174,7 +156,7 @@ def test_get_product_returns_full_product(client):
     response = client.get(f"/api/v1/products/{product['id']}", headers=headers)
 
     assert response.status_code == 200
-    assert response.json()["sku"] == "SKU-1001"
+    assert response.json()["sku"] == product["sku"]
 
 
 def test_get_product_not_found_returns_404(client):
@@ -205,7 +187,7 @@ def test_get_catalog_product_returns_effective_price(client):
 
     assert response.status_code == 200
     body = response.json()
-    assert body["sku"] == "SKU-1001"
+    assert body["sku"] == product["sku"]
     assert "effective_price" in body
     assert body["effective_price"] == product["selling_price"]
 
@@ -223,7 +205,7 @@ def test_get_catalog_product_not_found_returns_404(client):
 
 def test_list_products_for_management_returns_paginated_envelope(client):
     headers = auth_headers(client)
-    client.post("/api/v1/products", json=product_payload(), headers=headers)
+    product = client.post("/api/v1/products", json=product_payload(), headers=headers).json()
 
     response = client.get("/api/v1/products/manage", headers=headers)
 
@@ -233,7 +215,7 @@ def test_list_products_for_management_returns_paginated_envelope(client):
     assert body["page"] == 1
     assert body["page_size"] == 20
     assert len(body["items"]) == 1
-    assert body["items"][0]["sku"] == "SKU-1001"
+    assert body["items"][0]["sku"] == product["sku"]
 
 
 def test_list_products_for_management_includes_inactive_products(client):
@@ -253,7 +235,7 @@ def test_list_products_for_management_respects_page_size(client):
     for i in range(3):
         client.post(
             "/api/v1/products",
-            json=product_payload(sku=f"SKU-PAGE-{i}", barcode=f"890123456789{i}"),
+            json=product_payload(name=f"Page Product {i}"),
             headers=headers,
         )
 
@@ -270,7 +252,7 @@ def test_list_products_for_management_second_page_returns_remaining_items(client
     for i in range(3):
         client.post(
             "/api/v1/products",
-            json=product_payload(sku=f"SKU-PAGE2-{i}", barcode=f"890123457789{i}"),
+            json=product_payload(name=f"Page2 Product {i}"),
             headers=headers,
         )
 

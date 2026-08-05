@@ -42,7 +42,7 @@ function CustomerProductCardBase({ product, qty, onQtyChange }: CustomerProductC
         <Link href={`/products/${product.id}`}>
           <p className="line-clamp-2 text-sm font-medium leading-snug text-ink">{product.name}</p>
         </Link>
-        <p className="text-xs text-ink-muted">{product.packing}</p>
+        <p className="text-xs text-ink-muted">{product.unit}</p>
         <p className="text-sm">
           <span className="font-semibold text-ink">{formatCurrency(product.effective_price)}</span>
           <span className="ml-0.5 text-xs text-ink-muted">/pc</span>

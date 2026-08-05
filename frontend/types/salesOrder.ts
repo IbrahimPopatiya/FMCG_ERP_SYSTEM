@@ -16,7 +16,6 @@ export interface SalesOrderItemResponse {
   product_id: string;
   product_name: string;
   image: string | null;
-  packing: string | null;
   unit: string | null;
   ordered_qty: number;
   approved_qty: number;

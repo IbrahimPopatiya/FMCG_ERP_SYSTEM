@@ -14,13 +14,10 @@ import { BackArrowIcon } from "@/components/admin/icons";
 
 function toFormValues(product: ProductResponse): ProductFormValues {
   return {
-    sku: product.sku,
-    barcode: product.barcode,
     name: product.name,
     category_id: product.category_id ?? "",
     brand_id: product.brand_id ?? "",
     unit: product.unit,
-    packing: product.packing,
     units_per_box: String(product.units_per_box),
     mrp: String(product.mrp),
     selling_price: String(product.selling_price),
@@ -54,6 +51,9 @@ export function EditProductClient({ productId }: { productId: string }) {
             </h1>
             {product && <ProductStatusBadge status={product.status} />}
           </div>
+          {product && (
+            <p className="mt-1 text-sm text-ink-muted">SKU: {product.sku}</p>
+          )}
         </div>
         {product && (
           <Button

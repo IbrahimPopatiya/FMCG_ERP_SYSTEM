@@ -54,11 +54,8 @@ def create_warehouse(client, headers, state="Maharashtra"):
 
 def create_product(client, headers, **overrides):
     payload = {
-        "sku": "SKU-ORD-1",
-        "barcode": "8801234567890",
         "name": "Order Test Product",
         "unit": "bottle",
-        "packing": "1 x 500ml",
         "mrp": 40.00,
         "selling_price": 100.00,
         "gst_rate": 18.00,
@@ -146,7 +143,7 @@ def test_salesman_creates_order_different_state_applies_igst(client):
     salesman_headers, customer, _ = setup_salesman_and_customer(
         client, headers, customer_state="Karnataka"
     )
-    product = create_product(client, headers, sku="SKU-ORD-2", barcode="8801234567891")
+    product = create_product(client, headers)
 
     response = client.post(
         "/api/v1/orders",
@@ -167,7 +164,7 @@ def test_salesman_creates_order_different_state_applies_igst(client):
 def test_salesman_creates_order_for_customer_outside_route_returns_403(client):
     headers = admin_headers(client)
     salesman_headers, _, _ = setup_salesman_and_customer(client, headers)
-    product = create_product(client, headers, sku="SKU-ORD-3", barcode="8801234567892")
+    product = create_product(client, headers)
     # a second customer with no route at all
     other_customer = create_customer(
         client, headers, mobile="9876577777", customer_code="CUST-ORD-OUTSIDE"
@@ -191,7 +188,7 @@ def test_create_order_without_warehouse_returns_409(client):
     route = create_route(client, headers, salesman["id"])
     customer = create_customer(client, headers, route_id=route["id"])
     salesman_headers = user_token_headers(client, salesman)
-    product = create_product(client, headers, sku="SKU-ORD-4", barcode="8801234567893")
+    product = create_product(client, headers)
 
     response = client.post(
         "/api/v1/orders",
@@ -210,7 +207,7 @@ def test_create_order_without_warehouse_returns_409(client):
 def test_customer_creates_own_order(client):
     headers = admin_headers(client)
     create_warehouse(client, headers)
-    product = create_product(client, headers, sku="SKU-ORD-5", barcode="8801234567894")
+    product = create_product(client, headers)
     customer = create_customer(client, headers, mobile="9876588888")
     customer_headers = customer_login_headers(client, "9876588888")
 
@@ -230,7 +227,7 @@ def test_customer_creates_own_order(client):
 def test_customer_supplied_customer_id_is_ignored(client):
     headers = admin_headers(client)
     create_warehouse(client, headers)
-    product = create_product(client, headers, sku="SKU-ORD-6", barcode="8801234567895")
+    product = create_product(client, headers)
     customer = create_customer(client, headers, mobile="9876599999")
     other_customer = create_customer(client, headers, mobile="9876500001", customer_code="CUST-OTHER")
     customer_headers = customer_login_headers(client, "9876599999")
@@ -253,7 +250,7 @@ def test_customer_supplied_customer_id_is_ignored(client):
 def test_customer_edits_own_pending_order(client):
     headers = admin_headers(client)
     create_warehouse(client, headers)
-    product = create_product(client, headers, sku="SKU-ORD-7", barcode="8801234567896")
+    product = create_product(client, headers)
     create_customer(client, headers, mobile="9876511122")
     customer_headers = customer_login_headers(client, "9876511122")
     order = client.post(
@@ -275,7 +272,7 @@ def test_customer_edits_own_pending_order(client):
 def test_customer_cannot_edit_another_customers_order(client):
     headers = admin_headers(client)
     create_warehouse(client, headers)
-    product = create_product(client, headers, sku="SKU-ORD-8", barcode="8801234567897")
+    product = create_product(client, headers)
     create_customer(client, headers, mobile="9876522233")
     create_customer(client, headers, mobile="9876533344", customer_code="CUST-OTHER-2")
     owner_headers = customer_login_headers(client, "9876522233")
@@ -298,7 +295,7 @@ def test_edit_non_pending_order_returns_409(client, db_session):
 
     headers = admin_headers(client)
     create_warehouse(client, headers)
-    product = create_product(client, headers, sku="SKU-ORD-9", barcode="8801234567898")
+    product = create_product(client, headers)
     create_customer(client, headers, mobile="9876544455")
     customer_headers = customer_login_headers(client, "9876544455")
     order = client.post(
@@ -337,7 +334,7 @@ def test_edit_order_not_found_returns_404(client):
 def test_customer_cancels_own_pending_order(client):
     headers = admin_headers(client)
     create_warehouse(client, headers)
-    product = create_product(client, headers, sku="SKU-ORD-10", barcode="8801234567899")
+    product = create_product(client, headers)
     create_customer(client, headers, mobile="9876566677")
     customer_headers = customer_login_headers(client, "9876566677")
     order = client.post(
@@ -357,7 +354,7 @@ def test_cancel_non_pending_order_returns_409(client, db_session):
 
     headers = admin_headers(client)
     create_warehouse(client, headers)
-    product = create_product(client, headers, sku="SKU-ORD-11", barcode="8801234567900")
+    product = create_product(client, headers)
     create_customer(client, headers, mobile="9876577788")
     customer_headers = customer_login_headers(client, "9876577788")
     order = client.post(
@@ -392,7 +389,7 @@ def test_cancel_order_not_found_returns_404(client):
 def test_customer_lists_only_own_orders(client):
     headers = admin_headers(client)
     create_warehouse(client, headers)
-    product = create_product(client, headers, sku="SKU-ORD-12", barcode="8801234567901")
+    product = create_product(client, headers)
     create_customer(client, headers, mobile="9876599900")
     create_customer(client, headers, mobile="9876511100", customer_code="CUST-OTHER-3")
     mine_headers = customer_login_headers(client, "9876599900")
@@ -436,7 +433,7 @@ def get_inventory(db_session, warehouse_id, product_id):
 def test_approve_pending_order_reserves_stock(client, db_session):
     headers = admin_headers(client)
     salesman_headers, customer, warehouse = setup_salesman_and_customer(client, headers)
-    product = create_product(client, headers, sku="SKU-APR-1", barcode="8801234567910")
+    product = create_product(client, headers)
     order = client.post(
         "/api/v1/orders",
         json={
@@ -465,7 +462,7 @@ def test_approve_pending_order_reserves_stock(client, db_session):
 def test_approve_already_approved_order_returns_409(client, db_session):
     headers = admin_headers(client)
     salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
-    product = create_product(client, headers, sku="SKU-APR-2", barcode="8801234567911")
+    product = create_product(client, headers)
     order = client.post(
         "/api/v1/orders",
         json={
@@ -493,7 +490,7 @@ def test_approve_already_approved_order_returns_409(client, db_session):
 def test_approve_unknown_item_id_returns_404(client, db_session):
     headers = admin_headers(client)
     salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
-    product = create_product(client, headers, sku="SKU-APR-3", barcode="8801234567912")
+    product = create_product(client, headers)
     order = client.post(
         "/api/v1/orders",
         json={
@@ -516,7 +513,7 @@ def test_approve_unknown_item_id_returns_404(client, db_session):
 def test_approve_order_as_customer_returns_403(client, db_session):
     headers = admin_headers(client)
     salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
-    product = create_product(client, headers, sku="SKU-APR-4", barcode="8801234567913")
+    product = create_product(client, headers)
     order = client.post(
         "/api/v1/orders",
         json={
@@ -553,7 +550,7 @@ def test_approve_order_not_found_returns_404(client):
 def test_load_approved_order_reduces_stock(client, db_session):
     headers = admin_headers(client)
     salesman_headers, customer, warehouse = setup_salesman_and_customer(client, headers)
-    product = create_product(client, headers, sku="SKU-LOAD-1", barcode="8801234567920")
+    product = create_product(client, headers)
     order = client.post(
         "/api/v1/orders",
         json={
@@ -586,7 +583,7 @@ def test_load_approved_order_reduces_stock(client, db_session):
 def test_load_pending_order_returns_409(client, db_session):
     headers = admin_headers(client)
     salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
-    product = create_product(client, headers, sku="SKU-LOAD-2", barcode="8801234567921")
+    product = create_product(client, headers)
     order = client.post(
         "/api/v1/orders",
         json={
@@ -609,7 +606,7 @@ def test_load_pending_order_returns_409(client, db_session):
 def test_load_order_as_customer_returns_403(client, db_session):
     headers = admin_headers(client)
     salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
-    product = create_product(client, headers, sku="SKU-LOAD-3", barcode="8801234567922")
+    product = create_product(client, headers)
     order = client.post(
         "/api/v1/orders",
         json={

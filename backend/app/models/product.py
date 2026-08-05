@@ -9,12 +9,10 @@ class Product(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "products"
 
     sku = Column(String(80), unique=True, nullable=False)
-    barcode = Column(String(80), unique=True, nullable=False)
     name = Column(String(200), nullable=False)
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
     brand_id = Column(UUID(as_uuid=True), ForeignKey("brands.id"), nullable=True)
     unit = Column(String(50), nullable=False)
-    packing = Column(String(50), nullable=False)
     # How many individual pieces make up one box/carton - customers order in
     # boxes, but price is quoted per piece, so this is what turns "2 boxes"
     # into the actual piece count used for pricing and stock.

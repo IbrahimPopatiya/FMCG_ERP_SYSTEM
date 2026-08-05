@@ -96,6 +96,16 @@ export function PlusIcon({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
+export function ImageIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="M21 16l-5-5-4 4-3-3-6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function UploadCloudIcon({ className = "h-6 w-6" }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -113,6 +123,7 @@ export const NAV_ICON_BY_HREF: Record<string, ComponentType<IconProps>> = {
   "/admin/orders": CartIcon,
   "/admin/customers": PeopleIcon,
   "/admin/products": GridIcon,
+  "/admin/posts": ImageIcon,
   "/admin/deliveries": TruckIcon,
   "/admin/payments": WalletIcon,
   "/admin/invoices": DocumentIcon,

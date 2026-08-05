@@ -8,9 +8,9 @@ from app.core.deps import Principal, get_current_principal, get_current_user, re
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.common import Page
-from app.schemas.post import PostCreate, PostResponse, PostStatusUpdate
+from app.schemas.post import PostCreate, PostRepostMany, PostResponse, PostStatusUpdate
 from app.services import post as post_service
-from app.services.post import PostNotFoundError, ProductNotFoundError
+from app.services.post import PostImageRequiredError, PostNotFoundError, ProductNotFoundError
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -25,6 +25,8 @@ def create_post(
         return post_service.create_post(db, data, current_user.id)
     except ProductNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PostImageRequiredError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @router.get("", response_model=list[PostResponse])
@@ -72,5 +74,20 @@ def repost_post(
     """Bumps the post back to the top of the customer feed and reactivates it."""
     try:
         return post_service.repost(db, post_id)
+    except PostNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.post("/repost", response_model=list[PostResponse])
+def repost_posts(
+    data: PostRepostMany,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    """Bulk repost - bumps every selected post back to the top of the
+    customer feed and reactivates it, for the admin Posts screen's
+    multi-select repost action."""
+    try:
+        return post_service.repost_many(db, data.post_ids)
     except PostNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

@@ -88,9 +88,7 @@ export default function ProductDetailPage() {
 
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-ink">{product.name}</h2>
-            <p className="mt-1 text-sm text-ink-muted">
-              {product.packing} · {product.unit}
-            </p>
+            <p className="mt-1 text-sm text-ink-muted">{product.unit}</p>
             <p className="mt-0.5 font-mono text-xs text-ink-muted">{product.sku}</p>
           </div>
 

@@ -40,11 +40,8 @@ def make_warehouse(client, headers, **overrides):
 
 def make_product(client, headers, **overrides):
     payload = {
-        "sku": "SKU-1001",
-        "barcode": "8901234567890",
         "name": "Coca-Cola 500ml",
         "unit": "bottle",
-        "packing": "12 x 500ml",
         "mrp": 40.00,
         "selling_price": 35.00,
         "gst_rate": 18.00,

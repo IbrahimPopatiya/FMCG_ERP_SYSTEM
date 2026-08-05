@@ -207,7 +207,7 @@ export default function AdminOrderDetailPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-ink">{item.product_name}</p>
-                          {item.packing && <p className="text-xs text-ink-muted">{item.packing}</p>}
+                          {item.unit && <p className="text-xs text-ink-muted">{item.unit}</p>}
                           {editableStatus ? (
                             <label className="mt-1 flex items-center gap-2 text-xs text-ink-muted">
                               {data.status === "pending" ? "Approve qty" : "Loaded qty"}
@@ -244,18 +244,6 @@ export default function AdminOrderDetailPage() {
                   <div className="flex items-center justify-between text-sm text-ink-muted">
                     <span>Discount</span>
                     <span>−{formatCurrency(data.discount)}</span>
-                  </div>
-                )}
-                {data.cgst > 0 && (
-                  <div className="flex items-center justify-between text-sm text-ink-muted">
-                    <span>CGST</span>
-                    <span>{formatCurrency(data.cgst)}</span>
-                  </div>
-                )}
-                {data.sgst > 0 && (
-                  <div className="flex items-center justify-between text-sm text-ink-muted">
-                    <span>SGST</span>
-                    <span>{formatCurrency(data.sgst)}</span>
                   </div>
                 )}
                 {data.igst > 0 && (

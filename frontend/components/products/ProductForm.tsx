@@ -12,48 +12,41 @@ import { uploadFile } from "@/lib/api/fileUploads";
 import type { ProductCreate } from "@/types/product";
 
 export interface ProductFormValues {
-  sku: string;
-  barcode: string;
   name: string;
   category_id: string;
   brand_id: string;
   unit: string;
-  packing: string;
   units_per_box: string;
   mrp: string;
   selling_price: string;
-  gst_rate: string;
   minimum_stock: string;
+  // Not shown or editable in this form - GST rate is set elsewhere. Carried
+  // through so editing a product doesn't silently reset its existing rate.
+  gst_rate: string;
   imageUrl: string | null;
   imageFile: File | null;
 }
 
 export const EMPTY_PRODUCT_FORM: ProductFormValues = {
-  sku: "",
-  barcode: "",
   name: "",
   category_id: "",
   brand_id: "",
   unit: "",
-  packing: "",
   units_per_box: "1",
   mrp: "",
   selling_price: "",
-  gst_rate: "",
   minimum_stock: "",
+  gst_rate: "0",
   imageUrl: null,
   imageFile: null,
 };
 
 function toPayload(values: ProductFormValues, image: string | null): ProductCreate {
   return {
-    sku: values.sku.trim(),
-    barcode: values.barcode.trim(),
     name: values.name.trim(),
     category_id: values.category_id || null,
     brand_id: values.brand_id || null,
     unit: values.unit.trim(),
-    packing: values.packing.trim(),
     units_per_box: Number(values.units_per_box),
     mrp: Number(values.mrp),
     selling_price: Number(values.selling_price),
@@ -65,7 +58,7 @@ function toPayload(values: ProductFormValues, image: string | null): ProductCrea
 
 function submitErrorMessage(error: unknown): string {
   if (isAxiosError(error) && error.response?.status === 409) {
-    return "A product with this SKU or barcode already exists.";
+    return "A product with this name already exists.";
   }
   return "Something went wrong saving this product. Please try again.";
 }
@@ -135,34 +128,14 @@ export function ProductForm({
           onFileSelected={handleImageSelected}
           onRemove={handleImageRemoved}
         />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input
-            id="sku"
-            label="SKU"
-            placeholder="e.g. SKU-1001"
-            value={values.sku}
-            onChange={(e) => set("sku", e.target.value)}
-            required
-          />
-          <Input
-            id="barcode"
-            label="Barcode"
-            placeholder="e.g. 8901234567890"
-            value={values.barcode}
-            onChange={(e) => set("barcode", e.target.value)}
-            required
-          />
-          <div className="sm:col-span-2">
-            <Input
-              id="name"
-              label="Product name"
-              placeholder="e.g. Coca-Cola 500ml"
-              value={values.name}
-              onChange={(e) => set("name", e.target.value)}
-              required
-            />
-          </div>
-        </div>
+        <Input
+          id="name"
+          label="Product name"
+          placeholder="e.g. Coca-Cola 500ml"
+          value={values.name}
+          onChange={(e) => set("name", e.target.value)}
+          required
+        />
       </section>
 
       <section className="flex flex-col gap-4">
@@ -194,14 +167,6 @@ export function ProductForm({
             placeholder="e.g. bottle, box, piece"
             value={values.unit}
             onChange={(e) => set("unit", e.target.value)}
-            required
-          />
-          <Input
-            id="packing"
-            label="Packing"
-            placeholder="e.g. 12 x 500ml"
-            value={values.packing}
-            onChange={(e) => set("packing", e.target.value)}
             required
           />
           <Input
@@ -239,16 +204,6 @@ export function ProductForm({
             step="0.01"
             value={values.selling_price}
             onChange={(e) => set("selling_price", e.target.value)}
-            required
-          />
-          <Input
-            id="gst_rate"
-            label="GST rate (%)"
-            type="number"
-            min="0"
-            step="0.01"
-            value={values.gst_rate}
-            onChange={(e) => set("gst_rate", e.target.value)}
             required
           />
           <Input

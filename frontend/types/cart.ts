@@ -3,7 +3,6 @@ export interface CartItem {
   sku: string;
   name: string;
   unit: string;
-  packing: string;
   price: number;
   // How many pieces are in one box for this product - price is quoted per
   // piece, but `qty` here is the number of boxes the customer selected, so

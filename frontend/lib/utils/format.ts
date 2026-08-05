@@ -45,23 +45,3 @@ export function toTitleCase(value: string): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
-
-// Turns raw packing strings ("12*1", "12 x 500ml") into shopkeeper-friendly
-// labels like "Box of 12" / "Box of 12 · 500ml". Already-phrased values
-// ("Box of 18") pass through unchanged.
-export function formatPackingLabel(packing: string): string {
-  const trimmed = packing.trim();
-  if (!trimmed) return trimmed;
-  if (/^box\s+of\s+/i.test(trimmed)) return trimmed;
-
-  const match = trimmed.match(/^(\d+)\s*[x×*]\s*(.+)$/i);
-  if (!match) return trimmed;
-
-  const count = match[1];
-  const unit = match[2].trim();
-  // "12 x 1" / "12*1" means count only — the "1" isn't a useful size label.
-  if (/^1(?:\s*(?:pc|pcs|piece|pieces))?$/i.test(unit)) {
-    return `Box of ${count}`;
-  }
-  return `Box of ${count} · ${unit}`;
-}

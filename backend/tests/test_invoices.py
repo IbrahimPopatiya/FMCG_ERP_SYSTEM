@@ -55,11 +55,8 @@ def create_warehouse(client, headers, state="Maharashtra"):
 
 def create_product(client, headers, **overrides):
     payload = {
-        "sku": "SKU-INV-1",
-        "barcode": "8801234500001",
         "name": "Invoice Test Product",
         "unit": "bottle",
-        "packing": "1 x 500ml",
         "mrp": 40.00,
         "selling_price": 100.00,
         "gst_rate": 18.00,

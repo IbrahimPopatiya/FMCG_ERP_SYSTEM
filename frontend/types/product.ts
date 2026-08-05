@@ -1,13 +1,10 @@
 export type ProductStatus = "active" | "inactive";
 
 export interface ProductCreate {
-  sku: string;
-  barcode: string;
   name: string;
   category_id?: string | null;
   brand_id?: string | null;
   unit: string;
-  packing: string;
   units_per_box: number;
   mrp: number;
   selling_price: number;
@@ -21,12 +18,10 @@ export type ProductUpdate = Partial<ProductCreate>;
 export interface ProductResponse {
   id: string;
   sku: string;
-  barcode: string;
   name: string;
   category_id: string | null;
   brand_id: string | null;
   unit: string;
-  packing: string;
   units_per_box: number;
   mrp: number;
   selling_price: number;
@@ -47,7 +42,6 @@ export interface ProductCatalogResponse {
   category_id: string | null;
   brand_id: string | null;
   unit: string;
-  packing: string;
   units_per_box: number;
   mrp: number;
   effective_price: number;

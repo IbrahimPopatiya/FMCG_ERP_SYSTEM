@@ -30,7 +30,6 @@ class SalesOrderItemResponse(BaseModel):
     product_id: uuid.UUID
     product_name: str = "Product"
     image: Optional[str] = None
-    packing: Optional[str] = None
     unit: Optional[str] = None
     ordered_qty: Decimal
     approved_qty: Decimal
@@ -55,7 +54,6 @@ class SalesOrderItemResponse(BaseModel):
             "product_id": data.product_id,
             "product_name": product.name if product is not None else "Product",
             "image": product.image if product is not None else None,
-            "packing": product.packing if product is not None else None,
             "unit": product.unit if product is not None else None,
             "ordered_qty": data.ordered_qty,
             "approved_qty": data.approved_qty,

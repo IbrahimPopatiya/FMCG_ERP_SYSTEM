@@ -11,7 +11,14 @@ from app.schemas.product import ProductCreate, ProductUpdate
 
 
 class DuplicateProductError(Exception):
-    """Raised when sku or barcode is already used by another product."""
+    """Raised when the generated sku collides with an existing product."""
+
+
+def _next_sku(db: Session) -> str:
+    """SKU-{n}, where n is one past how many products have ever been created
+    (including soft-deleted ones, so numbers never get reused)."""
+    count = db.query(Product).count()
+    return f"SKU-{count + 1}"
 
 
 def get_product(db: Session, product_id: uuid.UUID) -> Product | None:
@@ -85,13 +92,13 @@ def list_all_products(
 
 
 def create_product(db: Session, data: ProductCreate, created_by: uuid.UUID) -> Product:
-    product = Product(**data.model_dump())
+    product = Product(sku=_next_sku(db), **data.model_dump())
     db.add(product)
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise DuplicateProductError("A product with this sku or barcode already exists")
+        raise DuplicateProductError("A product with this sku already exists")
     db.refresh(product)
 
     # Every new product is auto-posted to the customer Home feed too - see
@@ -116,7 +123,7 @@ def update_product(db: Session, product_id: uuid.UUID, data: ProductUpdate) -> P
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise DuplicateProductError("A product with this sku or barcode already exists")
+        raise DuplicateProductError("A product with this sku already exists")
     db.refresh(product)
     return product
 

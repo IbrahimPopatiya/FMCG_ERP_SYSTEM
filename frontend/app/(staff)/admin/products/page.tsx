@@ -12,7 +12,6 @@ import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useProductsManage } from "@/lib/hooks/useProductsManage";
 import { useSetProductStatus } from "@/lib/hooks/useProductMutations";
-import { useCreatePost } from "@/lib/hooks/usePostMutations";
 import type { ProductResponse } from "@/types/product";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
@@ -81,43 +80,6 @@ export default function AdminProductsPage() {
   const handleToggleStatus = (p: ProductResponse) =>
     setStatus.mutate({ productId: p.id, status: p.status === "active" ? "inactive" : "active" });
 
-  const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const createPost = useCreatePost();
-
-  function toggleSelected(p: ProductResponse) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(p.id)) next.delete(p.id);
-      else next.add(p.id);
-      return next;
-    });
-  }
-
-  function exitSelectMode() {
-    setSelectMode(false);
-    setSelectedIds(new Set());
-  }
-
-  async function handleRepost() {
-    const selectedProducts = products.filter((p) => selectedIds.has(p.id));
-    if (selectedProducts.length === 0) return;
-
-    await Promise.all(
-      selectedProducts.map((p) =>
-        createPost.mutateAsync({
-          product_id: p.id,
-          image: p.image,
-          product_name: p.name,
-          price: p.selling_price,
-          mrp: p.mrp,
-          quantity_in_box: p.units_per_box,
-        })
-      )
-    );
-    exitSelectMode();
-  }
-
   return (
     <div>
       <TopBar title="Products" subtitle="Manage All Products" />
@@ -133,25 +95,6 @@ export default function AdminProductsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {selectMode && (
-              <button
-                type="button"
-                onClick={exitSelectMode}
-                className="rounded-full px-3.5 py-2 text-sm font-medium text-ink-muted transition-colors hover:bg-surface hover:text-ink"
-              >
-                Cancel
-              </button>
-            )}
-            <Button
-              type="button"
-              variant={selectMode ? "primary" : "secondary"}
-              className="gap-1.5 rounded-full"
-              isLoading={createPost.isPending}
-              disabled={selectMode && selectedIds.size === 0}
-              onClick={selectMode ? handleRepost : () => setSelectMode(true)}
-            >
-              {selectMode ? `Repost${selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}` : "Post"}
-            </Button>
             <Link href="/admin/products/new">
               <Button type="button" className="w-full gap-1.5 rounded-full sm:w-auto">
                 <PlusIcon className="h-4 w-4" />
@@ -191,14 +134,7 @@ export default function AdminProductsPage() {
         <div className="p-4 sm:p-6">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
             {products.map((p) => (
-              <AdminProductCard
-                key={p.id}
-                product={p}
-                onToggleStatus={handleToggleStatus}
-                selectMode={selectMode}
-                selected={selectedIds.has(p.id)}
-                onToggleSelect={toggleSelected}
-              />
+              <AdminProductCard key={p.id} product={p} onToggleStatus={handleToggleStatus} />
             ))}
           </div>
 

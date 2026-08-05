@@ -9,6 +9,7 @@ export function Logo({ className }: { className?: string }) {
       width={BRAND.logoWidth}
       height={BRAND.logoHeight}
       className={className}
+      priority
     />
   );
 }

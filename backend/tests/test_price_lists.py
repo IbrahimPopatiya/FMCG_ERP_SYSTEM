@@ -28,11 +28,8 @@ def auth_headers(client):
 
 def create_product(client, headers, **overrides):
     payload = {
-        "sku": "SKU-2001",
-        "barcode": "8901234567891",
         "name": "Pepsi 500ml",
         "unit": "bottle",
-        "packing": "12 x 500ml",
         "mrp": 40.00,
         "selling_price": 35.00,
         "gst_rate": 18.00,

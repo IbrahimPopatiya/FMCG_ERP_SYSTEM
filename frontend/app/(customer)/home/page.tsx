@@ -24,16 +24,21 @@ import { usePosts } from "@/lib/hooks/usePosts";
 import { useSavedProducts, useToggleSavedProduct } from "@/lib/hooks/useSavedProducts";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
-import { formatCurrency, formatPackingLabel } from "@/lib/utils/format";
+import { formatCurrency } from "@/lib/utils/format";
 import { dummyProductImage } from "@/lib/utils/dummyProductImage";
 import type { ProductCatalogResponse } from "@/types/product";
 import type { PostResponse } from "@/types/post";
+
+// A feed item, optionally carrying a flag for standalone (image-only) posts —
+// those have no real product name/quantity behind them, so the reel and the
+// product-detail sheet skip the name/price/box caption for them entirely.
+type FeedItem = ProductCatalogResponse & { hideCaption?: boolean };
 
 // A post is a promoted listing referencing a real product — render it in the
 // same reel using the product's real id/fields so "Add to bag" etc. still
 // work against the underlying product, just with the post's promo image/copy
 // layered on top.
-function postToFeedItem(post: PostResponse): ProductCatalogResponse {
+function postToFeedItem(post: PostResponse): FeedItem {
   return {
     id: post.product_id,
     sku: "",
@@ -41,12 +46,12 @@ function postToFeedItem(post: PostResponse): ProductCatalogResponse {
     category_id: null,
     brand_id: null,
     unit: "",
-    packing: `Box of ${post.quantity_in_box}`,
     units_per_box: post.quantity_in_box,
     mrp: post.mrp,
     effective_price: post.price,
     gst_rate: 0,
     image: post.image,
+    hideCaption: post.is_standalone,
   };
 }
 
@@ -73,7 +78,7 @@ function ProductDetailSheet({
   onClose,
   onConfirm,
 }: {
-  product: ProductCatalogResponse;
+  product: FeedItem;
   qty: number;
   onClose: () => void;
   onConfirm: (qty: number) => void;
@@ -134,33 +139,39 @@ function ProductDetailSheet({
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-            <p className="text-lg font-bold leading-snug text-ink">{product.name}</p>
+            {!product.hideCaption && (
+              <>
+                <p className="text-lg font-bold leading-snug text-ink">{product.name}</p>
 
-            <div className="flex items-center justify-between gap-2 border-b border-border pb-2 text-sm">
-              <span className="flex items-center gap-1.5 text-ink-muted">
-                <TagIcon className="h-4 w-4" />
-                Selling Price
-              </span>
-              <span className="font-semibold text-ink">{formatCurrency(product.effective_price)}</span>
-            </div>
+                {product.effective_price > 0 && (
+                  <div className="flex items-center justify-between gap-2 border-b border-border pb-2 text-sm">
+                    <span className="flex items-center gap-1.5 text-ink-muted">
+                      <TagIcon className="h-4 w-4" />
+                      Selling Price
+                    </span>
+                    <span className="font-semibold text-ink">{formatCurrency(product.effective_price)}</span>
+                  </div>
+                )}
 
-            {product.mrp > product.effective_price && (
-              <div className="flex items-center justify-between gap-2 border-b border-border pb-2 text-sm">
-                <span className="flex items-center gap-1.5 text-ink-muted">
-                  <SparkleIcon className="h-4 w-4" />
-                  MRP
-                </span>
-                <span className="text-ink-muted line-through">{formatCurrency(product.mrp)}</span>
-              </div>
+                {product.mrp > product.effective_price && (
+                  <div className="flex items-center justify-between gap-2 border-b border-border pb-2 text-sm">
+                    <span className="flex items-center gap-1.5 text-ink-muted">
+                      <SparkleIcon className="h-4 w-4" />
+                      MRP
+                    </span>
+                    <span className="text-ink-muted line-through">{formatCurrency(product.mrp)}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-2 pb-1 text-sm">
+                  <span className="flex items-center gap-1.5 text-ink-muted">
+                    <BoxIcon className="h-4 w-4" />
+                    Box Quantity
+                  </span>
+                  <span className="font-medium text-ink">{product.units_per_box} pcs</span>
+                </div>
+              </>
             )}
-
-            <div className="flex items-center justify-between gap-2 pb-1 text-sm">
-              <span className="flex items-center gap-1.5 text-ink-muted">
-                <BoxIcon className="h-4 w-4" />
-                Box Quantity
-              </span>
-              <span className="font-medium text-ink">{product.packing}</span>
-            </div>
           </div>
         </div>
 
@@ -196,7 +207,7 @@ function ReelSlide({
   onOpenBag,
   onVisible,
 }: {
-  product: ProductCatalogResponse;
+  product: FeedItem;
   index: number;
   active: boolean;
   liked: boolean;
@@ -292,29 +303,30 @@ function ReelSlide({
         </button>
       </div>
 
-      {/* Top-left product name + price + packing — glassy chip over the photo */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 p-4 pr-24">
-        <div className="inline-flex max-w-full flex-col gap-0.5 rounded-2xl border border-white/40 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-md">
-          <span className="truncate text-left text-[18px] font-bold leading-snug text-black">
-            {product.name}
-          </span>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-sm font-semibold text-black">
-              {formatCurrency(product.effective_price)}
+      {/* Top-left product name + price — glassy chip over the photo.
+          Hidden entirely for standalone (image-only) posts, which have no
+          real product name/quantity behind them. */}
+      {!product.hideCaption && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 p-4 pr-24">
+          <div className="inline-flex max-w-full flex-col gap-0.5 rounded-2xl border border-white/40 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-md">
+            <span className="truncate text-left text-[18px] font-bold leading-snug text-black">
+              {product.name}
             </span>
-            {product.mrp > product.effective_price && (
-              <span className="text-xs text-black/55 line-through">
-                {formatCurrency(product.mrp)}
-              </span>
+            {product.effective_price > 0 && (
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-semibold text-black">
+                  {formatCurrency(product.effective_price)}
+                </span>
+                {product.mrp > product.effective_price && (
+                  <span className="text-xs text-black/55 line-through">
+                    {formatCurrency(product.mrp)}
+                  </span>
+                )}
+              </div>
             )}
           </div>
-          {product.packing && (
-            <span className="truncate text-xs font-medium text-black/70">
-              {formatPackingLabel(product.packing)}
-            </span>
-          )}
         </div>
-      </div>
+      )}
     </section>
   );
 }

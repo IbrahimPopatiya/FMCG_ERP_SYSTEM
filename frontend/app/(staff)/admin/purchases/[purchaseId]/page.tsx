@@ -152,18 +152,6 @@ export default function PurchaseDetailPage() {
                 <span>Subtotal</span>
                 <span>{formatCurrency(data.subtotal)}</span>
               </div>
-              {data.cgst > 0 && (
-                <div className="flex items-center justify-between text-sm text-ink-muted">
-                  <span>CGST</span>
-                  <span>{formatCurrency(data.cgst)}</span>
-                </div>
-              )}
-              {data.sgst > 0 && (
-                <div className="flex items-center justify-between text-sm text-ink-muted">
-                  <span>SGST</span>
-                  <span>{formatCurrency(data.sgst)}</span>
-                </div>
-              )}
               {data.igst > 0 && (
                 <div className="flex items-center justify-between text-sm text-ink-muted">
                   <span>IGST</span>

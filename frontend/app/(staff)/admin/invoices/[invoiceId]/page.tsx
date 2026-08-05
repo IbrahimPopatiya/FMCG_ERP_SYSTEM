@@ -107,18 +107,6 @@ export default function InvoiceDetailPage() {
                 <span>−{formatCurrency(invoice.data.discount)}</span>
               </div>
             )}
-            {invoice.data.cgst > 0 && (
-              <div className="flex items-center justify-between text-sm text-ink-muted">
-                <span>CGST</span>
-                <span>{formatCurrency(invoice.data.cgst)}</span>
-              </div>
-            )}
-            {invoice.data.sgst > 0 && (
-              <div className="flex items-center justify-between text-sm text-ink-muted">
-                <span>SGST</span>
-                <span>{formatCurrency(invoice.data.sgst)}</span>
-              </div>
-            )}
             {invoice.data.igst > 0 && (
               <div className="flex items-center justify-between text-sm text-ink-muted">
                 <span>IGST</span>

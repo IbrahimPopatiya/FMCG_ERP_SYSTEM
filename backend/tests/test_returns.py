@@ -59,11 +59,8 @@ def create_warehouse(client, headers, state="Maharashtra"):
 
 def create_product(client, headers, **overrides):
     payload = {
-        "sku": "SKU-RET-1",
-        "barcode": "8801234800001",
         "name": "Return Test Product",
         "unit": "bottle",
-        "packing": "1 x 500ml",
         "mrp": 40.00,
         "selling_price": 100.00,
         "gst_rate": 18.00,
@@ -110,10 +107,10 @@ def setup_return_fixture(client, headers, db_session):
     salesman_headers = user_token_headers(client, salesman)
 
     product_a = create_product(
-        client, headers, sku="SKU-RET-A", barcode="8801234800010", selling_price=100.00
+        client, headers, selling_price=100.00
     )
     product_b = create_product(
-        client, headers, sku="SKU-RET-B", barcode="8801234800011", selling_price=50.00
+        client, headers, selling_price=50.00
     )
 
     order = client.post(

@@ -109,7 +109,7 @@ export default function CartPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-ink">{item.name}</p>
-                      <p className="text-xs text-ink-muted">{item.packing}</p>
+                      <p className="text-xs text-ink-muted">{item.unit}</p>
                     </div>
                     <button
                       type="button"

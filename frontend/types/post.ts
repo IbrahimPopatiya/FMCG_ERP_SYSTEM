@@ -1,10 +1,10 @@
 export interface PostCreate {
   product_id?: string | null;
   image?: string | null;
-  product_name: string;
-  price: number;
-  mrp: number;
-  quantity_in_box: number;
+  product_name?: string;
+  price?: number;
+  mrp?: number;
+  quantity_in_box?: number;
 }
 
 export interface PostResponse {
@@ -17,5 +17,6 @@ export interface PostResponse {
   quantity_in_box: number;
   created_by: string;
   is_active: boolean;
+  is_standalone: boolean;
   created_at: string;
 }

@@ -18,7 +18,13 @@ class PostNotFoundError(Exception):
     """Raised when a post id doesn't match any post."""
 
 
-def _create_product_for_post(db: Session, data: PostCreate) -> Product:
+class PostImageRequiredError(Exception):
+    """Raised when a standalone post (no product_id) is created without an image."""
+
+
+def _create_product_for_post(
+    db: Session, data: PostCreate, product_name: str, price: Decimal, mrp: Decimal, quantity_in_box: int
+) -> Product:
     # Posts no longer let the admin pick a product (see mockup "Create Post"
     # screen - no product selector) - a lightweight product is created behind
     # the scenes from the post's own fields so cart/checkout still has a real
@@ -26,13 +32,11 @@ def _create_product_for_post(db: Session, data: PostCreate) -> Product:
     unique = uuid.uuid4().hex[:10].upper()
     product = Product(
         sku=f"POST-{unique}",
-        barcode=f"POST-{unique}",
-        name=data.product_name,
+        name=product_name,
         unit="piece",
-        packing=f"Box of {data.quantity_in_box}",
-        units_per_box=data.quantity_in_box,
-        mrp=data.mrp,
-        selling_price=data.price,
+        units_per_box=quantity_in_box,
+        mrp=mrp,
+        selling_price=price,
         gst_rate=Decimal("0"),
         minimum_stock=0,
         image=data.image,
@@ -61,21 +65,37 @@ def create_post_for_product(db: Session, product: Product, created_by: uuid.UUID
 
 
 def create_post(db: Session, data: PostCreate, created_by: uuid.UUID) -> Post:
-    if data.product_id is not None:
+    # Standalone posts (image only, from the admin "New post" screen - no
+    # product link, no price/mrp/box quantity) get sane defaults so the
+    # underlying product record and the Post row still satisfy their NOT NULL
+    # columns without implying a real product name or price.
+    price = data.price if data.price is not None else Decimal("0")
+    mrp = data.mrp if data.mrp is not None else Decimal("0")
+    quantity_in_box = data.quantity_in_box if data.quantity_in_box is not None else 1
+    product_name = data.product_name if data.product_name else "Post"
+
+    is_standalone = data.product_id is None
+
+    if not is_standalone:
         if get_product(db, data.product_id) is None:
             raise ProductNotFoundError("Product not found")
         product_id = data.product_id
     else:
-        product_id = _create_product_for_post(db, data).id
+        # The admin "New post" screen only offers an image upload - a
+        # standalone post without a product link needs one to be meaningful.
+        if not data.image:
+            raise PostImageRequiredError("Image is required")
+        product_id = _create_product_for_post(db, data, product_name, price, mrp, quantity_in_box).id
 
     post = Post(
         product_id=product_id,
         image=data.image,
-        product_name=data.product_name,
-        price=data.price,
-        mrp=data.mrp,
-        quantity_in_box=data.quantity_in_box,
+        product_name=product_name,
+        price=price,
+        mrp=mrp,
+        quantity_in_box=quantity_in_box,
         created_by=created_by,
+        is_standalone=is_standalone,
     )
     db.add(post)
     db.commit()
@@ -132,3 +152,20 @@ def repost(db: Session, post_id: uuid.UUID) -> Post:
     db.commit()
     db.refresh(post)
     return post
+
+
+def repost_many(db: Session, post_ids: list[uuid.UUID]) -> list[Post]:
+    """Bulk repost - bumps each selected post back to the top of the feed and
+    reactivates it, for the admin Posts screen's multi-select repost action."""
+    posts = db.query(Post).filter(Post.id.in_(post_ids)).all()
+    if len(posts) != len(set(post_ids)):
+        raise PostNotFoundError("One or more posts not found")
+
+    now = datetime.now(timezone.utc)
+    for post in posts:
+        post.created_at = now
+        post.is_active = True
+    db.commit()
+    for post in posts:
+        db.refresh(post)
+    return posts

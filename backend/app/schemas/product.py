@@ -9,29 +9,23 @@ from app.core.enums import ProductStatus
 
 
 class ProductCreate(BaseModel):
-    sku: str
-    barcode: str
     name: str
     category_id: Optional[uuid.UUID] = None
     brand_id: Optional[uuid.UUID] = None
     unit: str
-    packing: str
     units_per_box: int = 1
     mrp: Decimal
     selling_price: Decimal
-    gst_rate: Decimal
+    gst_rate: Decimal = Decimal("0")
     minimum_stock: int
     image: Optional[str] = None
 
 
 class ProductUpdate(BaseModel):
-    sku: Optional[str] = None
-    barcode: Optional[str] = None
     name: Optional[str] = None
     category_id: Optional[uuid.UUID] = None
     brand_id: Optional[uuid.UUID] = None
     unit: Optional[str] = None
-    packing: Optional[str] = None
     units_per_box: Optional[int] = None
     mrp: Optional[Decimal] = None
     selling_price: Optional[Decimal] = None
@@ -47,12 +41,10 @@ class ProductStatusUpdate(BaseModel):
 class ProductResponse(BaseModel):
     id: uuid.UUID
     sku: str
-    barcode: str
     name: str
     category_id: Optional[uuid.UUID]
     brand_id: Optional[uuid.UUID]
     unit: str
-    packing: str
     units_per_box: int
     mrp: Decimal
     selling_price: Decimal
@@ -72,7 +64,6 @@ class ProductCatalogResponse(BaseModel):
     category_id: Optional[uuid.UUID]
     brand_id: Optional[uuid.UUID]
     unit: str
-    packing: str
     units_per_box: int
     mrp: Decimal
     effective_price: Decimal
