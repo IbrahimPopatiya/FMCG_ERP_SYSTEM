@@ -42,6 +42,7 @@ export interface SalesOrderResponse {
   id: string;
   order_number: string;
   customer_id: string;
+  customer_name: string | null;
   salesman_id: string | null;
   order_source: OrderSource;
   status: OrderStatus;

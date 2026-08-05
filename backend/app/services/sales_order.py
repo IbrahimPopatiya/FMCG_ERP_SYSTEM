@@ -153,7 +153,10 @@ def create_sales_order(db: Session, data: SalesOrderCreate, principal: Principal
 def get_sales_order(db: Session, order_id: uuid.UUID) -> SalesOrder | None:
     return (
         db.query(SalesOrder)
-        .options(selectinload(SalesOrder.items).selectinload(SalesOrderItem.product))
+        .options(
+            selectinload(SalesOrder.items).selectinload(SalesOrderItem.product),
+            selectinload(SalesOrder.customer),
+        )
         .filter(SalesOrder.id == order_id, SalesOrder.deleted_at.is_(None))
         .first()
     )
@@ -297,7 +300,7 @@ def load_sales_order(
 
 
 def list_orders_for_principal(
-    db: Session, principal: Principal, page: int, page_size: int
+    db: Session, principal: Principal, page: int, page_size: int, customer_id: uuid.UUID | None = None
 ) -> tuple[list[SalesOrder], int]:
     query = db.query(SalesOrder).filter(SalesOrder.deleted_at.is_(None))
 
@@ -314,9 +317,15 @@ def list_orders_for_principal(
             .filter(Route.salesman_id == principal.user.id)
         )
 
+    if customer_id is not None:
+        query = query.filter(SalesOrder.customer_id == customer_id)
+
     total = query.count()
     items = (
-        query.options(selectinload(SalesOrder.items).selectinload(SalesOrderItem.product))
+        query.options(
+            selectinload(SalesOrder.items).selectinload(SalesOrderItem.product),
+            selectinload(SalesOrder.customer),
+        )
         .order_by(SalesOrder.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)

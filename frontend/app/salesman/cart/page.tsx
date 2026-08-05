@@ -32,7 +32,7 @@ export default function SalesmanCartPage() {
   const router = useRouter();
   const { items, subtotal, setQty, removeItem, clear } = useCart();
   const { data: customersPage } = useSalesmanCustomers();
-  const { customerId } = useSelectedCustomer();
+  const { customerId, setCustomerId } = useSelectedCustomer();
   const createOrder = useCreateOrder();
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +52,7 @@ export default function SalesmanCartPage() {
         items: items.map((i) => ({ product_id: i.productId, ordered_qty: i.qty * i.unitsPerBox })),
       });
       clear();
+      setCustomerId(null);
       router.push(`/salesman/orders/${order.id}`);
     } catch (err) {
       setError(placeOrderErrorMessage(err));

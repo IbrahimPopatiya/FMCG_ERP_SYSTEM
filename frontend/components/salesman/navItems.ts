@@ -1,4 +1,4 @@
-import { CartIcon, HomeIcon, OrdersIcon, GridIcon, AccountIcon } from "@/components/customer/icons";
+import { CartIcon, HomeIcon, OrdersIcon, GridIcon, AccountIcon, StoreIcon } from "@/components/customer/icons";
 import type { CustomerNavItem } from "@/components/customer/navItems";
 
 // Salesman storefront nav - same 3-tab shape as the customer app, pointed at
@@ -12,5 +12,6 @@ export const SALESMAN_NAV_ITEMS: CustomerNavItem[] = [
 
 export const SALESMAN_MENU_ITEMS: CustomerNavItem[] = [
   { href: "/salesman/orders", label: "Orders", icon: OrdersIcon },
+  { href: "/salesman/customers", label: "Customer", icon: StoreIcon },
   { href: "/salesman/account", label: "Account", icon: AccountIcon },
 ];

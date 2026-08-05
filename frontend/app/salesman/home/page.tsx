@@ -306,13 +306,8 @@ function ReelSlide({
             {product.effective_price > 0 && (
               <div className="flex items-baseline gap-1.5">
                 <span className="text-sm font-semibold text-black">
-                  {formatCurrency(product.effective_price)}
+                  {formatCurrency(product.effective_price) + " / " + (product.mrp)}
                 </span>
-                {product.mrp > product.effective_price && (
-                  <span className="text-xs text-black/55 line-through">
-                    {formatCurrency(product.mrp)}
-                  </span>
-                )}
               </div>
             )}
           </div>

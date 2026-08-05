@@ -53,8 +53,11 @@ export default function OrderDetailPage() {
       {order.data && (
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-6 md:p-8">
           <div className="flex items-center justify-between rounded-xl border border-border bg-white p-4">
-            <div>
-              <p className="font-mono text-xs font-medium text-ink-muted">{order.data.order_number}</p>
+            <div className="min-w-0">
+              {order.data.customer_name && (
+                <p className="truncate text-sm font-semibold text-ink">{order.data.customer_name}</p>
+              )}
+              <p className="mt-0.5 font-mono text-xs font-medium text-ink-muted">{order.data.order_number}</p>
               <p className="mt-1 text-sm text-ink-muted">Placed {formatDate(order.data.created_at)}</p>
             </div>
             <OrderStatusBadge status={order.data.status} />

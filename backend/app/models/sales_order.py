@@ -28,6 +28,7 @@ class SalesOrder(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     items = relationship("SalesOrderItem", cascade="all, delete-orphan")
+    customer = relationship("Customer")
 
 
 class SalesOrderItem(Base, UUIDPKMixin, TimestampMixin):

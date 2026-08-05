@@ -64,10 +64,13 @@ def create_order(
 def list_orders(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
+    customer_id: uuid.UUID | None = Query(None),
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    items, total = sales_order_service.list_orders_for_principal(db, principal, page, page_size)
+    items, total = sales_order_service.list_orders_for_principal(
+        db, principal, page, page_size, customer_id=customer_id
+    )
     return Page(items=items, total=total, page=page, page_size=page_size)
 
 
