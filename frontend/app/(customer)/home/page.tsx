@@ -50,8 +50,6 @@ function postToFeedItem(post: PostResponse): ProductCatalogResponse {
   };
 }
 
-const FEED_COUNT = 8;
-
 // Deterministic pseudo-counts so the same product always shows the same
 // like/save numbers across renders, without needing real backend fields.
 function fakeCount(seed: string, base: number, spread: number): number {
@@ -355,10 +353,11 @@ export default function HomePage() {
     if (isSearchOpen) searchInputRef.current?.focus();
   }, [isSearchOpen]);
 
-  // Posts (newest first) lead the feed, followed by a page of the catalog
-  // feed API — products already referenced by a post are skipped so the same
-  // item doesn't show twice. All posts are shown; the catalog fallback is
-  // capped to FEED_COUNT so the default reel doesn't fetch the whole catalog.
+  // Posts (newest first) lead the feed, followed by every catalog page
+  // fetched so far — products already referenced by a post are skipped so
+  // the same item doesn't show twice. Scrolling near the end of the reel
+  // (see handleVisible) fetches the next catalog page, so the reel keeps
+  // growing instead of stopping at whatever loaded first.
   const feedProducts = useMemo(() => {
     const postItems = (posts.data ?? []).map(postToFeedItem);
     const postedProductIds = new Set(postItems.map((p) => p.id));
@@ -368,17 +367,13 @@ export default function HomePage() {
 
     // Posts don't carry category_id; when a category is selected, only show
     // catalog items that match (posts stay in the unfiltered default reel).
-    let leading = postItems;
-    if (selectedCategoryId !== null) {
-      leading = [];
-    }
+    const leading = selectedCategoryId === null ? postItems : [];
 
     const query = debouncedSearch.trim().toLowerCase();
     if (query) {
       return [...leading, ...catalogItems].filter((p) => p.name.toLowerCase().includes(query));
     }
 
-    if (selectedCategoryId === null) return [...leading, ...catalogItems.slice(0, FEED_COUNT)];
     return [...leading, ...catalogItems];
   }, [posts.data, products.data, selectedCategoryId, debouncedSearch]);
 
@@ -386,8 +381,26 @@ export default function HomePage() {
   const isLoading = products.isLoading || posts.isLoading;
   const isError = products.isError || posts.isError;
 
+  // Refs (not the raw values) so this callback's identity never changes —
+  // ReelSlide's IntersectionObserver effect depends on `onVisible`, and a
+  // fresh function reference every render would tear down and re-observe
+  // every slide on every render instead of just once.
+  const productsRef = useRef(products);
+  productsRef.current = products;
+  const feedLengthRef = useRef(feedProducts.length);
+  feedLengthRef.current = feedProducts.length;
+
   const handleVisible = useCallback((index: number) => {
     setActiveIndex(index);
+
+    // Load the next catalog page a few slides before the user actually
+    // hits the end, so the reel keeps scrolling smoothly instead of
+    // stalling on a loading gap.
+    const nearEnd = index >= feedLengthRef.current - 3;
+    const feed = productsRef.current;
+    if (nearEnd && feed.hasNextPage && !feed.isFetchingNextPage) {
+      void feed.fetchNextPage();
+    }
   }, []);
 
   async function handleShare(product: ProductCatalogResponse) {
