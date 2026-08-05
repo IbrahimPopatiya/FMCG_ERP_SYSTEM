@@ -16,7 +16,6 @@ class Invoice(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     discount = Column(Numeric(12, 2), nullable=False, default=0)
     cgst = Column(Numeric(12, 2), nullable=False, default=0)
     sgst = Column(Numeric(12, 2), nullable=False, default=0)
-    igst = Column(Numeric(12, 2), nullable=False, default=0)
     round_off = Column(Numeric(12, 2), nullable=False, default=0)
     total = Column(Numeric(12, 2), nullable=False, default=0)
     payment_status = Column(String(20), nullable=False, default="unpaid")  # unpaid, partial, paid

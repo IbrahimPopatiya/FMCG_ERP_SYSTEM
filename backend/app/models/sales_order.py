@@ -22,7 +22,6 @@ class SalesOrder(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     discount = Column(Numeric(12, 2), nullable=False, default=0)
     cgst = Column(Numeric(12, 2), nullable=False, default=0)
     sgst = Column(Numeric(12, 2), nullable=False, default=0)
-    igst = Column(Numeric(12, 2), nullable=False, default=0)
     round_off = Column(Numeric(12, 2), nullable=False, default=0)
     total = Column(Numeric(12, 2), nullable=False, default=0)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
@@ -44,7 +43,6 @@ class SalesOrderItem(Base, UUIDPKMixin, TimestampMixin):
     gst_rate = Column(Numeric(5, 2), nullable=False, default=0)
     cgst = Column(Numeric(12, 2), nullable=False, default=0)
     sgst = Column(Numeric(12, 2), nullable=False, default=0)
-    igst = Column(Numeric(12, 2), nullable=False, default=0)
     line_total = Column(Numeric(12, 2), nullable=False, default=0)
 
     product = relationship("Product")

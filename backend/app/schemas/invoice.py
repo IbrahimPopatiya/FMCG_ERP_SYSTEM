@@ -18,7 +18,6 @@ class InvoiceResponse(BaseModel):
     discount: Decimal
     cgst: Decimal
     sgst: Decimal
-    igst: Decimal
     round_off: Decimal
     total: Decimal
     payment_status: PaymentStatus
@@ -42,7 +41,6 @@ class InvoiceListItem(BaseModel):
     discount: Decimal
     cgst: Decimal
     sgst: Decimal
-    igst: Decimal
     round_off: Decimal
     total: Decimal
     payment_status: PaymentStatus

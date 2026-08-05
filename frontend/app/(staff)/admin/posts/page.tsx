@@ -197,15 +197,15 @@ export default function PostsPage() {
           <Button
             type="button"
             variant={selectMode ? "primary" : "secondary"}
-            className="gap-1.5"
+            className="gap-1.5 flex-1 w-full"
             isLoading={repostMany.isPending}
             disabled={selectMode && selectedIds.size === 0}
             onClick={selectMode ? handleRepostSelected : () => setSelectMode(true)}
           >
-            {selectMode ? `Repost${selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}` : "Repost multiple"}
+            {selectMode ? `Repost${selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}` : "Multiple Repost"}
           </Button>
           {!selectMode && (
-            <Button type="button" className="w-full sm:w-auto" onClick={() => setFormOpen(true)}>
+            <Button type="button" className="flex-1 w-full sm:w-auto" onClick={() => setFormOpen(true)}>
               <PlusIcon className="h-4 w-4" />
               New post
             </Button>

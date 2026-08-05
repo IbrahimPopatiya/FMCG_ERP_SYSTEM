@@ -9,51 +9,36 @@ import { PersonIcon, UploadCloudIcon } from "@/components/admin/icons";
 import type { CustomerCreate } from "@/types/customers";
 
 interface CustomerFormValues {
-  customer_code: string;
   business_name: string;
   owner_name: string;
   mobile: string;
-  alternate_mobile: string;
-  gst_number: string;
   address: string;
   city: string;
   state: string;
   pincode: string;
-  credit_limit: string;
-  payment_terms: string;
   password: string;
 }
 
 const EMPTY_FORM: CustomerFormValues = {
-  customer_code: "",
   business_name: "",
   owner_name: "",
   mobile: "",
-  alternate_mobile: "",
-  gst_number: "",
   address: "",
   city: "",
   state: "",
   pincode: "",
-  credit_limit: "",
-  payment_terms: "",
   password: "",
 };
 
 function toPayload(values: CustomerFormValues): CustomerCreate {
   return {
-    customer_code: values.customer_code.trim(),
     business_name: values.business_name.trim(),
     owner_name: values.owner_name.trim(),
     mobile: values.mobile.trim(),
-    alternate_mobile: values.alternate_mobile.trim() || null,
-    gst_number: values.gst_number.trim() || null,
     address: values.address.trim(),
     city: values.city.trim(),
     state: values.state.trim(),
     pincode: values.pincode.trim(),
-    credit_limit: Number(values.credit_limit || 0),
-    payment_terms: Number(values.payment_terms || 0),
     password: values.password,
   };
 }
@@ -136,8 +121,8 @@ export function CustomerForm({ onSubmit, onSuccess }: CustomerFormProps) {
 
       <Input
         id="business_name"
-        label="Full Name"
-        placeholder="Enter customer name"
+        label="Shop Name"
+        placeholder="Enter Shop name"
         value={values.business_name}
         onChange={(e) => set("business_name", e.target.value)}
         required
@@ -185,56 +170,14 @@ export function CustomerForm({ onSubmit, onSuccess }: CustomerFormProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Input
-          id="customer_code"
-          label="Customer code"
-          placeholder="e.g. CUST-101"
-          value={values.customer_code}
-          onChange={(e) => set("customer_code", e.target.value)}
-          required
-        />
-        <Input
-          id="gst_number"
-          label="GST number (optional)"
-          value={values.gst_number}
-          onChange={(e) => set("gst_number", e.target.value)}
-        />
-        <Input
-          id="alternate_mobile"
-          label="Alternate mobile (optional)"
-          value={values.alternate_mobile}
-          onChange={(e) => set("alternate_mobile", e.target.value)}
-        />
-        <Input
-          id="password"
-          label="Login password"
-          type="password"
-          value={values.password}
-          onChange={(e) => set("password", e.target.value)}
-          required
-        />
-        <Input
-          id="credit_limit"
-          label="Credit limit (₹)"
-          type="number"
-          min="0"
-          step="0.01"
-          value={values.credit_limit}
-          onChange={(e) => set("credit_limit", e.target.value)}
-          required
-        />
-        <Input
-          id="payment_terms"
-          label="Payment terms (days)"
-          type="number"
-          min="0"
-          step="1"
-          value={values.payment_terms}
-          onChange={(e) => set("payment_terms", e.target.value)}
-          required
-        />
-      </div>
+      <Input
+        id="password"
+        label="Login password"
+        type="password"
+        value={values.password}
+        onChange={(e) => set("password", e.target.value)}
+        required
+      />
 
       <div className="flex items-center justify-between rounded-lg bg-surface px-4 py-3">
         <span className="text-sm font-medium text-ink">Status</span>

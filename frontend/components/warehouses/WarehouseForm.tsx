@@ -52,7 +52,7 @@ export function WarehouseForm({ onSubmit, onSuccess }: WarehouseFormProps) {
       <Input
         id="state"
         label="State"
-        placeholder="Used to decide CGST+SGST vs IGST on orders"
+        placeholder="Enter state"
         value={values.state}
         onChange={(e) => set("state", e.target.value)}
         required

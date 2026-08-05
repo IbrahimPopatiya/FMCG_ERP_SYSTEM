@@ -85,15 +85,12 @@ def _get_fulfilling_warehouse(db: Session) -> Warehouse:
 
 
 def _price_items(
-    db: Session, customer: Customer, warehouse: Warehouse, items_data
-) -> tuple[list[SalesOrderItem], Decimal, Decimal, Decimal, Decimal, Decimal]:
-    interstate = customer.state != warehouse.state
-
+    db: Session, customer: Customer, items_data
+) -> tuple[list[SalesOrderItem], Decimal, Decimal, Decimal]:
     order_items = []
     subtotal = Decimal("0")
     cgst_total = Decimal("0")
     sgst_total = Decimal("0")
-    igst_total = Decimal("0")
 
     for item_data in items_data:
         product = db.query(Product).filter(
@@ -105,14 +102,7 @@ def _price_items(
         price = get_effective_price(db, customer.price_list_id, product.id, product.selling_price)
         line_amount = price * item_data.ordered_qty
         gst_amount = line_amount * product.gst_rate / 100
-
-        cgst = sgst = igst = Decimal("0")
-        if interstate:
-            igst = gst_amount
-        else:
-            cgst = gst_amount / 2
-            sgst = gst_amount / 2
-
+        cgst = sgst = gst_amount / 2
         line_total = line_amount + gst_amount
 
         order_items.append(
@@ -123,24 +113,22 @@ def _price_items(
                 gst_rate=product.gst_rate,
                 cgst=cgst,
                 sgst=sgst,
-                igst=igst,
                 line_total=line_total,
             )
         )
         subtotal += line_amount
         cgst_total += cgst
         sgst_total += sgst
-        igst_total += igst
 
-    return order_items, subtotal, cgst_total, sgst_total, igst_total
+    return order_items, subtotal, cgst_total, sgst_total
 
 
 def create_sales_order(db: Session, data: SalesOrderCreate, principal: Principal) -> SalesOrder:
     customer, order_source, salesman_id = _resolve_customer_and_source(db, data, principal)
-    warehouse = _get_fulfilling_warehouse(db)
+    _get_fulfilling_warehouse(db)
 
-    order_items, subtotal, cgst, sgst, igst = _price_items(db, customer, warehouse, data.items)
-    total = subtotal + cgst + sgst + igst
+    order_items, subtotal, cgst, sgst = _price_items(db, customer, data.items)
+    total = subtotal + cgst + sgst
 
     order = SalesOrder(
         order_number=f"SO-{generate_uuid7().hex[:12].upper()}",
@@ -153,7 +141,6 @@ def create_sales_order(db: Session, data: SalesOrderCreate, principal: Principal
         subtotal=subtotal,
         cgst=cgst,
         sgst=sgst,
-        igst=igst,
         total=total,
         items=order_items,
     )
@@ -210,14 +197,13 @@ def update_sales_order(
 
     if data.items is not None:
         customer = db.query(Customer).filter(Customer.id == order.customer_id).first()
-        warehouse = _get_fulfilling_warehouse(db)
-        order_items, subtotal, cgst, sgst, igst = _price_items(db, customer, warehouse, data.items)
+        _get_fulfilling_warehouse(db)
+        order_items, subtotal, cgst, sgst = _price_items(db, customer, data.items)
         order.items = order_items
         order.subtotal = subtotal
         order.cgst = cgst
         order.sgst = sgst
-        order.igst = igst
-        order.total = subtotal + cgst + sgst + igst
+        order.total = subtotal + cgst + sgst
 
     db.commit()
     db.refresh(order)

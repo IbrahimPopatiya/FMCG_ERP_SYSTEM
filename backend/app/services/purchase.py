@@ -23,7 +23,7 @@ class PurchaseNotReceivableError(Exception):
     """Raised when receiving a purchase that isn't still draft."""
 
 
-def _build_items(db: Session, items_data) -> tuple[list[PurchaseItem], Decimal, Decimal, Decimal, Decimal]:
+def _build_items(db: Session, items_data) -> tuple[list[PurchaseItem], Decimal, Decimal, Decimal]:
     items = []
     subtotal = Decimal("0")
     cgst_total = Decimal("0")
@@ -50,7 +50,6 @@ def _build_items(db: Session, items_data) -> tuple[list[PurchaseItem], Decimal, 
                 gst_rate=product.gst_rate,
                 cgst=cgst,
                 sgst=sgst,
-                igst=Decimal("0"),
                 total=line_total,
             )
         )
@@ -58,12 +57,12 @@ def _build_items(db: Session, items_data) -> tuple[list[PurchaseItem], Decimal, 
         cgst_total += cgst
         sgst_total += sgst
 
-    return items, subtotal, cgst_total, sgst_total, Decimal("0")
+    return items, subtotal, cgst_total, sgst_total
 
 
 def create_purchase(db: Session, data: PurchaseCreate, user_id: uuid.UUID) -> Purchase:
-    items, subtotal, cgst, sgst, igst = _build_items(db, data.items)
-    total = subtotal + cgst + sgst + igst
+    items, subtotal, cgst, sgst = _build_items(db, data.items)
+    total = subtotal + cgst + sgst
 
     purchase = Purchase(
         supplier_id=data.supplier_id,
@@ -73,7 +72,6 @@ def create_purchase(db: Session, data: PurchaseCreate, user_id: uuid.UUID) -> Pu
         subtotal=subtotal,
         cgst=cgst,
         sgst=sgst,
-        igst=igst,
         total=total,
         created_by=user_id,
         items=items,
@@ -126,13 +124,12 @@ def update_purchase(
         purchase.purchase_date = data.purchase_date
 
     if data.items is not None:
-        items, subtotal, cgst, sgst, igst = _build_items(db, data.items)
+        items, subtotal, cgst, sgst = _build_items(db, data.items)
         purchase.items = items
         purchase.subtotal = subtotal
         purchase.cgst = cgst
         purchase.sgst = sgst
-        purchase.igst = igst
-        purchase.total = subtotal + cgst + sgst + igst
+        purchase.total = subtotal + cgst + sgst
 
     purchase.updated_by = user_id
     db.commit()

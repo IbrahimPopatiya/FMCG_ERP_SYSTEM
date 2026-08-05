@@ -9,7 +9,6 @@ export interface PurchaseItemResponse {
   gst_rate: number;
   cgst: number;
   sgst: number;
-  igst: number;
   total: number;
 }
 
@@ -23,7 +22,6 @@ export interface PurchaseResponse {
   subtotal: number;
   cgst: number;
   sgst: number;
-  igst: number;
   round_off: number;
   total: number;
   items: PurchaseItemResponse[];

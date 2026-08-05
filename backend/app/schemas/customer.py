@@ -9,7 +9,6 @@ from app.core.enums import CustomerStatus
 
 
 class CustomerCreate(BaseModel):
-    customer_code: str
     business_name: str
     owner_name: str
     mobile: str
@@ -19,8 +18,8 @@ class CustomerCreate(BaseModel):
     city: str
     state: str
     pincode: str
-    credit_limit: Decimal
-    payment_terms: int
+    credit_limit: Decimal = Decimal("0")
+    payment_terms: int = 0
     route_id: Optional[uuid.UUID] = None
     price_list_id: Optional[uuid.UUID] = None
     password: str

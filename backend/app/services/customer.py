@@ -23,9 +23,21 @@ class SalesmanNotFoundError(Exception):
     """Raised when salesman_id doesn't point to an active salesman user."""
 
 
+def _next_customer_code(db: Session) -> str:
+    """Generates CUST-{n} using the highest existing numeric suffix, so codes
+    stay sequential even after customers are deleted."""
+    codes = db.query(Customer.customer_code).filter(Customer.customer_code.like("CUST-%")).all()
+    max_seq = 0
+    for (code,) in codes:
+        suffix = code.removeprefix("CUST-")
+        if suffix.isdigit():
+            max_seq = max(max_seq, int(suffix))
+    return f"CUST-{max_seq + 1}"
+
+
 def create_customer(db: Session, data: CustomerCreate) -> Customer:
     customer = Customer(
-        customer_code=data.customer_code,
+        customer_code=_next_customer_code(db),
         business_name=data.business_name,
         owner_name=data.owner_name,
         mobile=data.mobile,

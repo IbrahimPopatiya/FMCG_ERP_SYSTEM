@@ -54,7 +54,6 @@ class PurchaseItemResponse(BaseModel):
     gst_rate: Decimal
     cgst: Decimal
     sgst: Decimal
-    igst: Decimal
     total: Decimal
 
     model_config = ConfigDict(from_attributes=True)
@@ -74,7 +73,6 @@ class PurchaseItemResponse(BaseModel):
             "gst_rate": data.gst_rate,
             "cgst": data.cgst,
             "sgst": data.sgst,
-            "igst": data.igst,
             "total": data.total,
         }
 
@@ -89,7 +87,6 @@ class PurchaseResponse(BaseModel):
     subtotal: Decimal
     cgst: Decimal
     sgst: Decimal
-    igst: Decimal
     round_off: Decimal
     total: Decimal
     items: list[PurchaseItemResponse]

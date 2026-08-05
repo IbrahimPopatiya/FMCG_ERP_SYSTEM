@@ -99,12 +99,6 @@ export default function OrderDetailPage() {
                 <span>−{formatCurrency(order.data.discount)}</span>
               </div>
             )}
-            {order.data.igst > 0 && (
-              <div className="flex items-center justify-between text-sm text-ink-muted">
-                <span>IGST</span>
-                <span>{formatCurrency(order.data.igst)}</span>
-              </div>
-            )}
             <div className="mt-1 flex items-center justify-between border-t border-border pt-2 text-base font-semibold text-ink">
               <span>Total</span>
               <span>{formatCurrency(order.data.total)}</span>

@@ -107,12 +107,6 @@ export default function InvoiceDetailPage() {
                 <span>−{formatCurrency(invoice.data.discount)}</span>
               </div>
             )}
-            {invoice.data.igst > 0 && (
-              <div className="flex items-center justify-between text-sm text-ink-muted">
-                <span>IGST</span>
-                <span>{formatCurrency(invoice.data.igst)}</span>
-              </div>
-            )}
             {invoice.data.round_off !== 0 && (
               <div className="flex items-center justify-between text-sm text-ink-muted">
                 <span>Round off</span>

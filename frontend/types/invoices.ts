@@ -13,7 +13,6 @@ export interface InvoiceListItem {
   discount: number;
   cgst: number;
   sgst: number;
-  igst: number;
   round_off: number;
   total: number;
   payment_status: PaymentStatus;
@@ -38,7 +37,6 @@ export interface InvoiceResponse {
   discount: number;
   cgst: number;
   sgst: number;
-  igst: number;
   round_off: number;
   total: number;
   payment_status: PaymentStatus;

@@ -9,5 +9,5 @@ class Warehouse(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
 
     name = Column(String(150), nullable=False)
     address = Column(Text, nullable=False)
-    state = Column(String(100), nullable=False)  # used to decide CGST+SGST vs IGST
+    state = Column(String(100), nullable=False)
     status = Column(String(20), nullable=False, default="active")  # active, inactive

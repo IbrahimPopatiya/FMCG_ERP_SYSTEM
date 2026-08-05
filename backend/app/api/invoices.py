@@ -38,7 +38,6 @@ def _to_list_item(row: tuple) -> InvoiceListItem:
         discount=invoice.discount,
         cgst=invoice.cgst,
         sgst=invoice.sgst,
-        igst=invoice.igst,
         round_off=invoice.round_off,
         total=invoice.total,
         payment_status=invoice.payment_status,

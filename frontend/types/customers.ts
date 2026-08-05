@@ -33,18 +33,13 @@ export interface CustomerCreateResponse {
 }
 
 export interface CustomerCreate {
-  customer_code: string;
   business_name: string;
   owner_name: string;
   mobile: string;
-  alternate_mobile?: string | null;
-  gst_number?: string | null;
   address: string;
   city: string;
   state: string;
   pincode: string;
-  credit_limit: number;
-  payment_terms: number;
   password: string;
 }
 

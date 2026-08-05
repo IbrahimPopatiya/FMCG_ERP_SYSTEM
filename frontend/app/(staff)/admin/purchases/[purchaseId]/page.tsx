@@ -152,12 +152,6 @@ export default function PurchaseDetailPage() {
                 <span>Subtotal</span>
                 <span>{formatCurrency(data.subtotal)}</span>
               </div>
-              {data.igst > 0 && (
-                <div className="flex items-center justify-between text-sm text-ink-muted">
-                  <span>IGST</span>
-                  <span>{formatCurrency(data.igst)}</span>
-                </div>
-              )}
               <div className="mt-1 flex items-center justify-between border-t border-border pt-2 text-base font-semibold text-ink">
                 <span>Total</span>
                 <span>{formatCurrency(data.total)}</span>

@@ -50,7 +50,6 @@ def generate_invoice(db: Session, order_id: uuid.UUID) -> Invoice | None:
         discount=order.discount,
         cgst=order.cgst,
         sgst=order.sgst,
-        igst=order.igst,
         round_off=order.round_off,
         total=order.total,
     )

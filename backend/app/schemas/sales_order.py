@@ -38,7 +38,6 @@ class SalesOrderItemResponse(BaseModel):
     gst_rate: Decimal
     cgst: Decimal
     sgst: Decimal
-    igst: Decimal
     line_total: Decimal
 
     model_config = ConfigDict(from_attributes=True)
@@ -62,7 +61,6 @@ class SalesOrderItemResponse(BaseModel):
             "gst_rate": data.gst_rate,
             "cgst": data.cgst,
             "sgst": data.sgst,
-            "igst": data.igst,
             "line_total": data.line_total,
         }
 
@@ -80,7 +78,6 @@ class SalesOrderResponse(BaseModel):
     discount: Decimal
     cgst: Decimal
     sgst: Decimal
-    igst: Decimal
     round_off: Decimal
     total: Decimal
     items: list[SalesOrderItemResponse]

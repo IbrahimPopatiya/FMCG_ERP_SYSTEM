@@ -25,7 +25,6 @@ export interface SalesOrderItemResponse {
   gst_rate: number;
   cgst: number;
   sgst: number;
-  igst: number;
   line_total: number;
 }
 
@@ -52,7 +51,6 @@ export interface SalesOrderResponse {
   discount: number;
   cgst: number;
   sgst: number;
-  igst: number;
   round_off: number;
   total: number;
   items: SalesOrderItemResponse[];
