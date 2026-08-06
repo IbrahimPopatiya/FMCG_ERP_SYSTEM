@@ -51,7 +51,7 @@ export default function OrderDetailPage() {
       )}
 
       {order.data && (
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-6 md:p-8">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-28 md:p-8">
           <div className="flex items-center justify-between rounded-xl border border-border bg-white p-4">
             <div className="min-w-0">
               {order.data.customer_name && (

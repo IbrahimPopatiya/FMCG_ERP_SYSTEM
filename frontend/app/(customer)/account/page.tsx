@@ -1,11 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ChevronRightIcon } from "@/components/customer/icons";
-import { clearSession } from "@/lib/auth/session";
 import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
 
 interface AccountRow {
@@ -33,15 +30,7 @@ const ACCOUNT_ROWS: AccountRow[] = [
 ];
 
 export default function AccountPage() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const customer = useCurrentCustomer();
-
-  function handleLogout() {
-    clearSession();
-    queryClient.clear();
-    router.push("/login");
-  }
 
   return (
     <div className="flex flex-col">
@@ -110,14 +99,6 @@ export default function AccountPage() {
               )}
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-semibold text-danger hover:opacity-90"
-          >
-            Log Out
-          </button>
         </div>
       )}
     </div>
