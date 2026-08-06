@@ -68,6 +68,7 @@ class ProductCatalogResponse(BaseModel):
     brand_id: Optional[uuid.UUID]
     unit: str
     units_per_box: int
+    loading_capacity: int
     mrp: Decimal
     effective_price: Decimal
     gst_rate: Decimal

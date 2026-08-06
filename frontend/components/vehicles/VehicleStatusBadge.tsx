@@ -1,6 +1,5 @@
-import { Badge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { VehicleStatus } from "@/types/vehicles";
-import { toTitleCase } from "@/lib/utils/format";
 
 const TONE: Record<VehicleStatus, "neutral" | "success" | "warning" | "danger"> = {
   available: "success",
@@ -9,5 +8,5 @@ const TONE: Record<VehicleStatus, "neutral" | "success" | "warning" | "danger"> 
 };
 
 export function VehicleStatusBadge({ status }: { status: VehicleStatus }) {
-  return <Badge tone={TONE[status]}>{toTitleCase(status)}</Badge>;
+  return <StatusBadge status={status} toneMap={TONE} />;
 }

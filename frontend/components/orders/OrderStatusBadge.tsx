@@ -1,6 +1,5 @@
-import { Badge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { OrderStatus } from "@/types/salesOrder";
-import { toTitleCase } from "@/lib/utils/format";
 
 // Colors per the reference mockup: pending=amber, approved="confirmed"=blue,
 // loaded="processing"=purple, delivered=green, cancelled=red.
@@ -23,5 +22,5 @@ const LABEL: Record<OrderStatus, string> = {
 };
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  return <Badge tone={TONE[status]}>{LABEL[status] ?? toTitleCase(status)}</Badge>;
+  return <StatusBadge status={status} toneMap={TONE} labelMap={LABEL} />;
 }

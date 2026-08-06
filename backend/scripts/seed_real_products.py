@@ -17,6 +17,7 @@ Skip the confirmation prompt with:
     python -m scripts.seed_real_products --yes
 """
 
+import random
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -220,7 +221,7 @@ def main() -> None:
                     brand_id=brand.id,
                     unit="piece",
                     units_per_box=defaults["units_per_box"],
-                    loading_capacity=defaults["units_per_box"] * 10,
+                    loading_capacity=random.randint(1, 10),
                     mrp=Decimal(defaults["mrp"]),
                     selling_price=Decimal(defaults["selling_price"]),
                     gst_rate=Decimal("0"),

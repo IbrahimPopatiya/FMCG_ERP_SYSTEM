@@ -45,6 +45,7 @@ export interface ProductCatalogResponse {
   brand_id: string | null;
   unit: string;
   units_per_box: number;
+  loading_capacity: number;
   mrp: number;
   effective_price: number;
   gst_rate: number;

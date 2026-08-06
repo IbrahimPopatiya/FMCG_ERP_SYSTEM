@@ -1,5 +1,11 @@
-import { Badge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { CustomerStatus } from "@/types/customers";
+
+const TONE: Record<CustomerStatus, "success" | "danger" | "neutral"> = {
+  active: "success",
+  blocked: "danger",
+  inactive: "neutral",
+};
 
 const LABEL: Record<CustomerStatus, string> = {
   active: "Active",
@@ -8,9 +14,5 @@ const LABEL: Record<CustomerStatus, string> = {
 };
 
 export function CustomerStatusBadge({ status }: { status: CustomerStatus }) {
-  return (
-    <Badge tone={status === "active" ? "success" : status === "blocked" ? "danger" : "neutral"}>
-      {LABEL[status]}
-    </Badge>
-  );
+  return <StatusBadge status={status} toneMap={TONE} labelMap={LABEL} />;
 }

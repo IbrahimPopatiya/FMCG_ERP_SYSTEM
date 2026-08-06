@@ -1,6 +1,5 @@
-import { Badge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { ReturnStatus } from "@/types/returns";
-import { toTitleCase } from "@/lib/utils/format";
 
 const TONE: Record<ReturnStatus, "neutral" | "success" | "warning" | "danger"> = {
   requested: "warning",
@@ -10,5 +9,5 @@ const TONE: Record<ReturnStatus, "neutral" | "success" | "warning" | "danger"> =
 };
 
 export function ReturnStatusBadge({ status }: { status: ReturnStatus }) {
-  return <Badge tone={TONE[status]}>{toTitleCase(status)}</Badge>;
+  return <StatusBadge status={status} toneMap={TONE} />;
 }

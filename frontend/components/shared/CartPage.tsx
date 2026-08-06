@@ -1,0 +1,204 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { QtyStepper } from "@/components/ui/QtyStepper";
+import { TrashIcon, CartIcon } from "@/components/customer/icons";
+import { useCart } from "@/components/cart/CartProvider";
+import { useCreateOrder } from "@/lib/hooks/useOrderMutations";
+import { formatCurrency } from "@/lib/utils/format";
+import type { CartItem } from "@/types/cart";
+import type { SalesOrderCreate } from "@/types/salesOrder";
+
+export interface CartPageProps {
+  title: string;
+  emptyCartTitle: string;
+  emptyCartMessage: string;
+  removeConfirmMessage: (name: string) => string;
+  productsBasePath: string;
+  orderBasePath: string;
+  placeOrderErrorMessage: (error: unknown) => string;
+  // Extra payload fields (e.g. salesman posts customer_id) and the
+  // customer-picker slot are salesman-only additions.
+  buildOrderPayload?: (items: CartItem[]) => Partial<SalesOrderCreate>;
+  canPlaceOrder?: boolean;
+  onOrderPlaced?: () => void;
+  headerSlot?: React.ReactNode;
+  belowHeaderSlot?: React.ReactNode;
+}
+
+export function CartPage({
+  title,
+  emptyCartTitle,
+  emptyCartMessage,
+  removeConfirmMessage,
+  productsBasePath,
+  orderBasePath,
+  placeOrderErrorMessage,
+  buildOrderPayload,
+  canPlaceOrder = true,
+  onOrderPlaced,
+  headerSlot,
+  belowHeaderSlot,
+}: CartPageProps) {
+  const router = useRouter();
+  const { items, subtotal, setQty, removeItem, clear } = useCart();
+  const createOrder = useCreateOrder();
+  const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const removalItem = items.find((i) => i.productId === pendingRemoval);
+
+  async function handlePlaceOrder() {
+    if (!canPlaceOrder) {
+      setError("Select a customer before placing the order.");
+      return;
+    }
+    setError(null);
+    try {
+      const order = await createOrder.mutateAsync({
+        // `qty` on a cart item is the number of boxes the customer picked;
+        // the backend prices/reserves stock per piece, so convert here.
+        items: items.map((i) => ({ product_id: i.productId, ordered_qty: i.qty * i.unitsPerBox })),
+        ...buildOrderPayload?.(items),
+      });
+      clear();
+      onOrderPlaced?.();
+      router.push(`${orderBasePath}/${order.id}`);
+    } catch (err) {
+      setError(placeOrderErrorMessage(err));
+    }
+  }
+
+  return (
+    <div className="flex min-h-full flex-col">
+      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3 md:px-8">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <CartIcon className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-2xl font-extrabold tracking-tight text-ink">{title}</p>
+            <p className="text-xs text-ink-muted">
+              {items.length} {items.length === 1 ? "Item" : "Items"}
+            </p>
+          </div>
+        </div>
+
+        {headerSlot}
+      </header>
+
+      {items.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path
+                d="M6 6h15l-1.5 9h-12z M6 6L5 3H2 M9 21a1 1 0 100-2 1 1 0 000 2zm9 0a1 1 0 100-2 1 1 0 000 2z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <h2 className="text-base font-semibold text-ink">{emptyCartTitle}</h2>
+          <p className="max-w-xs text-sm text-ink-muted">{emptyCartMessage}</p>
+          <Link href={productsBasePath}>
+            <Button type="button" className="mt-1">
+              Browse products
+            </Button>
+          </Link>
+        </div>
+      ) : (
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 pb-28 md:p-8">
+          {belowHeaderSlot}
+
+          <div className="flex flex-col gap-3">
+            {items.map((item) => (
+              <div key={item.productId} className="flex gap-3 rounded-xl border border-border bg-white p-3">
+                <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-primary-soft">
+                  {item.image ? (
+                    <Image src={item.image} alt={item.name} fill sizes="64px" className="rounded-lg object-cover" />
+                  ) : (
+                    <span className="text-[10px] font-medium text-primary/60">{item.unit}</span>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-ink">{item.name}</p>
+                      <p className="text-xs text-ink-muted">{item.unit}</p>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Remove item"
+                      onClick={() => setPendingRemoval(item.productId)}
+                      className="shrink-0 text-ink-muted hover:text-danger"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <p className="mt-0.5 text-sm font-semibold text-ink">
+                    {formatCurrency(item.price)}
+                    <span className="ml-0.5 text-xs font-normal text-ink-muted">
+                      /pc · {item.unitsPerBox} pcs/box
+                    </span>
+                  </p>
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                    <QtyStepper qty={item.qty} onChange={(qty) => setQty(item.productId, qty)} size="sm" />
+                    <span className="text-sm font-semibold text-ink">
+                      {formatCurrency(item.price * item.unitsPerBox * item.qty)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-2 rounded-xl border border-border bg-white p-4">
+            <div className="flex items-center justify-between text-sm text-ink-muted">
+              <span>
+                Subtotal ({items.length} {items.length === 1 ? "Item" : "Items"})
+              </span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between border-t border-border pt-2 text-base font-semibold text-ink">
+              <span>Total Amount</span>
+              <span className="text-primary">{formatCurrency(subtotal)}</span>
+            </div>
+            <p className="text-xs text-ink-muted">Final total is confirmed by the distributor on approval.</p>
+          </div>
+
+          {error && (
+            <div className="rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger">{error}</div>
+          )}
+
+          <Button
+            type="button"
+            className="w-full"
+            isLoading={createOrder.isPending}
+            disabled={!canPlaceOrder}
+            onClick={handlePlaceOrder}
+          >
+            Place order
+          </Button>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={pendingRemoval !== null}
+        title="Remove item"
+        message={removalItem ? removeConfirmMessage(removalItem.name) : ""}
+        confirmLabel="Remove"
+        tone="danger"
+        onConfirm={() => {
+          if (pendingRemoval) removeItem(pendingRemoval);
+          setPendingRemoval(null);
+        }}
+        onCancel={() => setPendingRemoval(null)}
+      />
+    </div>
+  );
+}

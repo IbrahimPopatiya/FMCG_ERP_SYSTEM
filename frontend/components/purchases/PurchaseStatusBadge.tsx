@@ -1,6 +1,5 @@
-import { Badge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { PurchaseStatus } from "@/types/purchases";
-import { toTitleCase } from "@/lib/utils/format";
 
 const TONE: Record<PurchaseStatus, "neutral" | "success" | "warning" | "danger"> = {
   draft: "warning",
@@ -9,5 +8,5 @@ const TONE: Record<PurchaseStatus, "neutral" | "success" | "warning" | "danger">
 };
 
 export function PurchaseStatusBadge({ status }: { status: PurchaseStatus }) {
-  return <Badge tone={TONE[status]}>{toTitleCase(status)}</Badge>;
+  return <StatusBadge status={status} toneMap={TONE} />;
 }

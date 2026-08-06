@@ -1,6 +1,5 @@
-import { Badge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { PaymentStatus } from "@/types/invoices";
-import { toTitleCase } from "@/lib/utils/format";
 
 const TONE: Record<PaymentStatus, "neutral" | "success" | "warning" | "danger"> = {
   unpaid: "warning",
@@ -9,5 +8,5 @@ const TONE: Record<PaymentStatus, "neutral" | "success" | "warning" | "danger"> 
 };
 
 export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
-  return <Badge tone={TONE[status]}>{toTitleCase(status)}</Badge>;
+  return <StatusBadge status={status} toneMap={TONE} />;
 }

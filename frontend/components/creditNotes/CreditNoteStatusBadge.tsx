@@ -1,6 +1,5 @@
-import { Badge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { CreditNoteStatus } from "@/types/creditNotes";
-import { toTitleCase } from "@/lib/utils/format";
 
 const TONE: Record<CreditNoteStatus, "neutral" | "success" | "warning" | "danger"> = {
   pending: "warning",
@@ -9,5 +8,5 @@ const TONE: Record<CreditNoteStatus, "neutral" | "success" | "warning" | "danger
 };
 
 export function CreditNoteStatusBadge({ status }: { status: CreditNoteStatus }) {
-  return <Badge tone={TONE[status]}>{toTitleCase(status)}</Badge>;
+  return <StatusBadge status={status} toneMap={TONE} />;
 }
