@@ -11,19 +11,27 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { TopBar } from "@/components/layout/TopBar";
 import { CustomerStatusBadge } from "@/components/customers/CustomerStatusBadge";
+import { UserStatusBadge } from "@/components/users/UserStatusBadge";
 
 const CustomerForm = dynamic(
   () => import("@/components/customers/CustomerForm").then((m) => m.CustomerForm),
   { ssr: false }
 );
+const SalesmanQuickAddForm = dynamic(
+  () => import("@/components/users/SalesmanQuickAddForm").then((m) => m.SalesmanQuickAddForm),
+  { ssr: false }
+);
 import { SearchIcon, PlusIcon } from "@/components/admin/icons";
 import { useCreateCustomer } from "@/lib/hooks/useCustomerMutations";
+import { useCreateUser, useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useCustomersManage } from "@/lib/hooks/useCustomersManage";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
+import { getStaffRole } from "@/lib/auth/session";
 import { formatCurrency } from "@/lib/utils/format";
 import type { CustomerListItem, CustomerStatus } from "@/types/customers";
+import type { UserResponse } from "@/types/users";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 const AVATAR_TONES = [
@@ -78,7 +86,7 @@ function EmptyState({ onAdd, hasSearch }: { onAdd: () => void; hasSearch: boolea
   );
 }
 
-type TabValue = "all" | Extract<CustomerStatus, "active" | "inactive">;
+type TabValue = "all" | Extract<CustomerStatus, "active" | "inactive"> | "salesman";
 
 export default function AdminCustomersPage() {
   useRoleGuard(["admin", "salesman", "manager", "cashier"]);
@@ -87,6 +95,8 @@ export default function AdminCustomersPage() {
   const debouncedSearch = useDebouncedValue(search);
   const [tab, setTab] = useState<TabValue>("all");
   const [isFormOpen, setFormOpen] = useState(false);
+  const [isSalesmanFormOpen, setSalesmanFormOpen] = useState(false);
+  const isAdmin = getStaffRole() === "admin";
   const {
     data,
     isLoading,
@@ -97,26 +107,37 @@ export default function AdminCustomersPage() {
     isFetchingNextPage,
   } = useCustomersManage(debouncedSearch);
   const createCustomer = useCreateCustomer();
+  const createUser = useCreateUser();
+  const staffDirectory = useStaffDirectory();
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
   const isDesktop = useIsDesktop();
 
   const allCustomers = data?.pages.flatMap((page) => page.items) ?? [];
   const total = data?.pages[0]?.total ?? 0;
+  const salesmen = (staffDirectory.data ?? []).filter((u) => u.role === "salesman");
 
   const counts = useMemo(
     () => ({
       all: allCustomers.length,
       active: allCustomers.filter((c) => c.status === "active").length,
       inactive: allCustomers.filter((c) => c.status !== "active").length,
+      salesman: salesmen.length,
     }),
-    [allCustomers]
+    [allCustomers, salesmen]
   );
 
   const customers = allCustomers.filter((c) => {
     if (tab === "all") return true;
     if (tab === "active") return c.status === "active";
-    return c.status !== "active";
+    if (tab === "inactive") return c.status !== "active";
+    return true;
+  });
+
+  const filteredSalesmen = salesmen.filter((s) => {
+    const query = debouncedSearch.trim().toLowerCase();
+    if (!query) return true;
+    return s.full_name.toLowerCase().includes(query) || s.mobile.includes(query);
   });
 
   return (
@@ -131,14 +152,27 @@ export default function AdminCustomersPage() {
               {total > 0 ? `${total} customer${total === 1 ? "" : "s"}` : "Shops and retailers you sell to"}
             </p>
           </div>
-          <Button
-            type="button"
-            className="w-full gap-1.5 rounded-full sm:w-auto"
-            onClick={() => setFormOpen(true)}
-          >
-            <PlusIcon className="h-4 w-4" />
-            Add Customer
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {isAdmin && (
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full gap-1.5 rounded-full sm:w-auto"
+                onClick={() => setSalesmanFormOpen(true)}
+              >
+                <PlusIcon className="h-4 w-4" />
+                Add Salesman
+              </Button>
+            )}
+            <Button
+              type="button"
+              className="w-full gap-1.5 rounded-full sm:w-auto"
+              onClick={() => setFormOpen(true)}
+            >
+              <PlusIcon className="h-4 w-4" />
+              Add Customer
+            </Button>
+          </div>
         </div>
 
         <div className="relative">
@@ -158,6 +192,7 @@ export default function AdminCustomersPage() {
               { value: "all", label: `All (${counts.all})` },
               { value: "active", label: `Active (${counts.active})` },
               { value: "inactive", label: `Inactive (${counts.inactive})` },
+              { value: "salesman", label: `Salesman (${counts.salesman})` },
             ] as { value: TabValue; label: string }[]
           ).map((t) => (
             <button
@@ -175,9 +210,9 @@ export default function AdminCustomersPage() {
         </div>
       </header>
 
-      {isLoading && <SkeletonRows />}
+      {tab !== "salesman" && isLoading && <SkeletonRows />}
 
-      {isError && (
+      {tab !== "salesman" && isError && (
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between gap-3 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
             Couldn&apos;t load customers.
@@ -188,11 +223,11 @@ export default function AdminCustomersPage() {
         </div>
       )}
 
-      {!isLoading && !isError && customers.length === 0 && !hasNextPage && (
+      {tab !== "salesman" && !isLoading && !isError && customers.length === 0 && !hasNextPage && (
         <EmptyState onAdd={() => setFormOpen(true)} hasSearch={!!search} />
       )}
 
-      {!isLoading && !isError && (customers.length > 0 || hasNextPage) && (
+      {tab !== "salesman" && !isLoading && !isError && (customers.length > 0 || hasNextPage) && (
         <div className="p-4 sm:p-6">
           {/* Desktop: full data table */}
           {isDesktop && (
@@ -254,12 +289,95 @@ export default function AdminCustomersPage() {
         </div>
       )}
 
+      {tab === "salesman" && staffDirectory.isLoading && <SkeletonRows />}
+
+      {tab === "salesman" && staffDirectory.isError && (
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center justify-between gap-3 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+            Couldn&apos;t load salesmen.
+            <Button type="button" variant="secondary" onClick={() => staffDirectory.refetch()}>
+              Retry
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {tab === "salesman" && !staffDirectory.isLoading && !staffDirectory.isError && filteredSalesmen.length === 0 && (
+        <div className="flex flex-col items-center gap-3 px-4 py-16 text-center">
+          <h2 className="text-base font-semibold text-ink">
+            {search.trim() ? "No salesmen match your search" : "No salesmen yet"}
+          </h2>
+          {!search.trim() && isAdmin && (
+            <>
+              <p className="max-w-sm text-sm text-ink-muted">
+                Add salesman logins so they can sign in and manage their own customers and orders.
+              </p>
+              <Button type="button" className="mt-1" onClick={() => setSalesmanFormOpen(true)}>
+                Add Salesman
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === "salesman" && !staffDirectory.isLoading && !staffDirectory.isError && filteredSalesmen.length > 0 && (
+        <div className="p-4 sm:p-6">
+          {/* Desktop: full data table */}
+          {isDesktop && (
+            <div className="hidden sm:block">
+              <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+                <Table<UserResponse>
+                  rowKey={(s) => s.id}
+                  rows={filteredSalesmen}
+                  columns={[
+                    { header: "Name", render: (s) => <span className="font-medium text-ink">{s.full_name}</span> },
+                    { header: "Mobile", render: (s) => s.mobile },
+                    { header: "Status", render: (s) => <UserStatusBadge status={s.status} /> },
+                  ]}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Mobile: avatar-initial rows matching the customer list style */}
+          {isDesktop === false && (
+            <div className="flex flex-col gap-3 sm:hidden">
+              {filteredSalesmen.map((s) => (
+                <Card key={s.id} className="flex items-center gap-3 rounded-2xl">
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ${avatarTone(
+                      s.id
+                    )}`}
+                  >
+                    {s.full_name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-ink">{s.full_name}</p>
+                    <p className="mt-0.5 truncate text-sm text-ink-muted">{s.mobile}</p>
+                  </div>
+                  <UserStatusBadge status={s.status} />
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <Modal open={isFormOpen} onClose={() => setFormOpen(false)} title="Add customer">
         <CustomerForm
           onSubmit={(payload) => createCustomer.mutateAsync(payload)}
           onSuccess={() => setFormOpen(false)}
         />
       </Modal>
+
+      {isAdmin && (
+        <Modal open={isSalesmanFormOpen} onClose={() => setSalesmanFormOpen(false)} title="Add salesman">
+          <SalesmanQuickAddForm
+            onSubmit={(payload) => createUser.mutateAsync(payload)}
+            onSuccess={() => setSalesmanFormOpen(false)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }
