@@ -8,6 +8,7 @@ export interface CartItem {
   // piece, but `qty` here is the number of boxes the customer selected, so
   // the actual line total is price * unitsPerBox * qty.
   unitsPerBox: number;
+  loadingCapacity: number;
   gstRate: number;
   image: string | null;
   qty: number;

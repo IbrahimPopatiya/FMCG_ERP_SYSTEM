@@ -10,6 +10,7 @@ interface CartContextValue {
   items: CartItem[];
   totalQty: number;
   subtotal: number;
+  totalLoadingCapacity: number;
   getQty: (productId: string) => number;
   addItem: (product: ProductCatalogResponse, qty?: number) => void;
   setQty: (productId: string, qty: number) => void;
@@ -64,6 +65,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             unit: product.unit,
             price: product.effective_price,
             unitsPerBox: product.units_per_box,
+            loadingCapacity: product.loading_capacity,
             gstRate: product.gst_rate,
             image: product.image,
             qty,
@@ -97,6 +99,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // qty is boxes, price is per-piece - the real line total needs the
       // box size multiplied in.
       subtotal: items.reduce((sum, i) => sum + i.qty * i.unitsPerBox * i.price, 0),
+      // qty is boxes, and loadingCapacity is per box. Falls back to 0 for
+      // carts persisted in localStorage before this field existed.
+      totalLoadingCapacity: items.reduce((sum, i) => sum + i.qty * (i.loadingCapacity || 0), 0),
       getQty,
       addItem,
       setQty,

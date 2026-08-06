@@ -18,6 +18,8 @@ export interface SalesOrderItemResponse {
   product_name: string;
   image: string | null;
   unit: string | null;
+  loading_capacity: number;
+  units_per_box: number;
   ordered_qty: number;
   approved_qty: number;
   loaded_qty: number;

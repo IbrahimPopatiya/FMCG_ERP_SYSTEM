@@ -46,7 +46,7 @@ export function CartPage({
   belowHeaderSlot,
 }: CartPageProps) {
   const router = useRouter();
-  const { items, subtotal, setQty, removeItem, clear } = useCart();
+  const { items, subtotal, totalLoadingCapacity, setQty, removeItem, clear } = useCart();
   const createOrder = useCreateOrder();
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -135,10 +135,10 @@ export function CartPage({
                       type="button"
                       aria-label="Remove item"
                       onClick={() => setPendingRemoval(item.productId)}
-                      className="shrink-0 text-ink-muted hover:text-danger"
+                      className="shrink-0 text-ink-muted hover:text-danger  bg-red-500 p-2 rounded-lg"
                     >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                      <TrashIcon className="h-4 w-4 text-white" />
+                    </button> 
                   </div>
                   <p className="mt-0.5 text-sm font-semibold text-ink">
                     {formatCurrency(item.price)}
@@ -158,6 +158,10 @@ export function CartPage({
           </div>
 
           <div className="flex flex-col gap-2 rounded-xl border border-border bg-white p-4">
+            <div className="flex items-center justify-between text-sm text-ink-muted">
+              <span>Total LC</span>
+              <span>{totalLoadingCapacity}</span>
+            </div>
             <div className="flex items-center justify-between text-sm text-ink-muted">
               <span>
                 Subtotal ({items.length} {items.length === 1 ? "Item" : "Items"})

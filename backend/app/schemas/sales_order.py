@@ -31,6 +31,8 @@ class SalesOrderItemResponse(BaseModel):
     product_name: str = "Product"
     image: Optional[str] = None
     unit: Optional[str] = None
+    loading_capacity: int = 0
+    units_per_box: int = 1
     ordered_qty: Decimal
     approved_qty: Decimal
     loaded_qty: Decimal
@@ -54,6 +56,8 @@ class SalesOrderItemResponse(BaseModel):
             "product_name": product.name if product is not None else "Product",
             "image": product.image if product is not None else None,
             "unit": product.unit if product is not None else None,
+            "loading_capacity": product.loading_capacity if product is not None else 0,
+            "units_per_box": product.units_per_box if product is not None else 1,
             "ordered_qty": data.ordered_qty,
             "approved_qty": data.approved_qty,
             "loaded_qty": data.loaded_qty,
