@@ -33,6 +33,7 @@ export default function SalesmanCartPage() {
       productsBasePath="/salesman/products"
       orderBasePath="/salesman/orders"
       placeOrderErrorMessage={placeOrderErrorMessage}
+      showLoadingCapacity
       buildOrderPayload={() => ({ customer_id: customerId ?? undefined })}
       canPlaceOrder={!!customerId}
       onOrderPlaced={() => setCustomerId(null)}

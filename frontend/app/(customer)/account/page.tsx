@@ -4,6 +4,13 @@ import Link from "next/link";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ChevronRightIcon } from "@/components/customer/icons";
 import { useCurrentCustomer } from "@/lib/hooks/useCurrentCustomer";
+import { clearSession } from "@/lib/auth/session";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { LogoutIcon } from "@/components/customer/icons";
+import { Button } from "@/components/ui/Button";
+
 
 interface AccountRow {
   label: string;
@@ -18,19 +25,27 @@ interface AccountRow {
 // render disabled with a "Coming soon" tag rather than as dead links that
 // promise a feature that doesn't exist.
 const ACCOUNT_ROWS: AccountRow[] = [
-  { label: "Business Details", description: "Manage your business information" },
-  { label: "User Profile", description: "Manage personal information" },
-  { label: "Delivery Addresses", description: "Manage delivery addresses" },
-  { label: "Payment Methods", description: "Manage payment options" },
+  // { label: "Business Details", description: "Manage your business information" },
+  // { label: "User Profile", description: "Manage personal information" },
+  // { label: "Delivery Addresses", description: "Manage delivery addresses" },
+  // { label: "Payment Methods", description: "Manage payment options" },
   { label: "Saved Products", description: "Products you've bookmarked", href: "/saved-products" },
-  { label: "Credit & Invoices", description: "View bills and credit history", href: "/dues" },
-  { label: "Notifications", description: "Manage your notifications" },
-  { label: "Settings", description: "App preferences and settings" },
-  { label: "Help & Support", description: "Get help and support" },
+  // { label: "Credit & Invoices", description: "View bills and credit history", href: "/dues" },
+  // { label: "Notifications", description: "Manage your notifications" },
+  // { label: "Settings", description: "App preferences and settings" },
+  // { label: "Help & Support", description: "Get help and support" },
 ];
 
 export default function AccountPage() {
   const customer = useCurrentCustomer();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  function handleLogout() {
+    clearSession();
+    queryClient.clear();
+    router.push("/login");
+  }
 
   return (
     <div className="flex flex-col">
@@ -97,6 +112,9 @@ export default function AccountPage() {
                   </div>
                 )
               )}
+              <Button type="button" variant="secondary" className="w-full bg-red-200 text-red-600" onClick={handleLogout}>
+                Log out
+              </Button>
             </div>
           </div>
         </div>

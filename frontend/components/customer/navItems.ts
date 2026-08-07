@@ -19,6 +19,6 @@ export const CUSTOMER_NAV_ITEMS: CustomerNavItem[] = [
 // secondary list on the desktop sidebar — kept out of the primary 3-tab nav.
 export const CUSTOMER_MENU_ITEMS: CustomerNavItem[] = [
   { href: "/orders", label: "Orders", icon: OrdersIcon },
-  { href: "/dues", label: "Ledger", icon: LedgerIcon },
+  // { href: "/dues", label: "Ledger", icon: LedgerIcon },
   { href: "/account", label: "Account", icon: AccountIcon },
 ];
