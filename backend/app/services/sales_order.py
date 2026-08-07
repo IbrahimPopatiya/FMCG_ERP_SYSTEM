@@ -101,9 +101,8 @@ def _price_items(
 
         price = get_effective_price(db, customer.price_list_id, product.id, product.selling_price)
         line_amount = price * item_data.ordered_qty
-        gst_amount = line_amount * product.gst_rate / 100
-        cgst = sgst = gst_amount / 2
-        line_total = line_amount + gst_amount
+        cgst = sgst = Decimal("0")
+        line_total = line_amount
 
         order_items.append(
             SalesOrderItem(

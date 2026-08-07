@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
+import { PrintBillButton } from "@/components/orders/PrintBillButton";
 import { SearchIcon, FilterIcon, PersonIcon, BoxIcon, ChevronRightIcon } from "@/components/admin/icons";
 import { CalendarIcon } from "@/components/customer/icons";
 import { useOrders } from "@/lib/hooks/useOrders";
@@ -240,6 +241,12 @@ export function OrdersListPage({ basePath, customerName, emptyState }: OrdersLis
                     { header: "Status", render: (o) => <OrderStatusBadge status={o.status} /> },
                     { header: "Amount", render: (o) => formatCurrency(o.total) },
                     { header: "Placed", render: (o) => formatDate(o.created_at) },
+                    {
+                      header: "",
+                      render: (o) => (
+                        <PrintBillButton order={o} customerName={customerName(o)} compact />
+                      ),
+                    },
                   ]}
                 />
               </div>
@@ -267,7 +274,10 @@ export function OrdersListPage({ basePath, customerName, emptyState }: OrdersLis
                           <BoxIcon className="h-4 w-4 text-ink-muted" />
                           {formatCurrency(o.total)}
                         </p>
-                        <OrderStatusBadge status={o.status} />
+                        <div className="flex items-center gap-2">
+                          <OrderStatusBadge status={o.status} />
+                          <PrintBillButton order={o} customerName={customerName(o)} compact />
+                        </div>
                       </div>
                     </div>
                     <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-muted" />

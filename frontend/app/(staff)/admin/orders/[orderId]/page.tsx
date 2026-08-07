@@ -11,6 +11,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TopBar } from "@/components/layout/TopBar";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
+import { PrintBillButton } from "@/components/orders/PrintBillButton";
 import { PersonIcon, PhoneIcon, PinIcon } from "@/components/admin/icons";
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useGenerateInvoice } from "@/lib/hooks/useInvoiceMutations";
@@ -140,7 +141,11 @@ export default function AdminOrderDetailPage() {
           const data = order.data;
           return (
             <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 pb-28 sm:p-6">
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-end gap-2">
+                <PrintBillButton
+                  order={data}
+                  customerName={customer.data?.business_name ?? "Customer"}
+                />
                 <OrderStatusBadge status={data.status} />
               </div>
 
