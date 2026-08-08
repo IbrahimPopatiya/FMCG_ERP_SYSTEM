@@ -330,15 +330,6 @@ export default function AdminOrderDetailPage() {
         })()}
       </div>
 
-      {order.data && (
-        <div className="sticky bottom-0 z-10 border-t border-border bg-white px-4 py-4 shadow-[0_-4px_12px_rgba(0,0,0,0.04)] sm:px-6">
-          <div className="mx-auto flex max-w-3xl items-center justify-between">
-            <span className="text-sm font-medium text-ink-muted">Total Amount</span>
-            <span className="text-xl font-bold text-danger">{formatCurrency(order.data.total)}</span>
-          </div>
-        </div>
-      )}
-
       <ConfirmDialog
         open={confirmCancel}
         title="Cancel order"
