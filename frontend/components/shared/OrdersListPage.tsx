@@ -215,7 +215,7 @@ export function OrdersListPage({ basePath, customerName, emptyState }: OrdersLis
       )}
 
       {!isLoading && !isError && (sorted.length > 0 || hasNextPage) && (
-        <div className="p-4 sm:p-6">
+        <div className="p-4 pb-10 sm:p-6">
           {/* Desktop: full data table */}
           {isDesktop && (
             <div className="hidden sm:block">
