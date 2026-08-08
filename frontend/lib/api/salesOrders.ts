@@ -7,10 +7,10 @@ import type {
 } from "@/types/salesOrder";
 import type { Page } from "@/types/pagination";
 
-export function listOrders(page: number, pageSize: number, customerId?: string) {
+export function listOrders(page: number, pageSize: number, customerId?: string, orderDate?: string) {
   return api
     .get<Page<SalesOrderResponse>>("/orders", {
-      params: { page, page_size: pageSize, customer_id: customerId },
+      params: { page, page_size: pageSize, customer_id: customerId, order_date: orderDate },
     })
     .then((res) => res.data);
 }

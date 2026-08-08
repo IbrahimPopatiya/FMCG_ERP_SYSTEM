@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -8,11 +9,14 @@ import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TopBar } from "@/components/layout/TopBar";
 import { CustomerStatusBadge } from "@/components/customers/CustomerStatusBadge";
+import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
 import { useAssignCustomerSalesman, useSetCustomerStatus } from "@/lib/hooks/useCustomerMutations";
 import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useRoutes } from "@/lib/hooks/useRoutes";
-import { formatCurrency } from "@/lib/utils/format";
+import { useOrders } from "@/lib/hooks/useOrders";
+import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 
 function initialsAvatarTone(seed: string) {
@@ -46,6 +50,19 @@ export default function CustomerDetailPage() {
   const staffDirectory = useStaffDirectory();
   const routes = useRoutes();
   const [isAssignOpen, setAssignOpen] = useState(false);
+  const [orderDate, setOrderDate] = useState("");
+
+  const {
+    data: ordersData,
+    isLoading: ordersLoading,
+    isError: ordersError,
+    refetch: refetchOrders,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useOrders(customerId, orderDate || undefined);
+  const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
+  const orders = ordersData?.pages.flatMap((page) => page.items) ?? [];
 
   const salesmen = (staffDirectory.data ?? []).filter((u) => u.role === "salesman");
   const currentRoute = routes.data?.find((r) => r.id === customer.data?.route_id) ?? null;
@@ -74,7 +91,7 @@ export default function CustomerDetailPage() {
       {customer.data && (() => {
         const data = customer.data;
         return (
-          <div className="mx-auto flex max-w-2xl flex-col gap-4 p-4 sm:p-6">
+          <div className="mx-auto flex max-w-2xl flex-col gap-4 p-4 pb-28 sm:p-6">
             <Card className="flex items-center gap-4 rounded-2xl">
               <div
                 className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-semibold ${initialsAvatarTone(
@@ -125,6 +142,76 @@ export default function CustomerDetailPage() {
               >
                 {data.status === "active" ? "Deactivate customer" : "Activate customer"}
               </Button>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-white shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
+                <h2 className="text-sm font-semibold text-ink">Orders</h2>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={orderDate}
+                    onChange={(e) => setOrderDate(e.target.value)}
+                    className="rounded-lg border border-border px-3 py-1.5 text-sm text-ink outline-none focus:border-primary"
+                  />
+                  {orderDate && (
+                    <button
+                      type="button"
+                      onClick={() => setOrderDate("")}
+                      className="text-xs font-medium text-ink-muted hover:text-ink"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {ordersLoading && (
+                <div className="flex flex-col gap-3 p-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                  ))}
+                </div>
+              )}
+
+              {ordersError && (
+                <div className="p-4">
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger">
+                    Couldn&apos;t load orders.
+                    <Button type="button" variant="secondary" onClick={() => refetchOrders()}>
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {!ordersLoading && !ordersError && orders.length === 0 && (
+                <p className="p-6 text-center text-sm text-ink-muted">
+                  {orderDate ? "No orders on this date." : "No orders yet."}
+                </p>
+              )}
+
+              {!ordersLoading && !ordersError && orders.length > 0 && (
+                <div className="divide-y divide-border">
+                  {orders.map((order) => (
+                    <Link
+                      key={order.id}
+                      href={`/admin/orders/${order.id}`}
+                      className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-surface"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-mono text-xs font-medium text-ink-muted">{order.order_number}</p>
+                        <p className="mt-1 text-sm font-semibold text-ink">{formatCurrency(order.total)}</p>
+                        <p className="mt-0.5 text-xs text-ink-muted">{formatDate(order.created_at)}</p>
+                      </div>
+                      <OrderStatusBadge status={order.status} />
+                    </Link>
+                  ))}
+                  <div ref={sentinelRef} className="flex justify-center py-3">
+                    {isFetchingNextPage && <p className="text-xs text-ink-muted">Loading more…</p>}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );

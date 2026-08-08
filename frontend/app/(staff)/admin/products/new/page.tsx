@@ -16,7 +16,7 @@ export default function NewProductPage() {
     <div>
       <TopBar title="Add Product" subtitle="Add a new item to the catalog" backHref="/admin/products" />
 
-      <div className="mx-auto max-w-2xl p-4 sm:p-6">
+      <div className="mx-auto max-w-2xl p-4 pb-28 sm:p-6">
         <ProductForm
           submitLabel="Save product"
           onSubmit={async (payload) => {
