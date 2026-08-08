@@ -376,6 +376,12 @@ export function HomeFeed({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [shareToast, setShareToast] = useState(false);
+  // navigator.share() only works when called synchronously inside the click
+  // handler — an `await fetch()` beforehand consumes the browser's "user
+  // activation" flag and the call silently no-ops on strict browsers (notably
+  // Safari). Pre-fetching the image ahead of time lets the click handler call
+  // share() with no intervening await.
+  const shareImageCache = useRef<Map<string, File>>(new Map());
 
   // Top-bar search icon (layout) reveals this row; focus once it mounts.
   useEffect(() => {
@@ -421,24 +427,83 @@ export function HomeFeed({
     setActiveIndex(index);
   }, []);
 
-  async function handleShare(product: ProductCatalogResponse) {
-    const url = `${window.location.origin}${shareBasePath}/${product.id}`;
-    const shareData: ShareData = {
-      title: product.name,
-      text: `${product.name} — ${formatCurrency(product.effective_price)}`,
-      url,
-    };
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(url);
-        setShareToast(true);
-        setTimeout(() => setShareToast(false), 2000);
-      }
-    } catch {
-      // User cancelled the share sheet — nothing to do.
+  // Best-effort prefetch of the active card's image (and the next one, so a
+  // quick swipe-then-share still hits the cache) into `shareImageCache`.
+  useEffect(() => {
+    const candidates = feedProducts.slice(activeIndex, activeIndex + 2);
+    for (const product of candidates) {
+      if (shareImageCache.current.has(product.id)) continue;
+      const imageUrl = product.image || dummyProductImage(product.name, product.id);
+      fetch(imageUrl)
+        .then((res) => res.blob())
+        .then((blob) => {
+          shareImageCache.current.set(
+            product.id,
+            new File([blob], `${product.name}.jpg`, { type: blob.type || "image/jpeg" })
+          );
+        })
+        .catch(() => {
+          // No prefetched blob — handleShare falls back to link sharing.
+        });
     }
+  }, [activeIndex, feedProducts]);
+
+  function shareLinkFallback(product: ProductCatalogResponse) {
+    const url = `${window.location.origin}${shareBasePath}/${product.id}`;
+    const caption = `${product.name} — ${formatCurrency(product.effective_price)}`;
+
+    if (navigator.share) {
+      navigator.share({ title: product.name, text: caption, url }).catch(() => {
+        // User cancelled the share sheet — nothing to do.
+      });
+    } else if (navigator.clipboard) {
+      navigator.clipboard
+        .writeText(url)
+        .then(() => {
+          setShareToast(true);
+          setTimeout(() => setShareToast(false), 2000);
+        })
+        .catch(() => {
+          // Clipboard permission denied — nothing to do.
+        });
+    }
+    // Neither the Web Share API nor the Clipboard API is available (e.g. a
+    // non-secure-context http:// origin other than localhost) — nothing more
+    // we can do from script in that case.
+  }
+
+  function shareProductImage(product: ProductCatalogResponse, file: File): boolean {
+    if (!navigator.canShare?.({ files: [file] })) return false;
+    navigator
+      .share({ title: product.name, text: `${product.name} — ${formatCurrency(product.effective_price)}`, files: [file] })
+      .catch(() => {
+        // User cancelled the share sheet — nothing to do.
+      });
+    return true;
+  }
+
+  function handleShare(product: ProductCatalogResponse) {
+    // Share the product photo as an actual image attachment (so WhatsApp etc.
+    // show the picture, not a link card) instead of a URL. The fast path uses
+    // the prefetched blob so the call stays perfectly synchronous with the
+    // click (required by Safari's stricter user-activation rules).
+    const cachedFile = shareImageCache.current.get(product.id);
+    if (cachedFile && shareProductImage(product, cachedFile)) return;
+
+    // No prefetched image yet (e.g. clicked right as the card scrolled into
+    // view) — fetch it now. Chromium keeps "user activation" alive for a few
+    // seconds after the click even across an await, so this still opens the
+    // image share sheet there; Safari is stricter and may reject it, in which
+    // case we fall back to the link share below.
+    const imageUrl = product.image || dummyProductImage(product.name, product.id);
+    fetch(imageUrl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const file = new File([blob], `${product.name}.jpg`, { type: blob.type || "image/jpeg" });
+        shareImageCache.current.set(product.id, file);
+        if (!shareProductImage(product, file)) shareLinkFallback(product);
+      })
+      .catch(() => shareLinkFallback(product));
   }
 
   return (
