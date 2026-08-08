@@ -26,6 +26,7 @@ import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { formatCurrency, formatPackingLabel } from "@/lib/utils/format";
 import { dummyProductImage } from "@/lib/utils/dummyProductImage";
+import { imageUrlToFile } from "@/lib/utils/shareImage";
 import type { ProductCatalogResponse } from "@/types/product";
 import type { PostResponse } from "@/types/post";
 
@@ -191,6 +192,7 @@ function ReelSlide({
   onToggleLike,
   onToggleSave,
   onShare,
+  isSharing,
   onOpenBag,
   onVisible,
 }: {
@@ -203,6 +205,7 @@ function ReelSlide({
   onToggleLike: () => void;
   onToggleSave: () => void;
   onShare: () => void;
+  isSharing: boolean;
   onOpenBag: () => void;
   onVisible: (index: number) => void;
 }) {
@@ -271,8 +274,18 @@ function ReelSlide({
           </span>
         </button>
 
-        <button type="button" aria-label="Share" onClick={onShare} className="flex items-center justify-center">
-          <ShareIcon className="h-8 w-8 text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]" />
+        <button
+          type="button"
+          aria-label="Share"
+          onClick={onShare}
+          disabled={isSharing}
+          className="flex items-center justify-center disabled:opacity-60"
+        >
+          {isSharing ? (
+            <span className="block h-8 w-8 animate-spin rounded-full border-2 border-white/40 border-t-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]" />
+          ) : (
+            <ShareIcon className="h-8 w-8 text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]" />
+          )}
         </button>
 
         <button
@@ -343,6 +356,7 @@ export default function HomePage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [shareToast, setShareToast] = useState(false);
+  const [sharingProductId, setSharingProductId] = useState<string | null>(null);
 
   // Top-bar search icon (layout) reveals this row; focus once it mounts.
   useEffect(() => {
@@ -405,14 +419,19 @@ export default function HomePage() {
 
   async function handleShare(product: ProductCatalogResponse) {
     const url = `${window.location.origin}/products/${product.id}`;
-    const shareData: ShareData = {
-      title: product.name,
-      text: `${product.name} — ${formatCurrency(product.effective_price)}`,
-      url,
-    };
+    const imageUrl = product.image || dummyProductImage(product.name, product.id);
+
+    setSharingProductId(product.id);
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
+      // Share only the product photo itself — no title/caption/link — so
+      // apps like WhatsApp send just the image, not an image + text bundle.
+      const file = await imageUrlToFile(imageUrl, `${product.sku || product.id}.jpg`);
+      const fileShareData: ShareData | null = file ? { files: [file] } : null;
+
+      if (fileShareData && navigator.canShare?.(fileShareData)) {
+        await navigator.share(fileShareData);
+      } else if (navigator.share) {
+        await navigator.share({ url });
       } else {
         await navigator.clipboard.writeText(url);
         setShareToast(true);
@@ -420,6 +439,8 @@ export default function HomePage() {
       }
     } catch {
       // User cancelled the share sheet — nothing to do.
+    } finally {
+      setSharingProductId(null);
     }
   }
 
@@ -515,6 +536,7 @@ export default function HomePage() {
               onToggleLike={() => setLiked((prev) => ({ ...prev, [product.id]: !prev[product.id] }))}
               onToggleSave={() => toggleSavedProduct(product, savedProductIds.has(product.id))}
               onShare={() => handleShare(product)}
+              isSharing={sharingProductId === product.id}
               onOpenBag={() => setOpenProductId(product.id)}
               onVisible={handleVisible}
             />
