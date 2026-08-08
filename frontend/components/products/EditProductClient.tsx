@@ -74,7 +74,7 @@ export function EditProductClient({ productId }: { productId: string }) {
         )}
       </header>
 
-      <div className="mx-auto max-w-2xl p-4 sm:p-6">
+      <div className="mx-auto max-w-2xl p-4 pb-28 sm:p-6">
         {isLoading && (
           <div className="flex flex-col gap-4">
             <Skeleton className="h-11 w-full" />

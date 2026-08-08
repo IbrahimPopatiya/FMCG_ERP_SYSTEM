@@ -3,10 +3,10 @@ import { getOrder, listOrders } from "@/lib/api/salesOrders";
 
 const PAGE_SIZE = 10;
 
-export function useOrders(customerId?: string) {
+export function useOrders(customerId?: string, orderDate?: string) {
   return useInfiniteQuery({
-    queryKey: ["orders", customerId ?? null],
-    queryFn: ({ pageParam }) => listOrders(pageParam, PAGE_SIZE, customerId),
+    queryKey: ["orders", customerId ?? null, orderDate ?? null],
+    queryFn: ({ pageParam }) => listOrders(pageParam, PAGE_SIZE, customerId, orderDate),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       const loaded = lastPage.page * lastPage.page_size;

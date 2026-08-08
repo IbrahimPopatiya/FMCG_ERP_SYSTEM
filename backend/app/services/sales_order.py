@@ -1,6 +1,8 @@
 import uuid
+from datetime import date
 from decimal import Decimal
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.deps import Principal
@@ -299,7 +301,12 @@ def load_sales_order(
 
 
 def list_orders_for_principal(
-    db: Session, principal: Principal, page: int, page_size: int, customer_id: uuid.UUID | None = None
+    db: Session,
+    principal: Principal,
+    page: int,
+    page_size: int,
+    customer_id: uuid.UUID | None = None,
+    order_date: date | None = None,
 ) -> tuple[list[SalesOrder], int]:
     query = db.query(SalesOrder).filter(SalesOrder.deleted_at.is_(None))
 
@@ -318,6 +325,9 @@ def list_orders_for_principal(
 
     if customer_id is not None:
         query = query.filter(SalesOrder.customer_id == customer_id)
+
+    if order_date is not None:
+        query = query.filter(func.date(SalesOrder.created_at) == order_date)
 
     total = query.count()
     items = (
