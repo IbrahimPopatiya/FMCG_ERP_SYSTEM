@@ -1,6 +1,6 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import { PrinterIcon } from "@/components/admin/icons";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { SalesOrderResponse } from "@/types/salesOrder";
@@ -97,36 +97,70 @@ function buildBillHtml(order: SalesOrderResponse, customerName: string): string 
 }
 
 export function PrintBillButton({ order, customerName, compact = false, className = "" }: PrintBillButtonProps) {
+  const [error, setError] = useState<string | null>(null);
+
   function handlePrint(e: MouseEvent) {
     // Rows this button sits in are often wrapped in a Link — don't navigate.
     e.preventDefault();
     e.stopPropagation();
+    setError(null);
 
-    const blob = new Blob([buildBillHtml(order, customerName)], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const printWindow = window.open(url, "_blank", "width=800,height=900");
-    if (!printWindow) return;
+    // Open the window synchronously (inside the click handler) so popup
+    // blockers treat it as a direct user action, and so we keep a live
+    // reference to it instead of losing it behind a Blob URL.
+    const printWindow = window.open("", "_blank", "width=800,height=900");
+    if (!printWindow) {
+      setError("Pop-up blocked — please allow pop-ups to print the bill.");
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(buildBillHtml(order, customerName));
+    printWindow.document.close();
+
+    let cleanedUp = false;
+    const closePrintWindow = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      printWindow.removeEventListener("afterprint", closePrintWindow);
+      window.removeEventListener("focus", closePrintWindow);
+      if (!printWindow.closed) printWindow.close();
+    };
+
+    // `afterprint` fires on Save and on Cancel alike, so it's the one signal
+    // we need — but some mobile browsers never fire it on a window opened via
+    // window.open, so falling back to the main window regaining focus (which
+    // happens the moment the print dialog is dismissed either way) catches those.
+    printWindow.addEventListener("afterprint", closePrintWindow);
+    window.addEventListener("focus", closePrintWindow, { once: true });
 
     printWindow.onload = () => {
+      printWindow.focus();
       printWindow.print();
-      URL.revokeObjectURL(url);
     };
   }
 
   return (
-    <button
-      type="button"
-      onClick={handlePrint}
-      aria-label={`Print bill for order ${order.order_number}`}
-      title="Print bill"
-      className={
-        compact
-          ? `flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-ink-muted transition-colors hover:border-primary hover:bg-primary-soft hover:text-primary ${className}`
-          : `inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-ink-muted transition-colors hover:border-primary hover:bg-primary-soft hover:text-primary ${className}`
-      }
-    >
-      <PrinterIcon className="h-4 w-4" />
-      {!compact && "Print"}
-    </button>
+    <div className={compact ? "relative" : "relative inline-block"}>
+      <button
+        type="button"
+        onClick={handlePrint}
+        aria-label={`Print bill for order ${order.order_number}`}
+        title="Print bill"
+        className={
+          compact
+            ? `flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-ink-muted transition-colors hover:border-primary hover:bg-primary-soft hover:text-primary ${className}`
+            : `inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-ink-muted transition-colors hover:border-primary hover:bg-primary-soft hover:text-primary ${className}`
+        }
+      >
+        <PrinterIcon className="h-4 w-4" />
+        {!compact && "Print"}
+      </button>
+      {error && (
+        <span className="absolute right-0 top-full z-10 mt-1 w-max max-w-[220px] rounded-lg bg-danger-soft px-2.5 py-1.5 text-xs font-medium text-danger shadow-sm">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }
