@@ -24,6 +24,7 @@ const ADMIN_DESKTOP: NavItem[] = [
   { href: "/admin/dashboard", label: "Home" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/customers", label: "Customers" },
+  { href: "/admin/posts", label: "Posts" },
   { href: "/admin/products", label: "Products" },
 ];
 

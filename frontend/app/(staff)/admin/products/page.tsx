@@ -142,7 +142,7 @@ export default function AdminProductsPage() {
                 Cancel
               </button>
             )}
-            <Button
+            {/* <Button
               type="button"
               variant={selectMode ? "primary" : "secondary"}
               className="gap-1.5 rounded-full"
@@ -151,7 +151,7 @@ export default function AdminProductsPage() {
               onClick={selectMode ? handleRepost : () => setSelectMode(true)}
             >
               {selectMode ? `Repost${selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}` : "Post"}
-            </Button>
+            </Button> */}
             <Link href="/admin/products/new">
               <Button type="button" className="w-full gap-1.5 rounded-full sm:w-auto">
                 <PlusIcon className="h-4 w-4" />

@@ -8,9 +8,15 @@ interface ProductImageFieldProps {
   previewUrl: string | null;
   onFileSelected: (file: File) => void;
   onRemove: () => void;
+  label?: string;
 }
 
-export function ProductImageField({ previewUrl, onFileSelected, onRemove }: ProductImageFieldProps) {
+export function ProductImageField({
+  previewUrl,
+  onFileSelected,
+  onRemove,
+  label = "Product image",
+}: ProductImageFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -21,7 +27,7 @@ export function ProductImageField({ previewUrl, onFileSelected, onRemove }: Prod
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-sm font-medium text-ink">Product image</label>
+      <label className="text-sm font-medium text-ink">{label}</label>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
