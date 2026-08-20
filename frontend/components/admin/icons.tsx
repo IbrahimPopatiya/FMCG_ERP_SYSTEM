@@ -106,6 +106,17 @@ export function ImageIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+export function PrinterIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M7 8.5V4h10v4.5" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="3.5" y="8.5" width="17" height="8" rx="1.5" />
+      <path d="M7 14.5h10V21H7z" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="17" cy="11.3" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function UploadCloudIcon({ className = "h-6 w-6" }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

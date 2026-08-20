@@ -15,10 +15,12 @@ class DuplicateProductError(Exception):
 
 
 def _next_sku(db: Session) -> str:
-    """SKU-{n}, where n is one past how many products have ever been created
-    (including soft-deleted ones, so numbers never get reused)."""
-    count = db.query(Product).count()
-    return f"SKU-{count + 1}"
+    """SKU-{n}, where n is one past the highest SKU number used so far
+    (including soft-deleted products), so numbers never get reused even if
+    rows were hard-deleted and left gaps."""
+    skus = db.query(Product.sku).all()
+    max_num = max((int(sku.split("-")[1]) for (sku,) in skus), default=0)
+    return f"SKU-{max_num + 1}"
 
 
 def get_product(db: Session, product_id: uuid.UUID) -> Product | None:

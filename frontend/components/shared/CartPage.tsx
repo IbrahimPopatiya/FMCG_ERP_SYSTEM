@@ -29,6 +29,9 @@ export interface CartPageProps {
   onOrderPlaced?: () => void;
   headerSlot?: React.ReactNode;
   belowHeaderSlot?: React.ReactNode;
+  // Salesman-only: shows the total loading capacity (LC) for vehicle
+  // planning. Customers don't need this, so it defaults to hidden.
+  showLoadingCapacity?: boolean;
 }
 
 export function CartPage({
@@ -44,6 +47,7 @@ export function CartPage({
   onOrderPlaced,
   headerSlot,
   belowHeaderSlot,
+  showLoadingCapacity = false,
 }: CartPageProps) {
   const router = useRouter();
   const { items, subtotal, totalLoadingCapacity, setQty, removeItem, clear } = useCart();
@@ -158,10 +162,12 @@ export function CartPage({
           </div>
 
           <div className="flex flex-col gap-2 rounded-xl border border-border bg-white p-4">
-            <div className="flex items-center justify-between text-sm text-ink-muted">
-              <span>Total LC</span>
-              <span>{totalLoadingCapacity}</span>
-            </div>
+            {showLoadingCapacity && (
+              <div className="flex items-center justify-between text-sm text-ink-muted">
+                <span>Total LC</span>
+                <span>{totalLoadingCapacity}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between text-sm text-ink-muted">
               <span>
                 Subtotal ({items.length} {items.length === 1 ? "Item" : "Items"})

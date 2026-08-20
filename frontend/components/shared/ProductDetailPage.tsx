@@ -109,7 +109,6 @@ export function ProductDetailPage({ basePath, cartHref, cartDisabled, cartDisabl
                 <p className="text-sm text-ink-muted line-through">{formatCurrency(product.mrp)}</p>
               )}
             </div>
-            <p className="mb-1 text-xs text-ink-muted">Incl. {product.gst_rate}% GST</p>
           </div>
 
           {cartDisabled && cartDisabledMessage && (

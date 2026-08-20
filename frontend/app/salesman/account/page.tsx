@@ -50,7 +50,7 @@ export default function SalesmanAccountPage() {
         </div>
       )}
 
-      <Button type="button" variant="secondary" className="w-full" onClick={handleLogout}>
+      <Button type="button" variant="secondary" className="w-full bg-red-200 text-red-600" onClick={handleLogout}>
         Log out
       </Button>
     </div>

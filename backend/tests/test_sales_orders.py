@@ -111,7 +111,7 @@ def setup_salesman_and_customer(client, headers, customer_state="Maharashtra"):
 
 # ---------- POST /orders (staff, on behalf of a customer) ----------
 
-def test_salesman_creates_order_same_state_applies_cgst_sgst(client):
+def test_salesman_creates_order_same_state_does_not_apply_cgst_sgst(client):
     headers = admin_headers(client)
     salesman_headers, customer, _ = setup_salesman_and_customer(client, headers)
     product = create_product(client, headers)
@@ -129,16 +129,14 @@ def test_salesman_creates_order_same_state_applies_cgst_sgst(client):
     body = response.json()
     assert body["order_source"] == "salesman"
     assert body["status"] == "pending"
-    assert float(body["cgst"]) > 0
-    assert float(body["sgst"]) > 0
-    # subtotal = 100 * 2 = 200, gst 18% = 36, cgst+sgst = 18 each
+    # GST is intentionally not applied to order totals - subtotal = 100 * 2 = 200.
     assert float(body["subtotal"]) == 200.00
-    assert float(body["cgst"]) == 18.00
-    assert float(body["sgst"]) == 18.00
-    assert float(body["total"]) == 236.00
+    assert float(body["cgst"]) == 0.00
+    assert float(body["sgst"]) == 0.00
+    assert float(body["total"]) == 200.00
 
 
-def test_salesman_creates_order_different_state_still_applies_cgst_sgst(client):
+def test_salesman_creates_order_different_state_still_does_not_apply_cgst_sgst(client):
     headers = admin_headers(client)
     salesman_headers, customer, _ = setup_salesman_and_customer(
         client, headers, customer_state="Karnataka"
@@ -156,8 +154,8 @@ def test_salesman_creates_order_different_state_still_applies_cgst_sgst(client):
 
     assert response.status_code == 201
     body = response.json()
-    assert float(body["cgst"]) == 9.00
-    assert float(body["sgst"]) == 9.00
+    assert float(body["cgst"]) == 0.00
+    assert float(body["sgst"]) == 0.00
 
 
 def test_salesman_creates_order_for_customer_outside_route_returns_403(client):

@@ -50,16 +50,16 @@ export function CustomerMenuProvider({ children }: { children: React.ReactNode }
             </div>
           </div>
         }
-        footer={
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border text-sm font-bold text-ink-muted transition-colors hover:bg-surface hover:text-ink"
-          >
-            <LogoutIcon className="h-4 w-4" />
-            Log out
-          </button>
-        }
+        // footer={
+        //   <button
+        //     type="button"
+        //     onClick={handleLogout}
+        //     className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border text-sm font-bold text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+        //   >
+        //     <LogoutIcon className="h-4 w-4" />
+        //     Log out
+        //   </button>
+        // }
       />
     </CustomerMenuContext.Provider>
   );
