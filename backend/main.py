@@ -41,6 +41,7 @@ from app.api import (
     credit_notes,
     posts,
     saved_products,
+    poster,
 )
 from app.core.config import settings
 from app.core.logging import get_logger, get_request_id, setup_logging
@@ -175,6 +176,7 @@ app.include_router(returns.router, prefix="/api/v1")
 app.include_router(credit_notes.router, prefix="/api/v1")
 app.include_router(posts.router, prefix="/api/v1")
 app.include_router(saved_products.router, prefix="/api/v1")
+app.include_router(poster.router, prefix="/api/v1")
 
 
 if __name__ == "__main__":
