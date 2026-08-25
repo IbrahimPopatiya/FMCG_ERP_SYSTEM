@@ -1,0 +1,58 @@
+Create a premium, professional wholesale product advertising poster using the uploaded product image as the primary and authoritative product reference.
+
+Number of product displays: {{PRODUCT_COUNT}}
+
+IMPORTANT PRODUCT RULE:
+The uploaded product image is the source of truth.
+Do not redesign, recolor, rename, reshape, replace, or invent the product packaging.
+Preserve the product's real brand, product name, packaging design, logo, colors, typography, visible claims, price, flavor information, quantity information, symbols and certifications.
+Remove the original photo background if necessary and present the product cleanly as a professional commercial product image.
+
+PRODUCT COUNT:
+If the number of product displays is 1, display one large product prominently in the main product area.
+If it is 2, display two matching product packages/containers side-by-side, both clearly visible and approximately equal in visual importance.
+If it is 3, display three matching product packages/containers in a balanced professional arrangement, every product clearly visible without excessive overlap.
+Do not create additional products beyond the requested count.
+
+POSTER STYLE:
+Create a clean, modern, premium FMCG wholesale advertisement.
+Use a mostly white/light background with strong visual hierarchy.
+Use the uploaded product's dominant packaging colors as the poster's secondary accent colors.
+
+COLOR ADAPTATION:
+Automatically analyze the uploaded product image and identify its dominant visual colors.
+Use those colors for feature icons, section dividers, enquiry section accents, delivery section accents, footer background, and decorative elements.
+The product itself must remain unchanged. Do not force any fixed color theme onto the product.
+
+LAYOUT:
+
+1. TOP BRANDING
+"Premium Quality" badge on the left, business name/logo area in the center, "100% VEG" badge on the right when appropriate for the product.
+
+2. MAIN PRODUCT AREA
+Place the requested number of product displays in the center. The product must be the main visual focus. Use realistic commercial lighting, clean edges, subtle shadows, and a premium catalog-style presentation.
+
+3. PRODUCT FEATURE SECTION
+Below the product, create exactly 6 short feature items, generated from the actual uploaded product image. Only use information that is clearly visible or safely inferable from the product packaging. Each feature has a simple small line icon, a very short title, maximum 2-4 words per line, clean spacing. Do not create a paragraph in the feature section.
+
+4. ENQUIRY + DELIVERY SECTION
+A clean horizontal information section with a phone icon and "FOR ENQUIRIES", and a delivery/truck icon with "DELIVERY AVAILABLE" / "FAST & SAFE DELIVERY".
+
+5. FOOTER
+A strong colored footer using an accent color derived from the product packaging, with a location icon and a business address placeholder, and an email icon with a business email placeholder.
+
+TYPOGRAPHY:
+Bold, highly readable commercial typography. Keep headings large and clear. Do not overcrowd the design.
+
+VISUAL QUALITY:
+High-resolution commercial advertising poster, sharp product packaging, accurate product proportions, clean white/light background, balanced margins, professional FMCG distributor catalog aesthetic, realistic product shadows, no unnecessary decorative objects.
+
+STRICT TEXT RULES:
+Do not add random marketing slogans or claims not supported by the product image. Do not add a separate large text box describing the product unless explicitly requested. The feature section is the only place where short product benefits should be displayed. Do not invent prices, weights, quantities, flavors, ingredients, certifications, or health claims.
+
+STRICT LAYOUT RULE:
+Keep this structure: TOP BRANDING -> MAIN PRODUCT -> 6 FEATURE ICONS -> ENQUIRY / DELIVERY -> BUSINESS FOOTER.
+
+Generate the final poster as a polished finished advertisement, not as a mockup or wireframe.
+
+Negative prompt / restrictions: do not create extra products, do not duplicate the product incorrectly, do not change the product packaging, do not redesign the brand logo, do not alter the product name, do not invent product claims, ingredients, flavors, or prices, do not add a large product-description text box or unnecessary paragraphs, do not use gradients that overpower the product, do not use an unrelated color palette, do not use a cluttered background, do not create a lifestyle scene, do not add unrelated objects, do not crop the product, do not hide important packaging details, do not make the product look like a different SKU.

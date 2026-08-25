@@ -20,7 +20,7 @@ interface RoleNav {
 // mockup (Home / Orders / Customers / Posts / Products). Every other admin
 // domain page (brands, inventory, invoices, etc.) still exists and works if
 // visited directly by URL - it's just not linked from the nav anymore.
-const ADMIN_DESKTOP: NavItem[] = [
+const ADMIN_MOBILE: NavItem[] = [
   { href: "/admin/dashboard", label: "Home" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/customers", label: "Customers" },
@@ -28,11 +28,16 @@ const ADMIN_DESKTOP: NavItem[] = [
   { href: "/admin/products", label: "Products" },
 ];
 
+// Desktop sidebar (and the mobile slide-out drawer, which reuses this same
+// list) carries everything the bottom tab bar doesn't have room for -
+// Poster AI included, since it's a menu-reachable tool, not a daily tab.
+const ADMIN_DESKTOP: NavItem[] = [...ADMIN_MOBILE, { href: "/admin/poster-ai", label: "Poster AI" }];
+
 export const ROLE_NAV: Record<UserRole, RoleNav> = {
   admin: {
     home: "/admin/dashboard",
     desktop: ADMIN_DESKTOP,
-    mobile: ADMIN_DESKTOP,
+    mobile: ADMIN_MOBILE,
   },
   salesman: {
     home: "/admin/dashboard",

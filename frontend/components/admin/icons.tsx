@@ -126,6 +126,36 @@ export function UploadCloudIcon({ className = "h-6 w-6" }: IconProps) {
   );
 }
 
+export function SparkleIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2.5l1.8 5.2 5.2 1.8-5.2 1.8L12 17.5l-1.8-5.2-5.2-1.8 5.2-1.8L12 2.5z" />
+      <path d="M19 15l.9 2.6L22.5 18.5l-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9L19 15z" />
+    </svg>
+  );
+}
+
+export function DownloadIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 3v12m0 0l-4-4m4 4l4-4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function RefreshIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path
+        d="M4 12a8 8 0 0114-5.3M20 12a8 8 0 01-14 5.3M4 4v5h5M20 20v-5h-5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 // Bottom-nav / sidebar icon per admin section, keyed by href so both
 // MobileBottomNav and DesktopSidebar can look one up without every caller
 // of getRoleNav() having to carry an icon component around.
@@ -140,4 +170,5 @@ export const NAV_ICON_BY_HREF: Record<string, ComponentType<IconProps>> = {
   "/admin/invoices": DocumentIcon,
   "/admin/credit-notes": DocumentIcon,
   "/admin/vehicles": TruckIcon,
+  "/admin/poster-ai": SparkleIcon,
 };
