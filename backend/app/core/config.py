@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     supabase_service_role_key: str
     supabase_storage_bucket: str = "fmcg_products"
 
-    # Gemini API key - server-side only, used to generate AI product ad
-    # posters (admin > Poster AI). Get one at aistudio.google.com.
-    gemini_api_key: str = ""
+    # OpenAI API key - server-side only, used to generate AI product ad
+    # posters (admin > Poster AI). Get one at platform.openai.com.
+    openai_api_key: str = ""
 
     # Logging — stdout only (not DB). Use ENVIRONMENT=production on deploy
     # so LOG_FORMAT=auto switches to JSON for log drains.

@@ -1,46 +1,47 @@
-from google import genai
-from google.genai import types
+import base64
+import io
+
+from openai import OpenAI
 
 from app.core.config import settings
 
-POSTER_MODEL = "gemini-2.5-flash-image"
+POSTER_MODEL = "gpt-image-1"
 
 
 class PosterGenerationError(Exception):
-    """Raised when Gemini fails to return a generated poster image."""
+    """Raised when OpenAI fails to return a generated poster image."""
 
 
 def generate_poster(image_bytes: bytes, mime_type: str, prompt: str) -> tuple[bytes, str]:
-    """Sends the product image + a fully-built prompt to Gemini's image
+    """Sends the product image + a fully-built prompt to OpenAI's image
     model and returns the generated poster as (image_bytes, mime_type).
-    Raises PosterGenerationError if Gemini doesn't return an image."""
-    if not settings.gemini_api_key:
-        raise PosterGenerationError("GEMINI_API_KEY is not configured")
+    Raises PosterGenerationError if OpenAI doesn't return an image."""
+    if not settings.openai_api_key:
+        raise PosterGenerationError("OPENAI_API_KEY is not configured")
 
-    client = genai.Client(api_key=settings.gemini_api_key)
+    client = OpenAI(api_key=settings.openai_api_key)
+
+    ext = mime_type.split("/")[-1] or "png"
+    image_file = io.BytesIO(image_bytes)
+    image_file.name = f"product.{ext}"
 
     try:
-        response = client.models.generate_content(
+        response = client.images.edit(
             model=POSTER_MODEL,
-            contents=[
-                prompt,
-                types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
-            ],
+            image=image_file,
+            prompt=prompt,
         )
     except Exception as e:
-        # Any Gemini/network failure (bad key, quota, timeout, ...) must
+        # Any OpenAI/network failure (bad key, quota, timeout, ...) must
         # surface as PosterGenerationError - an exception raised past this
         # point would skip CORSMiddleware entirely (Starlette only attaches
         # CORS headers to responses that go through normal exception
         # handling), which the browser reports as a misleading CORS error
         # instead of the real failure.
-        raise PosterGenerationError(f"Gemini request failed: {e}") from e
+        raise PosterGenerationError(f"OpenAI request failed: {e}") from e
 
-    candidates = response.candidates or []
-    for candidate in candidates:
-        parts = candidate.content.parts if candidate.content else []
-        for part in parts:
-            if part.inline_data and part.inline_data.data:
-                return part.inline_data.data, part.inline_data.mime_type or "image/png"
+    data = response.data or []
+    if data and data[0].b64_json:
+        return base64.b64decode(data[0].b64_json), "image/png"
 
-    raise PosterGenerationError("Gemini did not return a generated image")
+    raise PosterGenerationError("OpenAI did not return a generated image")
