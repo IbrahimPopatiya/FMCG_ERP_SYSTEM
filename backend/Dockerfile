@@ -17,6 +17,10 @@ COPY . .
 
 EXPOSE 8000
 
+RUN chmod +x start.sh
+
 # host 0.0.0.0, not localhost - inside a container "localhost" only
-# refers to the container itself, other containers couldn't reach it
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# refers to the container itself, other containers couldn't reach it.
+# start.sh reads $PORT (Render sets this at runtime) and runs migrations
+# before starting uvicorn.
+CMD ["./start.sh"]
