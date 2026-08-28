@@ -39,7 +39,6 @@ def list_saved_products(
                 loading_capacity=s.product.loading_capacity,
                 mrp=s.product.mrp,
                 effective_price=prices[s.product.id],
-                gst_rate=s.product.gst_rate,
                 image=s.product.image,
             ),
         )
@@ -75,7 +74,6 @@ def save_product(
             loading_capacity=saved.product.loading_capacity,
             mrp=saved.product.mrp,
             effective_price=prices[saved.product.id],
-            gst_rate=saved.product.gst_rate,
             image=saved.product.image,
         ),
     )

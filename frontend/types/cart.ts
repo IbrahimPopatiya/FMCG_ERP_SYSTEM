@@ -9,7 +9,6 @@ export interface CartItem {
   // the actual line total is price * unitsPerBox * qty.
   unitsPerBox: number;
   loadingCapacity: number;
-  gstRate: number;
   image: string | null;
   qty: number;
 }

@@ -21,9 +21,6 @@ export interface ProductFormValues {
   mrp: string;
   selling_price: string;
   minimum_stock: string;
-  // Not shown or editable in this form - GST rate is set elsewhere. Carried
-  // through so editing a product doesn't silently reset its existing rate.
-  gst_rate: string;
   imageUrl: string | null;
   imageFile: File | null;
 }
@@ -38,7 +35,6 @@ export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   mrp: "",
   selling_price: "",
   minimum_stock: "",
-  gst_rate: "0",
   imageUrl: null,
   imageFile: null,
 };
@@ -53,7 +49,6 @@ function toPayload(values: ProductFormValues, image: string | null): ProductCrea
     loading_capacity: Number(values.loading_capacity),
     mrp: Number(values.mrp),
     selling_price: Number(values.selling_price),
-    gst_rate: Number(values.gst_rate),
     minimum_stock: Number(values.minimum_stock),
     image,
   };

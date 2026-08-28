@@ -4,6 +4,7 @@ import Link from "next/link";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { DiscountBadge } from "@/components/customer/DiscountBadge";
 import { CartIcon } from "@/components/customer/icons";
+import { NoProductImage } from "@/components/ui/NoProductImage";
 import { formatCurrency } from "@/lib/utils/format";
 import type { ProductCatalogResponse } from "@/types/product";
 
@@ -43,7 +44,7 @@ function ProductCardBase({
               className="object-cover"
             />
           ) : (
-            <span className="text-xs font-medium text-primary/60">{product.unit}</span>
+            <NoProductImage />
           )}
         </div>
         <div className="absolute left-2 top-2">

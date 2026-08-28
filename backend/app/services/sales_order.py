@@ -111,7 +111,7 @@ def _price_items(
                 product_id=product.id,
                 ordered_qty=item_data.ordered_qty,
                 price=price,
-                gst_rate=product.gst_rate,
+                gst_rate=Decimal("0"),
                 cgst=cgst,
                 sgst=sgst,
                 line_total=line_total,

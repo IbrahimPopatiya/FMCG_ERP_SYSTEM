@@ -49,7 +49,6 @@ def list_products(
             loading_capacity=p.loading_capacity,
             mrp=p.mrp,
             effective_price=prices[p.id],
-            gst_rate=p.gst_rate,
             image=p.image,
         )
         for p in products
@@ -90,7 +89,6 @@ def list_products_feed(
             loading_capacity=p.loading_capacity,
             mrp=p.mrp,
             effective_price=prices[p.id],
-            gst_rate=p.gst_rate,
             image=p.image,
         )
         for p in products
@@ -103,12 +101,13 @@ def list_products_for_management(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     search: Optional[str] = Query(default=None),
+    brand_id: Optional[uuid.UUID] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Staff catalog management view - every product, any status, full fields, paginated.
-    `search` matches product name, SKU, or brand name."""
-    items, total = product_service.list_all_products(db, page, page_size, search)
+    `search` matches product name, SKU, or brand name. `brand_id` narrows to one brand."""
+    items, total = product_service.list_all_products(db, page, page_size, search, brand_id)
     return Page(items=items, total=total, page=page, page_size=page_size)
 
 
@@ -151,7 +150,6 @@ def get_catalog_product(
         loading_capacity=product.loading_capacity,
         mrp=product.mrp,
         effective_price=prices[product.id],
-        gst_rate=product.gst_rate,
         image=product.image,
     )
 

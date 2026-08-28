@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { NoProductImage } from "@/components/ui/NoProductImage";
 import { TopBar } from "@/components/layout/TopBar";
 import { SearchIcon, PlusIcon } from "@/components/admin/icons";
 
@@ -20,7 +21,6 @@ import { useCreatePost, useRepostPost, useRepostPosts, useSetPostStatus } from "
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 import { formatCurrency } from "@/lib/utils/format";
-import { dummyProductImage } from "@/lib/utils/dummyProductImage";
 import type { PostResponse } from "@/types/post";
 
 const PAGE_SIZE = 12;
@@ -67,13 +67,17 @@ function PostCard({
         disabled={!selectMode}
         className="relative block h-40 w-full bg-surface disabled:cursor-default"
       >
-        <Image
-          src={post.image || dummyProductImage(post.product_name, post.id)}
-          alt={post.product_name}
-          fill
-          sizes="(min-width: 640px) 33vw, 100vw"
-          className="object-cover"
-        />
+        {post.image ? (
+          <Image
+            src={post.image}
+            alt={post.product_name}
+            fill
+            sizes="(min-width: 640px) 33vw, 100vw"
+            className="object-cover"
+          />
+        ) : (
+          <NoProductImage />
+        )}
         {!selectMode && (
           <div className="absolute right-2 top-2">
             <Badge tone={post.is_active ? "success" : "neutral"}>{post.is_active ? "Active" : "Inactive"}</Badge>

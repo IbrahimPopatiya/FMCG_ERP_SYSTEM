@@ -33,10 +33,15 @@ export function listProductsFeed({ page, pageSize, search, categoryId, sort }: P
     .then((res) => res.data);
 }
 
-export function listProductsForManagement(page: number, pageSize: number, search?: string) {
+export function listProductsForManagement(
+  page: number,
+  pageSize: number,
+  search?: string,
+  brandId?: string | null
+) {
   return api
     .get<Page<ProductResponse>>("/products/manage", {
-      params: { page, page_size: pageSize, search: search || undefined },
+      params: { page, page_size: pageSize, search: search || undefined, brand_id: brandId || undefined },
     })
     .then((res) => res.data);
 }

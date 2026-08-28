@@ -12,8 +12,51 @@ import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useProductsManage } from "@/lib/hooks/useProductsManage";
 import { useSetProductStatus } from "@/lib/hooks/useProductMutations";
+import { useBrands } from "@/lib/hooks/useBrands";
 import type { ProductResponse } from "@/types/product";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
+
+function BrandFilterRow({
+  selectedBrandId,
+  onSelect,
+}: {
+  selectedBrandId: string | null;
+  onSelect: (brandId: string | null) => void;
+}) {
+  const brands = useBrands();
+
+  if (!brands.data || brands.data.length === 0) return null;
+
+  return (
+    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+      <button
+        type="button"
+        onClick={() => onSelect(null)}
+        className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+          selectedBrandId === null
+            ? "bg-ink text-white"
+            : "bg-surface text-ink-muted hover:bg-border"
+        }`}
+      >
+        All brands
+      </button>
+      {brands.data.map((brand) => (
+        <button
+          key={brand.id}
+          type="button"
+          onClick={() => onSelect(brand.id)}
+          className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+            selectedBrandId === brand.id
+              ? "bg-ink text-white"
+              : "bg-surface text-ink-muted hover:bg-border"
+          }`}
+        >
+          {brand.name}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function SkeletonRows() {
   return (
@@ -60,6 +103,7 @@ export default function AdminProductsPage() {
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
 
   const {
     data,
@@ -69,7 +113,7 @@ export default function AdminProductsPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useProductsManage(debouncedSearch);
+  } = useProductsManage(debouncedSearch, selectedBrandId);
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
 
@@ -113,6 +157,7 @@ export default function AdminProductsPage() {
             className="h-11 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
           />
         </div>
+        <BrandFilterRow selectedBrandId={selectedBrandId} onSelect={setSelectedBrandId} />
       </header>
 
       {isLoading && <SkeletonRows />}
@@ -128,7 +173,9 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && total === 0 && <EmptyState hasSearch={!!debouncedSearch} />}
+      {!isLoading && !isError && total === 0 && (
+        <EmptyState hasSearch={!!debouncedSearch || !!selectedBrandId} />
+      )}
 
       {!isLoading && !isError && total > 0 && (
         <div className="p-4 sm:p-6">

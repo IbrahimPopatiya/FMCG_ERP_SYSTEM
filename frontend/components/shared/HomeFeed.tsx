@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { QtyStepper } from "@/components/ui/QtyStepper";
+import { NoProductImage } from "@/components/ui/NoProductImage";
 import { FilterDrawer } from "@/components/customer/FilterDrawer";
 import { useHomeSearch } from "@/components/customer/HomeSearch";
 import {
@@ -24,7 +25,6 @@ import { usePosts } from "@/lib/hooks/usePosts";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { formatCurrency } from "@/lib/utils/format";
-import { dummyProductImage } from "@/lib/utils/dummyProductImage";
 import type { ProductCatalogResponse } from "@/types/product";
 import type { PostResponse } from "@/types/post";
 
@@ -49,7 +49,6 @@ function postToFeedItem(post: PostResponse): FeedItem {
     loading_capacity: 0,
     mrp: post.mrp,
     effective_price: post.price,
-    gst_rate: 0,
     image: post.image,
     hideCaption: post.is_standalone,
   };
@@ -133,13 +132,17 @@ function ProductDetailSheet({
 
         <div className="mt-3 flex gap-4 overflow-y-auto">
           <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft">
-            <Image
-              src={product.image || dummyProductImage(product.name, product.id)}
-              alt={product.name}
-              fill
-              sizes="112px"
-              className="object-cover"
-            />
+            {product.image ? (
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                sizes="112px"
+                className="object-cover"
+              />
+            ) : (
+              <NoProductImage />
+            )}
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-2.5">
@@ -249,23 +252,25 @@ function ReelSlide({
     return () => observer.disconnect();
   }, [index, onVisible]);
 
-  const imageSrc = product.image || dummyProductImage(product.name, product.id);
-
   return (
     <section
       ref={sectionRef}
       className="relative h-full w-full shrink-0 snap-start snap-always overflow-hidden bg-white"
     >
       <div className="absolute inset-0 h-full w-full bg-surface">
-        {shouldLoadImage && (
-          <Image
-            src={imageSrc}
-            alt={product.name}
-            fill
-            sizes="100vw"
-            priority={index === 0}
-            className="object-contain"
-          />
+        {product.image ? (
+          shouldLoadImage && (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="100vw"
+              priority={index === 0}
+              className="object-contain"
+            />
+          )
+        ) : (
+          <NoProductImage />
         )}
       </div>
 
@@ -432,9 +437,8 @@ export function HomeFeed({
   useEffect(() => {
     const candidates = feedProducts.slice(activeIndex, activeIndex + 2);
     for (const product of candidates) {
-      if (shareImageCache.current.has(product.id)) continue;
-      const imageUrl = product.image || dummyProductImage(product.name, product.id);
-      fetch(imageUrl)
+      if (!product.image || shareImageCache.current.has(product.id)) continue;
+      fetch(product.image)
         .then((res) => res.blob())
         .then((blob) => {
           shareImageCache.current.set(
@@ -490,13 +494,17 @@ export function HomeFeed({
     const cachedFile = shareImageCache.current.get(product.id);
     if (cachedFile && shareProductImage(product, cachedFile)) return;
 
+    if (!product.image) {
+      shareLinkFallback(product);
+      return;
+    }
+
     // No prefetched image yet (e.g. clicked right as the card scrolled into
     // view) — fetch it now. Chromium keeps "user activation" alive for a few
     // seconds after the click even across an await, so this still opens the
     // image share sheet there; Safari is stricter and may reject it, in which
     // case we fall back to the link share below.
-    const imageUrl = product.image || dummyProductImage(product.name, product.id);
-    fetch(imageUrl)
+    fetch(product.image)
       .then((res) => res.blob())
       .then((blob) => {
         const file = new File([blob], `${product.name}.jpg`, { type: blob.type || "image/jpeg" });

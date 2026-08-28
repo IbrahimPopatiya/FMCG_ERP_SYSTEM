@@ -66,7 +66,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             price: product.effective_price,
             unitsPerBox: product.units_per_box,
             loadingCapacity: product.loading_capacity,
-            gstRate: product.gst_rate,
             image: product.image,
             qty,
           },

@@ -74,11 +74,13 @@ def list_active_products_feed(
 
 
 def list_all_products(
-    db: Session, page: int, page_size: int, search: str | None = None
+    db: Session, page: int, page_size: int, search: str | None = None, brand_id: uuid.UUID | None = None
 ) -> tuple[list[Product], int]:
     """Staff catalog management view - every non-deleted product, any status, paginated.
     `search` matches product name, SKU, or brand name (outer-joined so
-    brandless products still show up when there's no search term)."""
+    brandless products still show up when there's no search term).
+    `brand_id` narrows the list to a single brand (see the admin products
+    brand filter row)."""
     query = db.query(Product).outerjoin(Brand, Brand.id == Product.brand_id).filter(
         Product.deleted_at.is_(None)
     )
@@ -87,6 +89,8 @@ def list_all_products(
         query = query.filter(
             (Product.name.ilike(like)) | (Product.sku.ilike(like)) | (Brand.name.ilike(like))
         )
+    if brand_id:
+        query = query.filter(Product.brand_id == brand_id)
     query = query.order_by(Product.name)
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()

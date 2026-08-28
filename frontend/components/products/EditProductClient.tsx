@@ -22,7 +22,6 @@ function toFormValues(product: ProductResponse): ProductFormValues {
     loading_capacity: String(product.loading_capacity),
     mrp: String(product.mrp),
     selling_price: String(product.selling_price),
-    gst_rate: String(product.gst_rate),
     minimum_stock: String(product.minimum_stock),
     imageUrl: product.image,
     imageFile: null,

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { NoProductImage } from "@/components/ui/NoProductImage";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { DiscountBadge } from "@/components/customer/DiscountBadge";
@@ -86,7 +87,7 @@ export function ProductDetailPage({ basePath, cartHref, cartDisabled, cartDisabl
                 priority
               />
             ) : (
-              <span className="text-sm font-medium text-primary/60">{product.unit}</span>
+              <NoProductImage />
             )}
             <div className="absolute left-3 top-3">
               <DiscountBadge mrp={product.mrp} effectivePrice={product.effective_price} />

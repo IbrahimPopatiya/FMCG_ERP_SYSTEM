@@ -37,17 +37,15 @@ def _build_items(db: Session, items_data) -> tuple[list[PurchaseItem], Decimal, 
             raise ProductNotFoundError(f"Product {item_data.product_id} not found")
 
         line_amount = item_data.purchase_price * item_data.quantity
-        gst_amount = line_amount * product.gst_rate / 100
-        cgst = gst_amount / 2
-        sgst = gst_amount / 2
-        line_total = line_amount + gst_amount
+        cgst = sgst = Decimal("0")
+        line_total = line_amount
 
         items.append(
             PurchaseItem(
                 product_id=product.id,
                 quantity=item_data.quantity,
                 purchase_price=item_data.purchase_price,
-                gst_rate=product.gst_rate,
+                gst_rate=Decimal("0"),
                 cgst=cgst,
                 sgst=sgst,
                 total=line_total,

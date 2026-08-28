@@ -9,7 +9,6 @@ export interface ProductCreate {
   loading_capacity: number;
   mrp: number;
   selling_price: number;
-  gst_rate: number;
   minimum_stock: number;
   image?: string | null;
 }
@@ -27,7 +26,6 @@ export interface ProductResponse {
   loading_capacity: number;
   mrp: number;
   selling_price: number;
-  gst_rate: number;
   minimum_stock: number;
   image: string | null;
   status: ProductStatus;
@@ -48,7 +46,6 @@ export interface ProductCatalogResponse {
   loading_capacity: number;
   mrp: number;
   effective_price: number;
-  gst_rate: number;
   image: string | null;
 }
 

@@ -17,7 +17,6 @@ class ProductCreate(BaseModel):
     loading_capacity: int
     mrp: Decimal
     selling_price: Decimal
-    gst_rate: Decimal = Decimal("0")
     minimum_stock: int
     image: Optional[str] = None
 
@@ -31,7 +30,6 @@ class ProductUpdate(BaseModel):
     loading_capacity: Optional[int] = None
     mrp: Optional[Decimal] = None
     selling_price: Optional[Decimal] = None
-    gst_rate: Optional[Decimal] = None
     minimum_stock: Optional[int] = None
     image: Optional[str] = None
 
@@ -51,7 +49,6 @@ class ProductResponse(BaseModel):
     loading_capacity: int
     mrp: Decimal
     selling_price: Decimal
-    gst_rate: Decimal
     minimum_stock: int
     image: Optional[str]
     status: ProductStatus
@@ -71,7 +68,6 @@ class ProductCatalogResponse(BaseModel):
     loading_capacity: int
     mrp: Decimal
     effective_price: Decimal
-    gst_rate: Decimal
     image: Optional[str]
 
     model_config = ConfigDict(from_attributes=True)

@@ -22,7 +22,6 @@ class Product(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
     loading_capacity = Column(Integer, nullable=False, default=0)
     mrp = Column(Numeric(12, 2), nullable=False)
     selling_price = Column(Numeric(12, 2), nullable=False)
-    gst_rate = Column(Numeric(5, 2), nullable=False)
     minimum_stock = Column(Integer, nullable=False, default=0)
     image = Column(String(255), nullable=True)
     status = Column(String(20), nullable=False, default="active")  # active, inactive
