@@ -11,6 +11,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useProductsFeed } from "@/lib/hooks/useProducts";
 import { useCategories } from "@/lib/hooks/useCategories";
+import { useBrands } from "@/lib/hooks/useBrands";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import type { ProductCatalogResponse } from "@/types/product";
 
@@ -30,6 +31,10 @@ export interface ProductsListPageProps {
   headerSlot: React.ReactNode;
   disabled?: boolean;
   renderCard: (product: ProductCatalogResponse, qty: number, onQtyChange: (product: ProductCatalogResponse, qty: number) => void) => React.ReactNode;
+  // "category" (default, customer Products) filters by category via a
+  // ?category= URL param; "brand" (salesman Products) filters by brand via
+  // ?brand= instead - see FilterDrawer's `mode` prop.
+  filterMode?: "category" | "brand";
 }
 
 export function ProductsListPage(props: ProductsListPageProps) {
@@ -40,22 +45,25 @@ export function ProductsListPage(props: ProductsListPageProps) {
   );
 }
 
-function ProductsListPageContent({ headerSlot, disabled, renderCard }: ProductsListPageProps) {
+function ProductsListPageContent({ headerSlot, disabled, renderCard, filterMode = "category" }: ProductsListPageProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const categoryId = searchParams.get("category");
+  const brandId = searchParams.get("brand");
   const [sort, setSort] = useState<SortOption>("popular");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { getQty, addItem, setQty } = useCart();
   const categories = useCategories();
+  const brands = useBrands();
 
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } = useProductsFeed({
     search: debouncedSearch,
-    categoryId,
+    categoryId: filterMode === "category" ? categoryId : undefined,
+    brandId: filterMode === "brand" ? brandId : undefined,
     sort,
   });
 
@@ -75,10 +83,11 @@ function ProductsListPageContent({ headerSlot, disabled, renderCard }: ProductsL
     [setQty, getQty, addItem, disabled]
   );
 
-  function handleApplyFilter(nextCategoryId: string | null) {
+  function handleApplyFilter(nextId: string | null) {
+    const paramName = filterMode === "brand" ? "brand" : "category";
     const params = new URLSearchParams(searchParams.toString());
-    if (nextCategoryId) params.set("category", nextCategoryId);
-    else params.delete("category");
+    if (nextId) params.set(paramName, nextId);
+    else params.delete(paramName);
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname);
     setIsFilterOpen(false);
@@ -117,8 +126,11 @@ function ProductsListPageContent({ headerSlot, disabled, renderCard }: ProductsL
 
       <FilterDrawer
         open={isFilterOpen}
+        mode={filterMode}
         categories={categories.data ?? []}
         selectedCategoryId={categoryId}
+        brands={brands.data ?? []}
+        selectedBrandId={brandId}
         onApply={handleApplyFilter}
         onClose={() => setIsFilterOpen(false)}
       />

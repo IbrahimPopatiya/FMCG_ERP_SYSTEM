@@ -79,7 +79,7 @@ function AdminProductCardBase({ product }: AdminProductCardProps) {
             aria-label="Upload product image"
             disabled={isUploading}
             onClick={() => fileInputRef.current?.click()}
-            className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow-md transition-colors hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow-md transition-colors hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isUploading ? (
               <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />

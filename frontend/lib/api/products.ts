@@ -17,9 +17,10 @@ export interface ProductsFeedParams {
   search?: string;
   categoryId?: string | null;
   sort?: "popular" | "price_low" | "price_high" | "name";
+  brandId?: string | null;
 }
 
-export function listProductsFeed({ page, pageSize, search, categoryId, sort }: ProductsFeedParams) {
+export function listProductsFeed({ page, pageSize, search, categoryId, sort, brandId }: ProductsFeedParams) {
   return api
     .get<Page<ProductCatalogResponse>>("/products/feed", {
       params: {
@@ -28,6 +29,7 @@ export function listProductsFeed({ page, pageSize, search, categoryId, sort }: P
         search: search || undefined,
         category_id: categoryId || undefined,
         sort: sort || undefined,
+        brand_id: brandId || undefined,
       },
     })
     .then((res) => res.data);

@@ -11,6 +11,7 @@ export default function SalesmanProductsPage() {
   return (
     <ProductsListPage
       disabled={!customerId}
+      filterMode="brand"
       headerSlot={
         <div className="mb-3">
           <CustomerSelect />

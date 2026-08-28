@@ -23,6 +23,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { useProductsFeed } from "@/lib/hooks/useProducts";
 import { usePosts } from "@/lib/hooks/usePosts";
 import { useCategories } from "@/lib/hooks/useCategories";
+import { useBrands } from "@/lib/hooks/useBrands";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { formatCurrency } from "@/lib/utils/format";
 import type { ProductCatalogResponse } from "@/types/product";
@@ -353,6 +354,10 @@ export interface HomeFeedProps {
   // Gate on adding to cart (e.g. salesman must first pick a customer).
   cartDisabled?: boolean;
   cartDisabledMessage?: string;
+  // "category" (default, customer Home) filters the feed drawer by category;
+  // "brand" (salesman Home) replaces it with a real brand list instead - see
+  // FilterDrawer's `mode` prop.
+  filterMode?: "category" | "brand";
 }
 
 export function HomeFeed({
@@ -361,17 +366,24 @@ export function HomeFeed({
   onToggleSave,
   cartDisabled,
   cartDisabledMessage,
+  filterMode = "category",
 }: HomeFeedProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
 
   const products = useProductsFeed({
     search: debouncedSearch.trim() || undefined,
-    categoryId: selectedCategoryId,
+    categoryId: filterMode === "category" ? selectedCategoryId : undefined,
+    brandId: filterMode === "brand" ? selectedBrandId : undefined,
   });
   const posts = usePosts();
   const categories = useCategories();
+  const brands = useBrands();
+  // Whichever filter this screen actually uses, for the shared feed-shaping
+  // logic below (posts don't carry category_id or brand_id).
+  const selectedFilterId = filterMode === "brand" ? selectedBrandId : selectedCategoryId;
   const { addItem, getQty, setQty } = useCart();
   const { register: registerHomeSearch } = useHomeSearch();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -408,10 +420,11 @@ export function HomeFeed({
       (p) => !postedProductIds.has(p.id)
     );
 
-    // Posts don't carry category_id; when a category is selected, only show
-    // catalog items that match (posts stay in the unfiltered default reel).
+    // Posts don't carry category_id or brand_id; when a filter is selected,
+    // only show catalog items that match (posts stay in the unfiltered
+    // default reel).
     let leading = postItems;
-    if (selectedCategoryId !== null) {
+    if (selectedFilterId !== null) {
       leading = [];
     }
 
@@ -420,9 +433,9 @@ export function HomeFeed({
       return [...leading, ...catalogItems].filter((p) => p.name.toLowerCase().includes(query));
     }
 
-    if (selectedCategoryId === null) return [...leading, ...catalogItems.slice(0, FEED_COUNT)];
+    if (selectedFilterId === null) return [...leading, ...catalogItems.slice(0, FEED_COUNT)];
     return [...leading, ...catalogItems];
-  }, [posts.data, products.data, selectedCategoryId, debouncedSearch]);
+  }, [posts.data, products.data, selectedFilterId, debouncedSearch]);
 
   const openProduct = feedProducts.find((p) => p.id === openProductId) ?? null;
   const isLoading = products.isLoading || posts.isLoading;
@@ -555,10 +568,14 @@ export function HomeFeed({
 
       <FilterDrawer
         open={isFilterOpen}
+        mode={filterMode}
         categories={categories.data ?? []}
         selectedCategoryId={selectedCategoryId}
+        brands={brands.data ?? []}
+        selectedBrandId={selectedBrandId}
         onApply={(id) => {
-          setSelectedCategoryId(id);
+          if (filterMode === "brand") setSelectedBrandId(id);
+          else setSelectedCategoryId(id);
           setIsFilterOpen(false);
         }}
         onClose={() => setIsFilterOpen(false)}
@@ -588,7 +605,7 @@ export function HomeFeed({
 
       {!isLoading && !isError && feedProducts.length === 0 && (
         <p className="flex flex-1 items-center justify-center px-4 text-center text-sm text-ink-muted">
-          {search.trim() || selectedCategoryId ? "No products match your filters." : "No products to show yet."}
+          {search.trim() || selectedFilterId ? "No products match your filters." : "No products to show yet."}
         </p>
       )}
 

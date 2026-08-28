@@ -29,6 +29,7 @@ export default function SalesmanHomePage() {
       onToggleSave={handleToggleSave}
       cartDisabled={!customerId}
       cartDisabledMessage="Select a customer on the Products screen before adding items to their order."
+      filterMode="brand"
     />
   );
 }

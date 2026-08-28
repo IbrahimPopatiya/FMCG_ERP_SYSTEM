@@ -45,16 +45,19 @@ def list_active_products_feed(
     search: str | None = None,
     category_id: uuid.UUID | None = None,
     sort: str = "popular",
+    brand_id: uuid.UUID | None = None,
 ) -> tuple[list[Product], int]:
     """Paginated, filterable version of the customer catalog feed - same
     active-only scope as list_active_products, but with search/category/sort
     handled in SQL instead of fetching everything and filtering in the
-    browser."""
+    browser. `brand_id` powers the salesman Home screen's brand filter."""
     query = db.query(Product).filter(
         Product.deleted_at.is_(None), Product.status == ProductStatus.ACTIVE
     )
     if category_id is not None:
         query = query.filter(Product.category_id == category_id)
+    if brand_id is not None:
+        query = query.filter(Product.brand_id == brand_id)
     if search:
         like = f"%{search}%"
         query = query.filter((Product.name.ilike(like)) | (Product.sku.ilike(like)))

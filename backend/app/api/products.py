@@ -62,17 +62,19 @@ def list_products_feed(
     search: Optional[str] = Query(default=None),
     category_id: Optional[uuid.UUID] = Query(default=None),
     sort: str = Query(default="popular"),
+    brand_id: Optional[uuid.UUID] = Query(default=None),
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
     """Paginated customer catalog feed - the browsing/scrolling version of
     `GET /products` used by the customer Products screen. `GET /products`
     itself stays unpaginated since it's also used to populate full-catalog
-    dropdowns/lookups elsewhere (inventory, purchases, returns, price lists)."""
+    dropdowns/lookups elsewhere (inventory, purchases, returns, price lists).
+    `brand_id` powers the salesman Home screen's brand filter."""
     price_list_id = principal.customer.price_list_id if principal.type == "customer" else None
 
     products, total = product_service.list_active_products_feed(
-        db, page, page_size, search, category_id, sort
+        db, page, page_size, search, category_id, sort, brand_id
     )
     prices = price_list_service.get_effective_prices(
         db, price_list_id, [(p.id, p.selling_price) for p in products]
