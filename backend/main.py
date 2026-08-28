@@ -153,6 +153,16 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
+@app.api_route("/", methods=["GET", "HEAD"])
+def root():
+    # Render's default health check probes "/" (HEAD then GET) - the real
+    # health endpoint lives at /api/v1/health, so without this the probe
+    # 404s on every check and spams the deploy logs even though the app is
+    # otherwise healthy. Starlette doesn't auto-add HEAD for a GET-only
+    # route, so both methods are declared explicitly.
+    return {"status": "ok"}
+
+
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
 app.include_router(routes.router, prefix="/api/v1")
