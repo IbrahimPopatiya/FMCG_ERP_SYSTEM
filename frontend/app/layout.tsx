@@ -28,6 +28,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: BRAND.themeColor,
+  // Lets the app draw edge-to-edge behind notches/gesture bars/system nav so
+  // env(safe-area-inset-*) reports real values instead of always 0 - without
+  // this, installed-PWA layouts (bottom nav, top bar) can't tell where the
+  // device's own OS chrome sits and get overlapped by it.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
