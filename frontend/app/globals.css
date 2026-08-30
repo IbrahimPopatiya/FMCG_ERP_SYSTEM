@@ -34,6 +34,13 @@
   }
 }
 
+/* App-launch splash screen (components/shared/AppSplash) - Tailwind
+   arbitrary `animate-[...]` values reference this by name. */
+@keyframes login-loading-bar {
+  from { width: 0; }
+  to { width: 72%; }
+}
+
 /*
  * Brand tokens. DMS is a distribution/logistics tool — the palette is a
  * five-stop blue ramp (light sky -> deep navy) from final_docs/image.png:
