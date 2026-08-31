@@ -170,11 +170,7 @@ def _authorize_order_access(db: Session, order: SalesOrder, principal: Principal
     if principal.user.role != UserRole.SALESMAN:
         return True
 
-    customer = db.query(Customer).filter(Customer.id == order.customer_id).first()
-    route = None
-    if customer and customer.route_id is not None:
-        route = db.query(Route).filter(Route.id == customer.route_id).first()
-    return route is not None and route.salesman_id == principal.user.id
+    return order.salesman_id == principal.user.id
 
 
 def get_owned_sales_order(db: Session, order_id: uuid.UUID, principal: Principal) -> SalesOrder | None:
@@ -311,19 +307,20 @@ def _local_order_date(column):
     return func.date(func.timezone(_LOCAL_TZ, column))
 
 
-def _scope_orders_to_principal(query, principal: Principal):
+def _scope_orders_to_principal(query, principal: Principal, only_mine: bool = False):
     if principal.type == "customer":
         return query.filter(SalesOrder.customer_id == principal.customer.id)
-    if principal.user.role == UserRole.SALESMAN:
-        # Only salesmen are scoped to their own route's customers - every other
-        # staff role (admin, manager, dispatcher, cashier) needs full visibility
-        # to approve/track orders across the business. One join instead of
-        # fetching routes then customers then orders as three separate queries.
-        return (
-            query.join(Customer, Customer.id == SalesOrder.customer_id)
-            .join(Route, Route.id == Customer.route_id)
-            .filter(Route.salesman_id == principal.user.id)
-        )
+    if principal.user.role == UserRole.SALESMAN or only_mine:
+        # A salesman only sees orders they personally placed - not every
+        # order for customers on their route (those may have been placed by
+        # another salesman previously on that route, by staff, or by the
+        # customer themselves). Every other staff role (admin, manager,
+        # dispatcher, cashier) needs full visibility across the business by
+        # default - but an admin using the salesman ordering screens (see
+        # RoleSwitchCards - same account, no separate salesman login) passes
+        # `only_mine` to get that same personal-orders-only scoping, since
+        # their real DB role is still "admin".
+        return query.filter(SalesOrder.salesman_id == principal.user.id)
     return query
 
 
@@ -334,9 +331,10 @@ def list_orders_for_principal(
     page_size: int,
     customer_id: uuid.UUID | None = None,
     order_date: date | None = None,
+    only_mine: bool = False,
 ) -> tuple[list[SalesOrder], int]:
     query = _scope_orders_to_principal(
-        db.query(SalesOrder).filter(SalesOrder.deleted_at.is_(None)), principal
+        db.query(SalesOrder).filter(SalesOrder.deleted_at.is_(None)), principal, only_mine
     )
 
     if customer_id is not None:
@@ -359,15 +357,18 @@ def list_orders_for_principal(
     return items, total
 
 
-def list_order_dates_for_principal(db: Session, principal: Principal) -> list[tuple[date, int]]:
+def list_order_dates_for_principal(
+    db: Session, principal: Principal, only_mine: bool = False
+) -> list[tuple[date, int]]:
     """Distinct order days with how many orders landed on each, newest day
-    first - powers the admin Orders screen's day-list landing view."""
+    first - powers the admin/salesman Orders screen's day-list landing view."""
     day = _local_order_date(SalesOrder.created_at)
     query = _scope_orders_to_principal(
         db.query(day.label("order_date"), func.count(SalesOrder.id).label("order_count")).filter(
             SalesOrder.deleted_at.is_(None)
         ),
         principal,
+        only_mine,
     )
     rows = query.group_by(day).order_by(day.desc()).all()
     return [(row.order_date, row.order_count) for row in rows]

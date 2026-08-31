@@ -19,7 +19,7 @@ export default function SalesmanCustomerOrdersPage() {
   const customer = customersPage?.items.find((c) => c.id === customerId);
 
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useOrders(customerId);
+    useOrders(customerId, undefined, true);
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
   const orders = data?.pages.flatMap((page) => page.items) ?? [];
 

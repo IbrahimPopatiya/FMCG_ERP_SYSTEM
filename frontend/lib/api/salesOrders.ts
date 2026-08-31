@@ -8,18 +8,35 @@ import type {
 } from "@/types/salesOrder";
 import type { Page } from "@/types/pagination";
 
-export function listOrders(page: number, pageSize: number, customerId?: string, orderDate?: string) {
+export function listOrders(
+  page: number,
+  pageSize: number,
+  customerId?: string,
+  orderDate?: string,
+  onlyMine?: boolean
+) {
   return api
     .get<Page<SalesOrderResponse>>("/orders", {
-      params: { page, page_size: pageSize, customer_id: customerId, order_date: orderDate },
+      params: {
+        page,
+        page_size: pageSize,
+        customer_id: customerId,
+        order_date: orderDate,
+        only_mine: onlyMine || undefined,
+      },
     })
     .then((res) => res.data);
 }
 
 // Distinct days that have orders, newest first, with a count per day —
-// powers the admin Orders screen's day-list landing view.
-export function listOrderDates() {
-  return api.get<OrderDateCount[]>("/orders/dates").then((res) => res.data);
+// powers the admin/salesman Orders screen's day-list landing view.
+// `onlyMine` scopes it to orders the current account placed - used when an
+// admin is on the salesman ordering screens (see RoleSwitchCards), since
+// their real DB role is still "admin" and would otherwise see every order.
+export function listOrderDates(onlyMine?: boolean) {
+  return api
+    .get<OrderDateCount[]>("/orders/dates", { params: { only_mine: onlyMine || undefined } })
+    .then((res) => res.data);
 }
 
 export function getOrder(orderId: string) {
