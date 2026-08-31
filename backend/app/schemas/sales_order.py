@@ -1,11 +1,16 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.core.enums import OrderSource, OrderStatus
+
+
+class OrderDateCount(BaseModel):
+    order_date: date
+    order_count: int
 
 
 class SalesOrderItemCreate(BaseModel):

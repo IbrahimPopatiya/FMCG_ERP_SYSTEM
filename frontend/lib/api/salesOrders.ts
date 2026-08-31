@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/client";
 import type {
+  OrderDateCount,
   SalesOrderApproveItem,
   SalesOrderCreate,
   SalesOrderLoadItem,
@@ -13,6 +14,12 @@ export function listOrders(page: number, pageSize: number, customerId?: string, 
       params: { page, page_size: pageSize, customer_id: customerId, order_date: orderDate },
     })
     .then((res) => res.data);
+}
+
+// Distinct days that have orders, newest first, with a count per day —
+// powers the admin Orders screen's day-list landing view.
+export function listOrderDates() {
+  return api.get<OrderDateCount[]>("/orders/dates").then((res) => res.data);
 }
 
 export function getOrder(orderId: string) {

@@ -24,7 +24,7 @@ export default function AdminOrdersPage() {
   return (
     <div>
       <TopBar title="Orders" subtitle="All Customer Orders" />
-      <OrdersListPage basePath="/admin/orders" customerName={customerName} />
+      <OrdersListPage basePath="/admin/orders" customerName={customerName} groupByDate />
     </div>
   );
 }

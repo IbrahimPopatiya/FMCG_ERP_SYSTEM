@@ -130,6 +130,14 @@ def get_post(db: Session, post_id: uuid.UUID) -> Post | None:
     return db.query(Post).filter(Post.id == post_id).first()
 
 
+def delete_posts_for_product(db: Session, product_id: uuid.UUID) -> None:
+    """Hard-deletes every post for a product when the product itself is
+    deleted - a post for a product that no longer exists can't be ordered,
+    so it shouldn't keep showing up or sit around in the database."""
+    db.query(Post).filter(Post.product_id == product_id).delete()
+    db.commit()
+
+
 def set_post_active(db: Session, post_id: uuid.UUID, is_active: bool) -> Post:
     post = get_post(db, post_id)
     if post is None:

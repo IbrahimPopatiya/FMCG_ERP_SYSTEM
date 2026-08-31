@@ -94,7 +94,7 @@ def list_all_products(
         )
     if brand_id:
         query = query.filter(Product.brand_id == brand_id)
-    query = query.order_by(Product.name)
+    query = query.order_by(Product.created_at.desc())
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
     return items, total
@@ -156,4 +156,9 @@ def soft_delete_product(db: Session, product_id: uuid.UUID) -> Product | None:
     product.deleted_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(product)
+
+    from app.services import post as post_service
+
+    post_service.delete_posts_for_product(db, product.id)
+
     return product

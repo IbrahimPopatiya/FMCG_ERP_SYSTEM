@@ -300,6 +300,33 @@ def load_sales_order(
     return order
 
 
+# Orders group "by day" using IST, not UTC — created_at is stored in UTC,
+# but the app's users and its date pickers are all India-local, so an order
+# placed at 11pm IST must count toward that IST calendar day, not the next
+# UTC day.
+_LOCAL_TZ = "Asia/Kolkata"
+
+
+def _local_order_date(column):
+    return func.date(func.timezone(_LOCAL_TZ, column))
+
+
+def _scope_orders_to_principal(query, principal: Principal):
+    if principal.type == "customer":
+        return query.filter(SalesOrder.customer_id == principal.customer.id)
+    if principal.user.role == UserRole.SALESMAN:
+        # Only salesmen are scoped to their own route's customers - every other
+        # staff role (admin, manager, dispatcher, cashier) needs full visibility
+        # to approve/track orders across the business. One join instead of
+        # fetching routes then customers then orders as three separate queries.
+        return (
+            query.join(Customer, Customer.id == SalesOrder.customer_id)
+            .join(Route, Route.id == Customer.route_id)
+            .filter(Route.salesman_id == principal.user.id)
+        )
+    return query
+
+
 def list_orders_for_principal(
     db: Session,
     principal: Principal,
@@ -308,26 +335,15 @@ def list_orders_for_principal(
     customer_id: uuid.UUID | None = None,
     order_date: date | None = None,
 ) -> tuple[list[SalesOrder], int]:
-    query = db.query(SalesOrder).filter(SalesOrder.deleted_at.is_(None))
-
-    if principal.type == "customer":
-        query = query.filter(SalesOrder.customer_id == principal.customer.id)
-    elif principal.user.role == UserRole.SALESMAN:
-        # Only salesmen are scoped to their own route's customers - every other
-        # staff role (admin, manager, dispatcher, cashier) needs full visibility
-        # to approve/track orders across the business. One join instead of
-        # fetching routes then customers then orders as three separate queries.
-        query = (
-            query.join(Customer, Customer.id == SalesOrder.customer_id)
-            .join(Route, Route.id == Customer.route_id)
-            .filter(Route.salesman_id == principal.user.id)
-        )
+    query = _scope_orders_to_principal(
+        db.query(SalesOrder).filter(SalesOrder.deleted_at.is_(None)), principal
+    )
 
     if customer_id is not None:
         query = query.filter(SalesOrder.customer_id == customer_id)
 
     if order_date is not None:
-        query = query.filter(func.date(SalesOrder.created_at) == order_date)
+        query = query.filter(_local_order_date(SalesOrder.created_at) == order_date)
 
     total = query.count()
     items = (
@@ -341,3 +357,17 @@ def list_orders_for_principal(
         .all()
     )
     return items, total
+
+
+def list_order_dates_for_principal(db: Session, principal: Principal) -> list[tuple[date, int]]:
+    """Distinct order days with how many orders landed on each, newest day
+    first - powers the admin Orders screen's day-list landing view."""
+    day = _local_order_date(SalesOrder.created_at)
+    query = _scope_orders_to_principal(
+        db.query(day.label("order_date"), func.count(SalesOrder.id).label("order_count")).filter(
+            SalesOrder.deleted_at.is_(None)
+        ),
+        principal,
+    )
+    rows = query.group_by(day).order_by(day.desc()).all()
+    return [(row.order_date, row.order_count) for row in rows]

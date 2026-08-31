@@ -1,20 +1,23 @@
 "use client";
 
 import { SubmitEvent, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import { Combobox } from "@/components/ui/Combobox";
 import { ProductImageField } from "@/components/products/ProductImageField";
 import { useBrands } from "@/lib/hooks/useBrands";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { uploadFile } from "@/lib/api/fileUploads";
+import { createBrand } from "@/lib/api/brands";
+import { createCategory } from "@/lib/api/categories";
 import type { ProductCreate } from "@/types/product";
 
 export interface ProductFormValues {
   name: string;
-  category_id: string;
-  brand_id: string;
+  category_name: string;
+  brand_name: string;
   unit: string;
   units_per_box: string;
   loading_capacity: string;
@@ -27,8 +30,8 @@ export interface ProductFormValues {
 
 export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   name: "",
-  category_id: "",
-  brand_id: "",
+  category_name: "",
+  brand_name: "",
   unit: "",
   units_per_box: "1",
   loading_capacity: "",
@@ -39,11 +42,47 @@ export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   imageFile: null,
 };
 
-function toPayload(values: ProductFormValues, image: string | null): ProductCreate {
+/** Resolves a typed brand/category name to an existing id (case-insensitive
+ * match) or creates a new one — this is what makes the combobox fields
+ * double as an "add new" form. */
+async function resolveCategoryId(
+  name: string,
+  categories: { id: string; name: string }[]
+): Promise<string | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const existing = categories.find((c) => c.name.toLowerCase() === trimmed.toLowerCase());
+  if (existing) return existing.id;
+  const created = await createCategory({ name: trimmed });
+  return created.id;
+}
+
+async function resolveBrandId(
+  name: string,
+  brands: { id: string; name: string }[]
+): Promise<string | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const existing = brands.find((b) => b.name.toLowerCase() === trimmed.toLowerCase());
+  if (existing) return existing.id;
+  const created = await createBrand({ name: trimmed });
+  return created.id;
+}
+
+async function toPayload(
+  values: ProductFormValues,
+  image: string | null,
+  categories: { id: string; name: string }[],
+  brands: { id: string; name: string }[]
+): Promise<ProductCreate> {
+  const [category_id, brand_id] = await Promise.all([
+    resolveCategoryId(values.category_name, categories),
+    resolveBrandId(values.brand_name, brands),
+  ]);
   return {
     name: values.name.trim(),
-    category_id: values.category_id || null,
-    brand_id: values.brand_id || null,
+    category_id,
+    brand_id,
     unit: values.unit.trim(),
     units_per_box: Number(values.units_per_box),
     loading_capacity: Number(values.loading_capacity),
@@ -78,6 +117,7 @@ export function ProductForm({
   const [error, setError] = useState<string | null>(null);
   const brands = useBrands();
   const categories = useCategories();
+  const queryClient = useQueryClient();
 
   function set<K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -109,7 +149,10 @@ export function ProductForm({
           return;
         }
       }
-      await onSubmit(toPayload(values, image));
+      const payload = await toPayload(values, image, categories.data ?? [], brands.data ?? []);
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["brands"] });
+      await onSubmit(payload);
     } catch (err) {
       setError(submitErrorMessage(err));
     } finally {
@@ -139,25 +182,23 @@ export function ProductForm({
       <section className="flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-ink">Classification</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select
-            id="category_id"
+          <Combobox
+            id="category_name"
             label="Category"
-            value={values.category_id || "none"}
-            onValueChange={(v) => set("category_id", v === "none" ? "" : v)}
-            options={[
-              { value: "none", label: "No category" },
-              ...(categories.data?.map((c) => ({ value: c.id, label: c.name })) ?? []),
-            ]}
+            value={values.category_name}
+            onChange={(v) => set("category_name", v)}
+            placeholder="Search or add a category…"
+            emptyOptionLabel="No category"
+            options={categories.data?.map((c) => ({ value: c.id, label: c.name })) ?? []}
           />
-          <Select
-            id="brand_id"
+          <Combobox
+            id="brand_name"
             label="Brand"
-            value={values.brand_id || "none"}
-            onValueChange={(v) => set("brand_id", v === "none" ? "" : v)}
-            options={[
-              { value: "none", label: "No brand" },
-              ...(brands.data?.map((b) => ({ value: b.id, label: b.name })) ?? []),
-            ]}
+            value={values.brand_name}
+            onChange={(v) => set("brand_name", v)}
+            placeholder="Search or add a brand…"
+            emptyOptionLabel="No brand"
+            options={brands.data?.map((b) => ({ value: b.id, label: b.name })) ?? []}
           />
           <Input
             id="unit"
@@ -170,23 +211,25 @@ export function ProductForm({
           <Input
             id="units_per_box"
             label="Units per box"
-            type="number"
-            min="1"
-            step="1"
+            type="text"
+            inputMode="numeric"
             placeholder="e.g. 12"
             value={values.units_per_box}
-            onChange={(e) => set("units_per_box", e.target.value)}
+            onChange={(e) => {
+              if (/^\d*$/.test(e.target.value)) set("units_per_box", e.target.value);
+            }}
             required
           />
           <Input
             id="loading_capacity"
             label="Loading capacity (LC)"
-            type="number"
-            min="0"
-            step="1"
+            type="text"
+            inputMode="numeric"
             placeholder="e.g. 500"
             value={values.loading_capacity}
-            onChange={(e) => set("loading_capacity", e.target.value)}
+            onChange={(e) => {
+              if (/^\d*$/.test(e.target.value)) set("loading_capacity", e.target.value);
+            }}
             required
           />
         </div>
@@ -198,31 +241,34 @@ export function ProductForm({
           <Input
             id="mrp"
             label="MRP (₹)"
-            type="number"
-            min="0"
-            step="0.01"
+            type="text"
+            inputMode="decimal"
             value={values.mrp}
-            onChange={(e) => set("mrp", e.target.value)}
+            onChange={(e) => {
+              if (/^\d*\.?\d*$/.test(e.target.value)) set("mrp", e.target.value);
+            }}
             required
           />
           <Input
             id="selling_price"
             label="Selling price (₹)"
-            type="number"
-            min="0"
-            step="0.01"
+            type="text"
+            inputMode="decimal"
             value={values.selling_price}
-            onChange={(e) => set("selling_price", e.target.value)}
+            onChange={(e) => {
+              if (/^\d*\.?\d*$/.test(e.target.value)) set("selling_price", e.target.value);
+            }}
             required
           />
           <Input
             id="minimum_stock"
             label="Minimum stock"
-            type="number"
-            min="0"
-            step="1"
+            type="text"
+            inputMode="numeric"
             value={values.minimum_stock}
-            onChange={(e) => set("minimum_stock", e.target.value)}
+            onChange={(e) => {
+              if (/^\d*$/.test(e.target.value)) set("minimum_stock", e.target.value);
+            }}
             required
           />
         </div>

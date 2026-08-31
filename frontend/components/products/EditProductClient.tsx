@@ -7,16 +7,24 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { ProductForm, type ProductFormValues } from "@/components/products/ProductForm";
 import { ProductStatusBadge } from "@/components/products/ProductStatusBadge";
 import { useProduct } from "@/lib/hooks/useProduct";
+import { useBrands } from "@/lib/hooks/useBrands";
+import { useCategories } from "@/lib/hooks/useCategories";
 import { useSetProductStatus, useUpdateProduct } from "@/lib/hooks/useProductMutations";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 import type { ProductResponse } from "@/types/product";
+import type { BrandResponse } from "@/types/brands";
+import type { CategoryResponse } from "@/types/categories";
 import { BackArrowIcon } from "@/components/admin/icons";
 
-function toFormValues(product: ProductResponse): ProductFormValues {
+function toFormValues(
+  product: ProductResponse,
+  categories: CategoryResponse[],
+  brands: BrandResponse[]
+): ProductFormValues {
   return {
     name: product.name,
-    category_id: product.category_id ?? "",
-    brand_id: product.brand_id ?? "",
+    category_name: categories.find((c) => c.id === product.category_id)?.name ?? "",
+    brand_name: brands.find((b) => b.id === product.brand_id)?.name ?? "",
     unit: product.unit,
     units_per_box: String(product.units_per_box),
     loading_capacity: String(product.loading_capacity),
@@ -33,6 +41,8 @@ export function EditProductClient({ productId }: { productId: string }) {
 
   const router = useRouter();
   const { data: product, isLoading, isError } = useProduct(productId);
+  const brands = useBrands();
+  const categories = useCategories();
   const updateProduct = useUpdateProduct(productId);
   const setStatus = useSetProductStatus();
 
@@ -74,7 +84,7 @@ export function EditProductClient({ productId }: { productId: string }) {
       </header>
 
       <div className="mx-auto max-w-2xl p-4 pb-28 sm:p-6">
-        {isLoading && (
+        {(isLoading || brands.isLoading || categories.isLoading) && (
           <div className="flex flex-col gap-4">
             <Skeleton className="h-11 w-full" />
             <Skeleton className="h-11 w-full" />
@@ -88,9 +98,9 @@ export function EditProductClient({ productId }: { productId: string }) {
           </div>
         )}
 
-        {product && (
+        {product && brands.data && categories.data && (
           <ProductForm
-            initialValues={toFormValues(product)}
+            initialValues={toFormValues(product, categories.data, brands.data)}
             submitLabel="Save changes"
             onSubmit={async (payload) => {
               const updated = await updateProduct.mutateAsync(payload);
