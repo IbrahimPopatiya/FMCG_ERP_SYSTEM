@@ -19,6 +19,7 @@ from app.schemas.sales_order import (
     SalesOrderApproveResponse,
     SalesOrderLoadRequest,
     SalesOrderLoadResponse,
+    OrderDateCount,
 )
 from app.services import sales_order as sales_order_service
 from app.services.sales_order import (
@@ -74,6 +75,15 @@ def list_orders(
         db, principal, page, page_size, customer_id=customer_id, order_date=order_date
     )
     return Page(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/dates", response_model=list[OrderDateCount])
+def list_order_dates(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    rows = sales_order_service.list_order_dates_for_principal(db, principal)
+    return [OrderDateCount(order_date=order_date, order_count=count) for order_date, count in rows]
 
 
 @router.get("/{order_id}", response_model=SalesOrderResponse)

@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { getOrder, listOrders } from "@/lib/api/salesOrders";
+import { getOrder, listOrderDates, listOrders } from "@/lib/api/salesOrders";
 
 const PAGE_SIZE = 10;
 
@@ -12,6 +12,13 @@ export function useOrders(customerId?: string, orderDate?: string) {
       const loaded = lastPage.page * lastPage.page_size;
       return loaded < lastPage.total ? lastPage.page + 1 : undefined;
     },
+  });
+}
+
+export function useOrderDates() {
+  return useQuery({
+    queryKey: ["orders", "dates"],
+    queryFn: listOrderDates,
   });
 }
 

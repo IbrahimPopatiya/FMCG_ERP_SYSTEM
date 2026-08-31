@@ -17,6 +17,7 @@ export default function SalesmanOrdersPage() {
       <OrdersListPage
         basePath="/salesman/orders"
         customerName={customerName}
+        groupByDate
         emptyState={{
           title: "No orders yet",
           message: "Orders placed for your route's customers will show up here.",

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/lib/providers/query-provider";
 import { ServiceWorkerProvider } from "@/lib/providers/service-worker-provider";
 import { InstallAppBannerLazy } from "@/components/pwa/InstallAppBannerLazy";
+import { AppSplash } from "@/components/shared/AppSplash";
 import { BRAND } from "@/lib/branding";
 import "./globals.css";
 
@@ -81,6 +82,7 @@ export default function RootLayout({
         />
       </head>
       <body className="flex h-dvh flex-col overflow-hidden" suppressHydrationWarning>
+        <AppSplash />
         <ServiceWorkerProvider>
           <InstallAppBannerLazy />
           <QueryProvider>{children}</QueryProvider>

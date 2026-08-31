@@ -3,10 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ProductStatusBadge } from "@/components/products/ProductStatusBadge";
 import { NoProductImage } from "@/components/ui/NoProductImage";
-import { UploadCloudIcon } from "@/components/admin/icons";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { UploadCloudIcon, TrashIcon } from "@/components/admin/icons";
 import { formatCurrency } from "@/lib/utils/format";
 import { uploadFile } from "@/lib/api/fileUploads";
-import { useUpdateProduct } from "@/lib/hooks/useProductMutations";
+import { useDeleteProduct, useUpdateProduct } from "@/lib/hooks/useProductMutations";
 import type { ProductResponse } from "@/types/product";
 
 interface AdminProductCardProps {
@@ -20,7 +21,15 @@ interface AdminProductCardProps {
 function AdminProductCardBase({ product }: AdminProductCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const updateProduct = useUpdateProduct(product.id);
+  const deleteProduct = useDeleteProduct();
+
+  function handleDeleteConfirmed() {
+    deleteProduct.mutate(product.id, {
+      onSuccess: () => setIsConfirmingDelete(false),
+    });
+  }
 
   async function handleFileSelected(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -96,30 +105,31 @@ function AdminProductCardBase({ product }: AdminProductCardProps) {
         </Link>
         <p className="text-xs text-ink-muted">{product.sku}</p>
         <p className="text-xs text-ink-muted">LC: {product.loading_capacity}</p>
-        <p className="text-sm">
-          <span className="font-semibold text-ink">{formatCurrency(product.selling_price) + "/" + (product.mrp)}</span>
-        </p>
-        {/* {!selectMode && (
-          <div className="mt-auto flex gap-1.5 pt-1.5">
-            <Link
-              href={`/admin/products/${product.id}`}
-              className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#f2f2f3] text-xs font-semibold text-[#1c1c1e] transition-colors hover:bg-[#1c1c1e] hover:text-white"
-            >
-              <PencilIcon className="h-3.5 w-3.5" />
-              Edit
-            </Link>
-            <button
-              type="button"
-              onClick={() => onToggleStatus(product)}
-              aria-label={product.status === "active" ? "Deactivate product" : "Activate product"}
-              className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#f2f2f3] text-xs font-semibold text-[#1c1c1e] transition-colors hover:bg-[#1c1c1e] hover:text-white"
-            >
-              <TrashIcon className="h-3.5 w-3.5" />
-              {product.status === "active" ? "Delete" : "Restore"}
-            </button>
-          </div>
-        )} */}
+        <div className="flex items-end justify-between gap-2">
+          <p className="text-sm">
+            <span className="font-semibold text-ink">{formatCurrency(product.selling_price) + "/" + (product.mrp)}</span>
+          </p>
+          <button
+            type="button"
+            aria-label="Delete product"
+            onClick={() => setIsConfirmingDelete(true)}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f2f2f3] text-red-600 transition-colors hover:bg-red-600 hover:text-white"
+          >
+            <TrashIcon className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
+
+      <ConfirmDialog
+        open={isConfirmingDelete}
+        title="Delete product?"
+        message={`"${product.name}" will be permanently removed from the catalog. This can't be undone.`}
+        confirmLabel="Delete"
+        tone="danger"
+        isConfirming={deleteProduct.isPending}
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setIsConfirmingDelete(false)}
+      />
     </div>
   );
 }

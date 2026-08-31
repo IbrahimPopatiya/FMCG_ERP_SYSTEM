@@ -11,9 +11,16 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { PrintBillButton } from "@/components/orders/PrintBillButton";
-import { SearchIcon, FilterIcon, PersonIcon, BoxIcon, ChevronRightIcon } from "@/components/admin/icons";
+import {
+  SearchIcon,
+  FilterIcon,
+  PersonIcon,
+  BoxIcon,
+  ChevronRightIcon,
+  BackArrowIcon,
+} from "@/components/admin/icons";
 import { CalendarIcon } from "@/components/customer/icons";
-import { useOrders } from "@/lib/hooks/useOrders";
+import { useOrderDates, useOrders } from "@/lib/hooks/useOrders";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useIsDesktop } from "@/lib/hooks/useIsDesktop";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -48,6 +55,10 @@ function formatDateLabel(dateValue: string) {
   });
 }
 
+function formatDayLabel(dateValue: string) {
+  return new Date(`${dateValue}T00:00:00`).toLocaleDateString("en-IN", { weekday: "long" });
+}
+
 function totalLoadingCapacity(order: SalesOrderResponse): number {
   const total = order.items.reduce((sum, item) => {
     const boxes = item.ordered_qty / (item.units_per_box || 1);
@@ -66,6 +77,85 @@ function SkeletonRows() {
   );
 }
 
+// The admin Orders landing view — a list of days that have orders, newest
+// first, each showing how many orders landed that day. Picking one drills
+// into that day's orders (see OrdersListPage's `selectedDate` view below).
+function DayListView({
+  onSelectDate,
+  emptyState,
+}: {
+  onSelectDate: (date: string) => void;
+  emptyState?: OrdersListPageProps["emptyState"];
+}) {
+  const { data, isLoading, isError, refetch } = useOrderDates();
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-3 p-4 sm:p-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="flex items-center justify-between gap-3 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+          Couldn&apos;t load order days.
+          <Button type="button" variant="secondary" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
+        <p className="text-sm font-medium text-ink">{emptyState?.title ?? "No orders here"}</p>
+        <p className="text-sm text-ink-muted">
+          {emptyState?.message ?? "No orders have been placed yet."}
+        </p>
+        {emptyState?.cta && (
+          <Link href={emptyState.cta.href}>
+            <Button type="button" className="mt-1">
+              {emptyState.cta.label}
+            </Button>
+          </Link>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 p-4 sm:p-6">
+      {data.map(({ order_date, order_count }) => (
+        <button
+          key={order_date}
+          type="button"
+          onClick={() => onSelectDate(order_date)}
+          className="w-full text-left"
+        >
+          <Card className="flex items-center gap-3 rounded-2xl transition-shadow hover:shadow-md">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+              <CalendarIcon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-ink">{formatDayLabel(order_date)}</p>
+              <p className="text-sm text-ink-muted">{formatDateLabel(order_date)}</p>
+            </div>
+            <Badge tone="neutral">{order_count} order{order_count === 1 ? "" : "s"}</Badge>
+            <ChevronRightIcon className="h-4 w-4 shrink-0 text-ink-muted" />
+          </Card>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export interface OrdersListPageProps {
   // "/admin/orders" | "/salesman/orders" — used for both row links and the
   // "browse products" empty-state CTA fallback.
@@ -78,9 +168,13 @@ export interface OrdersListPageProps {
     message: string;
     cta?: { href: string; label: string };
   };
+  // Admin orders lands on a list of days that have orders instead of a flat
+  // order list — pick a day to drill into that day's orders. Salesman orders
+  // keeps the flat list, so this defaults off.
+  groupByDate?: boolean;
 }
 
-export function OrdersListPage({ basePath, customerName, emptyState }: OrdersListPageProps) {
+export function OrdersListPage({ basePath, customerName, emptyState, groupByDate = false }: OrdersListPageProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -123,9 +217,30 @@ export function OrdersListPage({ basePath, customerName, emptyState }: OrdersLis
     setDateModalOpen(false);
   }
 
+  if (groupByDate && !selectedDate) {
+    return (
+      <div>
+        <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
+          <h2 className="text-sm font-medium text-ink-muted">Pick a day to view its orders</h2>
+        </header>
+        <DayListView onSelectDate={setSelectedDate} emptyState={emptyState} />
+      </div>
+    );
+  }
+
   return (
     <div>
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
+        {groupByDate && selectedDate && (
+          <button
+            type="button"
+            onClick={() => setSelectedDate(null)}
+            className="flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-ink"
+          >
+            <BackArrowIcon className="h-4 w-4" />
+            {formatDayLabel(selectedDate)}, {formatDateLabel(selectedDate)}
+          </button>
+        )}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
