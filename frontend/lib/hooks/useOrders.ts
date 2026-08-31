@@ -3,10 +3,10 @@ import { getOrder, listOrderDates, listOrders } from "@/lib/api/salesOrders";
 
 const PAGE_SIZE = 10;
 
-export function useOrders(customerId?: string, orderDate?: string) {
+export function useOrders(customerId?: string, orderDate?: string, onlyMine?: boolean) {
   return useInfiniteQuery({
-    queryKey: ["orders", customerId ?? null, orderDate ?? null],
-    queryFn: ({ pageParam }) => listOrders(pageParam, PAGE_SIZE, customerId, orderDate),
+    queryKey: ["orders", customerId ?? null, orderDate ?? null, !!onlyMine],
+    queryFn: ({ pageParam }) => listOrders(pageParam, PAGE_SIZE, customerId, orderDate, onlyMine),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       const loaded = lastPage.page * lastPage.page_size;
@@ -15,10 +15,10 @@ export function useOrders(customerId?: string, orderDate?: string) {
   });
 }
 
-export function useOrderDates() {
+export function useOrderDates(onlyMine?: boolean) {
   return useQuery({
-    queryKey: ["orders", "dates"],
-    queryFn: listOrderDates,
+    queryKey: ["orders", "dates", !!onlyMine],
+    queryFn: () => listOrderDates(onlyMine),
   });
 }
 

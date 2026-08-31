@@ -83,11 +83,13 @@ function SkeletonRows() {
 function DayListView({
   onSelectDate,
   emptyState,
+  onlyMine,
 }: {
   onSelectDate: (date: string) => void;
   emptyState?: OrdersListPageProps["emptyState"];
+  onlyMine?: boolean;
 }) {
-  const { data, isLoading, isError, refetch } = useOrderDates();
+  const { data, isLoading, isError, refetch } = useOrderDates(onlyMine);
 
   if (isLoading) {
     return (
@@ -172,9 +174,21 @@ export interface OrdersListPageProps {
   // order list — pick a day to drill into that day's orders. Salesman orders
   // keeps the flat list, so this defaults off.
   groupByDate?: boolean;
+  // Scopes every order query to ones the current account personally placed.
+  // A real salesman is always scoped this way server-side regardless of this
+  // flag; it exists for an admin using the salesman ordering screens (same
+  // account, no separate salesman login — see RoleSwitchCards), whose real
+  // DB role is "admin" and would otherwise see every order in the business.
+  onlyMine?: boolean;
 }
 
-export function OrdersListPage({ basePath, customerName, emptyState, groupByDate = false }: OrdersListPageProps) {
+export function OrdersListPage({
+  basePath,
+  customerName,
+  emptyState,
+  groupByDate = false,
+  onlyMine = false,
+}: OrdersListPageProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -182,7 +196,7 @@ export function OrdersListPage({ basePath, customerName, emptyState, groupByDate
   const [dateModalOpen, setDateModalOpen] = useState(false);
   const [draftDate, setDraftDate] = useState("");
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useOrders();
+    useOrders(undefined, undefined, onlyMine);
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
   const isDesktop = useIsDesktop();
@@ -223,7 +237,7 @@ export function OrdersListPage({ basePath, customerName, emptyState, groupByDate
         <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
           <h2 className="text-sm font-medium text-ink-muted">Pick a day to view its orders</h2>
         </header>
-        <DayListView onSelectDate={setSelectedDate} emptyState={emptyState} />
+        <DayListView onSelectDate={setSelectedDate} emptyState={emptyState} onlyMine={onlyMine} />
       </div>
     );
   }

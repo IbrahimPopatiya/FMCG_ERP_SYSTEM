@@ -68,21 +68,27 @@ def list_orders(
     page_size: int = Query(10, ge=1, le=100),
     customer_id: uuid.UUID | None = Query(None),
     order_date: date | None = Query(None),
+    # An admin using the salesman ordering screens (same account, no separate
+    # salesman login - see RoleSwitchCards) sets this to scope the list down
+    # to orders they personally placed, same as a real salesman sees by
+    # default. A real salesman is always scoped this way regardless of the flag.
+    only_mine: bool = Query(False),
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
     items, total = sales_order_service.list_orders_for_principal(
-        db, principal, page, page_size, customer_id=customer_id, order_date=order_date
+        db, principal, page, page_size, customer_id=customer_id, order_date=order_date, only_mine=only_mine
     )
     return Page(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.get("/dates", response_model=list[OrderDateCount])
 def list_order_dates(
+    only_mine: bool = Query(False),
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    rows = sales_order_service.list_order_dates_for_principal(db, principal)
+    rows = sales_order_service.list_order_dates_for_principal(db, principal, only_mine)
     return [OrderDateCount(order_date=order_date, order_count=count) for order_date, count in rows]
 
 

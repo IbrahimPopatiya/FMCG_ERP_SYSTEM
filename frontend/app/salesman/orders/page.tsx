@@ -18,9 +18,10 @@ export default function SalesmanOrdersPage() {
         basePath="/salesman/orders"
         customerName={customerName}
         groupByDate
+        onlyMine
         emptyState={{
           title: "No orders yet",
-          message: "Orders placed for your route's customers will show up here.",
+          message: "Orders you place will show up here.",
           cta: { href: "/salesman/products", label: "Start an order" },
         }}
       />
