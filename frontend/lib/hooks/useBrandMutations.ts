@@ -21,3 +21,13 @@ export function useDeleteBrand() {
     },
   });
 }
+
+export function useBulkDeleteBrands() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (brandIds: string[]) => Promise.all(brandIds.map((id) => deleteBrand(id))),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["brands"] });
+    },
+  });
+}

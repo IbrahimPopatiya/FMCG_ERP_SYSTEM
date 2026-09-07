@@ -59,6 +59,16 @@ export function useDeleteProduct() {
   });
 }
 
+export function useBulkDeleteProducts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (productIds: string[]) => Promise.all(productIds.map((id) => deleteProduct(id))),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
 export function useSetProductStatus() {
   const queryClient = useQueryClient();
   return useMutation({

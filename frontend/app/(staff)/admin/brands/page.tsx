@@ -5,8 +5,10 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TopBar } from "@/components/layout/TopBar";
+import type { BrandResponse } from "@/types/brands";
 
 const BrandForm = dynamic(() => import("@/components/brands/BrandForm").then((m) => m.BrandForm), {
   ssr: false,
@@ -33,11 +35,17 @@ export default function BrandsPage() {
   useRoleGuard(["admin"]);
 
   const [isFormOpen, setFormOpen] = useState(false);
+  const [brandToDelete, setBrandToDelete] = useState<BrandResponse | null>(null);
   const brands = useBrands();
   const createBrand = useCreateBrand();
   const deleteBrand = useDeleteBrand();
 
   const rows = brands.data ?? [];
+
+  function handleConfirmDelete() {
+    if (!brandToDelete) return;
+    deleteBrand.mutate(brandToDelete.id, { onSuccess: () => setBrandToDelete(null) });
+  }
 
   return (
     <div>
@@ -88,7 +96,7 @@ export default function BrandsPage() {
                 variant="secondary"
                 className="h-9 px-3 text-xs"
                 isLoading={deleteBrand.isPending && deleteBrand.variables === b.id}
-                onClick={() => deleteBrand.mutate(b.id)}
+                onClick={() => setBrandToDelete(b)}
               >
                 Delete
               </Button>
@@ -100,6 +108,17 @@ export default function BrandsPage() {
       <Modal open={isFormOpen} onClose={() => setFormOpen(false)} title="Add brand">
         <BrandForm onSubmit={(payload) => createBrand.mutateAsync(payload)} onSuccess={() => setFormOpen(false)} />
       </Modal>
+
+      <ConfirmDialog
+        open={!!brandToDelete}
+        title={`Delete "${brandToDelete?.name}"?`}
+        message="This also deletes every product under this brand from the catalog. This can't be undone."
+        confirmLabel="Delete"
+        tone="danger"
+        isConfirming={deleteBrand.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setBrandToDelete(null)}
+      />
     </div>
   );
 }
