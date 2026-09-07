@@ -22,5 +22,7 @@ async def upload_file(
     # save_file() does a blocking network call to Supabase Storage - running it
     # directly here would freeze every other in-flight request on the event loop
     # until the upload finishes, so it runs in a worker thread instead.
-    file_url = await run_in_threadpool(save_file, contents, file.filename, category)
+    file_url = await run_in_threadpool(
+        save_file, contents, file.filename, category, file.content_type
+    )
     return FileUploadResponse(file_url=file_url)
