@@ -18,6 +18,7 @@ import {
   GridIcon,
   CartIcon,
   WalletIcon,
+  SettingsIcon,
 } from "@/components/customer/icons";
 
 export {
@@ -35,6 +36,7 @@ export {
   GridIcon,
   CartIcon,
   WalletIcon,
+  SettingsIcon,
 };
 
 type IconProps = { className?: string };

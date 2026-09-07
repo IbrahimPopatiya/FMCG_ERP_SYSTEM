@@ -15,10 +15,12 @@ export function MobileBottomNav({
   items,
   className = "bg-white border-border text-ink-muted",
   variant = "bar",
+  style,
 }: {
   items: NavItem[];
   className?: string;
   variant?: "bar" | "island";
+  style?: React.CSSProperties;
 }) {
   const pathname = usePathname();
   const isIsland = variant === "island";
@@ -50,6 +52,7 @@ export function MobileBottomNav({
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-4 pt-2 sm:hidden">
         <nav
           className={`pointer-events-auto flex gap-1 rounded-full border shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl ${className}`}
+          style={style}
         >
           {links}
         </nav>

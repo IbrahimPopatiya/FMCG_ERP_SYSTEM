@@ -27,7 +27,8 @@ function CustomerMobileNav() {
     <MobileBottomNav
       items={items}
       variant="island"
-      className="border-border/60 bg-white/80 text-ink-muted"
+      className="border-white/40 bg-white/45 text-ink-muted"
+      style={{ backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)" }}
     />
   );
 }

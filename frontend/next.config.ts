@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   // blocks dev-only asset/endpoint requests from other origins - needed so
   // the app works when opened via the laptop's LAN IP (LAN/mobile testing).
   allowedDevOrigins: process.env.DEV_LAN_IP ? [process.env.DEV_LAN_IP] : [],
+  // Hides the black Next.js dev-mode badge shown in the corner while running
+  // `next dev` - purely a dev overlay, never present in production builds.
+  devIndicators: false,
   images: {
     // Lets next/image auto-resize/optimize images from these sources instead
     // of shipping the original full-size file for a thumbnail-sized slot:

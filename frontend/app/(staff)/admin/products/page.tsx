@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TopBar } from "@/components/layout/TopBar";
 import { AdminProductCard } from "@/components/products/AdminProductCard";
-import { SearchIcon, PlusIcon } from "@/components/admin/icons";
+import { SearchIcon, PlusIcon, SettingsIcon } from "@/components/admin/icons";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useProductsManage } from "@/lib/hooks/useProductsManage";
@@ -140,6 +140,16 @@ export default function AdminProductsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/admin/products/settings">
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-11 w-11 shrink-0 rounded-full px-0"
+                aria-label="Product settings"
+              >
+                <SettingsIcon className="h-[18px] w-[18px]" />
+              </Button>
+            </Link>
             <Link href="/admin/products/new">
               <Button type="button" className="w-full gap-1.5 rounded-full sm:w-auto">
                 <PlusIcon className="h-4 w-4" />
