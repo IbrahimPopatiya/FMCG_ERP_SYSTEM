@@ -13,12 +13,13 @@ import type { ProductResponse } from "@/types/product";
 interface AdminProductCardProps {
   product: ProductResponse;
   onToggleStatus: (product: ProductResponse) => void;
+  priority?: boolean;
 }
 
 // Same card shape as the customer storefront's CustomerProductCard (square
 // image, name, SKU, price) so admin's catalog reads as the same product
 // grid — just with Edit/Delete in place of Add to Cart.
-function AdminProductCardBase({ product }: AdminProductCardProps) {
+function AdminProductCardBase({ product, priority }: AdminProductCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
@@ -78,6 +79,7 @@ function AdminProductCardBase({ product }: AdminProductCardProps) {
               fill
               sizes="(min-width: 640px) 200px, 50vw"
               unoptimized={displayImage.startsWith("blob:")}
+              priority={priority}
               className="object-cover"
             />
           ) : (

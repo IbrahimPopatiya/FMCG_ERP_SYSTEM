@@ -181,8 +181,13 @@ export default function AdminProductsPage() {
       {!isLoading && !isError && total > 0 && (
         <div className="p-4 sm:p-6">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
-            {products.map((p) => (
-              <AdminProductCard key={p.id} product={p} onToggleStatus={handleToggleStatus} />
+            {products.map((p, index) => (
+              <AdminProductCard
+                key={p.id}
+                product={p}
+                onToggleStatus={handleToggleStatus}
+                priority={index < 5}
+              />
             ))}
           </div>
 
