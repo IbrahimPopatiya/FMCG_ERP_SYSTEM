@@ -117,7 +117,8 @@ export default function AdminProductsPage() {
 
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
 
-  const products = data?.pages.flatMap((page) => page.items) ?? [];
+  const allItems = data?.pages.flatMap((page) => page.items) ?? [];
+  const products = Array.from(new Map(allItems.map((p) => [p.id, p])).values());
   const total = data?.pages[0]?.total ?? 0;
 
   const setStatus = useSetProductStatus();
