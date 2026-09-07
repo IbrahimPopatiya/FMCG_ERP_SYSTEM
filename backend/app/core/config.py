@@ -13,7 +13,10 @@ class Settings(BaseSettings):
     # point at Supabase while the suite stays on localhost.
     test_database_url: str = "postgresql://postgres@localhost:5432/dms_test_db"
     secret_key: str
-    access_token_expire_minutes: int = 60
+    # 7 days, matching the frontend's session cookie lifetime (see
+    # frontend/lib/auth/session.ts) - a shorter value here logs the user out
+    # well before that cookie expires.
+    access_token_expire_minutes: int = 60 * 24 * 7
     cors_extra_origins: str = ""
     # Matches this client's Vercel preview deploys (project-name-git-branch-*.vercel.app).
     # Each client's Render service should set this to their own Vercel project name.
