@@ -63,13 +63,13 @@ def list_active_products_feed(
         query = query.filter((Product.name.ilike(like)) | (Product.sku.ilike(like)))
 
     if sort == "price_low":
-        query = query.order_by(Product.selling_price.asc())
+        query = query.order_by(Product.selling_price.asc(), Product.id.desc())
     elif sort == "price_high":
-        query = query.order_by(Product.selling_price.desc())
+        query = query.order_by(Product.selling_price.desc(), Product.id.desc())
     elif sort == "name":
-        query = query.order_by(Product.name.asc())
+        query = query.order_by(Product.name.asc(), Product.id.desc())
     else:
-        query = query.order_by(Product.created_at.desc())
+        query = query.order_by(Product.created_at.desc(), Product.id.desc())
 
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
@@ -94,7 +94,7 @@ def list_all_products(
         )
     if brand_id:
         query = query.filter(Product.brand_id == brand_id)
-    query = query.order_by(Product.created_at.desc())
+    query = query.order_by(Product.created_at.desc(), Product.id.desc())
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
     return items, total
