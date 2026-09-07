@@ -309,7 +309,7 @@ export default function ProductSettingsPage() {
     <div className="flex min-h-screen flex-col">
       <TopBar title="Product Settings" backHref="/admin/products" />
 
-      <div className="border-b border-border bg-white px-4 pt-4 sm:px-6">
+      <div className="border-b border-border bg-white px-4 pb-4 pt-4 sm:px-6">
         <h1 className="text-lg font-semibold tracking-tight text-ink">Product Settings</h1>
         <p className="mt-0.5 text-sm text-ink-muted">Bulk delete brands or products</p>
 
