@@ -1,20 +1,42 @@
 "use client";
 
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { StoreIcon, ChevronRightIcon } from "@/components/customer/icons";
+import { PlusIcon } from "@/components/admin/icons";
 import { useSalesmanCustomers } from "@/lib/hooks/useSalesmanCustomers";
+import { useCreateCustomerAsSalesman } from "@/lib/hooks/useCustomerMutations";
+
+const CustomerForm = dynamic(
+  () => import("@/components/customers/CustomerForm").then((m) => m.CustomerForm),
+  { ssr: false }
+);
 
 export default function SalesmanCustomersPage() {
   const { data, isLoading, isError, refetch } = useSalesmanCustomers();
+  const createCustomer = useCreateCustomerAsSalesman();
+  const [isFormOpen, setFormOpen] = useState(false);
   const customers = data?.items ?? [];
 
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-3 md:px-8">
-        <h1 className="text-lg font-semibold tracking-tight text-ink">Customers</h1>
-        <p className="mt-0.5 text-xs text-ink-muted">Customers on your route</p>
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-white px-4 py-3 md:px-8">
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight text-ink">Customers</h1>
+          <p className="mt-0.5 text-xs text-ink-muted">Customers on your route</p>
+        </div>
+        <Button
+          type="button"
+          className="shrink-0 gap-1.5 rounded-full"
+          onClick={() => setFormOpen(true)}
+        >
+          <PlusIcon className="h-4 w-4" />
+          Add customer
+        </Button>
       </header>
 
       {isLoading && (
@@ -40,6 +62,9 @@ export default function SalesmanCustomersPage() {
         <div className="flex flex-col items-center gap-3 px-4 py-20 text-center">
           <h2 className="text-base font-semibold text-ink">No customers yet</h2>
           <p className="max-w-xs text-sm text-ink-muted">Customers on your assigned route will show up here.</p>
+          <Button type="button" className="mt-1 rounded-full" onClick={() => setFormOpen(true)}>
+            Add customer
+          </Button>
         </div>
       )}
 
@@ -65,6 +90,13 @@ export default function SalesmanCustomersPage() {
           ))}
         </div>
       )}
+
+      <Modal open={isFormOpen} onClose={() => setFormOpen(false)} title="Add customer">
+        <CustomerForm
+          onSubmit={(payload) => createCustomer.mutateAsync(payload)}
+          onSuccess={() => setFormOpen(false)}
+        />
+      </Modal>
     </div>
   );
 }

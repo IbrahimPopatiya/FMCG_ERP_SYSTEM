@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -11,13 +11,18 @@ import { TopBar } from "@/components/layout/TopBar";
 import { CustomerStatusBadge } from "@/components/customers/CustomerStatusBadge";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { useCustomer } from "@/lib/hooks/useCustomer";
-import { useAssignCustomerSalesman, useSetCustomerStatus } from "@/lib/hooks/useCustomerMutations";
+import {
+  useAssignCustomerSalesman,
+  useDeleteCustomer,
+  useSetCustomerStatus,
+} from "@/lib/hooks/useCustomerMutations";
 import { useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useRoutes } from "@/lib/hooks/useRoutes";
 import { useOrders } from "@/lib/hooks/useOrders";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
+import { getStaffRole } from "@/lib/auth/session";
 
 function initialsAvatarTone(seed: string) {
   const tones = [
@@ -43,14 +48,18 @@ function Row({ label, value }: { label: string; value: string }) {
 export default function CustomerDetailPage() {
   useRoleGuard(["admin", "salesman", "manager", "cashier"]);
 
+  const router = useRouter();
   const { customerId } = useParams<{ customerId: string }>();
   const customer = useCustomer(customerId);
   const setStatus = useSetCustomerStatus(customerId);
   const assignSalesman = useAssignCustomerSalesman(customerId);
+  const deleteCustomer = useDeleteCustomer(customerId);
   const staffDirectory = useStaffDirectory();
   const routes = useRoutes();
   const [isAssignOpen, setAssignOpen] = useState(false);
+  const [isDeleteOpen, setDeleteOpen] = useState(false);
   const [orderDate, setOrderDate] = useState("");
+  const isAdmin = getStaffRole() === "admin";
 
   const {
     data: ordersData,
@@ -66,7 +75,12 @@ export default function CustomerDetailPage() {
 
   const salesmen = (staffDirectory.data ?? []).filter((u) => u.role === "salesman");
   const currentRoute = routes.data?.find((r) => r.id === customer.data?.route_id) ?? null;
-  const currentSalesman = salesmen.find((s) => s.id === currentRoute?.salesman_id) ?? null;
+  // The route's owner may not have role "salesman" (e.g. an admin using the
+  // salesman-facing "Add customer" screen also gets their own route) - look
+  // them up in the full directory, not just the salesmen filter used for
+  // the "assign salesperson" picker below.
+  const currentSalesman =
+    (staffDirectory.data ?? []).find((s) => s.id === currentRoute?.salesman_id) ?? null;
 
   return (
     <div>
@@ -134,6 +148,16 @@ export default function CustomerDetailPage() {
               <Button type="button" variant="secondary" onClick={() => setAssignOpen(true)}>
                 Assign Salesperson
               </Button>
+              {isAdmin && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="border-danger text-danger hover:bg-danger-soft"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  Delete customer
+                </Button>
+              )}
               <Button
                 type="button"
                 variant={data.status === "active" ? "danger" : "primary"}
@@ -242,6 +266,43 @@ export default function CustomerDetailPage() {
           </div>
         )}
       </Modal>
+
+      {isAdmin && customer.data && (
+        <Modal open={isDeleteOpen} onClose={() => setDeleteOpen(false)} title="Delete customer">
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-ink">
+              Delete <span className="font-semibold">{customer.data.business_name}</span>? They&apos;ll be
+              removed from the customer list and won&apos;t be able to log in or place new orders.
+            </p>
+            <p className="text-sm text-ink-muted">
+              Their past orders, invoices, and payment records are kept for accounting purposes and are
+              not deleted.
+            </p>
+            {deleteCustomer.isError && (
+              <div className="rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+                Couldn&apos;t delete this customer. Please try again.
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="secondary" onClick={() => setDeleteOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                isLoading={deleteCustomer.isPending}
+                onClick={() =>
+                  deleteCustomer.mutate(undefined, {
+                    onSuccess: () => router.push("/admin/customers"),
+                  })
+                }
+              >
+                Delete customer
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

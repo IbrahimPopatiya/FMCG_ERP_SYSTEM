@@ -43,6 +43,11 @@ export interface CustomerCreate {
   password: string;
 }
 
+export interface CustomerDeleteResponse {
+  id: string;
+  deleted_at: string;
+}
+
 export interface DueInvoiceItem {
   invoice_id: string;
   invoice_number: string;

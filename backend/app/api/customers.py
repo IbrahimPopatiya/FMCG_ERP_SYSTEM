@@ -4,7 +4,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user, require_customer
+from app.core.deps import get_current_user, require_customer, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.customer import Customer
 from app.models.user import User
@@ -96,10 +97,25 @@ def get_customer(
 def create_customer(
     data: CustomerCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALESMAN)),
 ):
     try:
         return customer_service.create_customer(db, data)
+    except DuplicateCustomerError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+
+@router.post("/mine", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
+def create_my_customer(
+    data: CustomerCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.MANAGER, UserRole.SALESMAN)),
+):
+    """Used by the salesman-facing "Add customer" screen - always attaches
+    the new customer to the caller's own route so it shows up in their own
+    customer list right away (see create_customer in the service)."""
+    try:
+        return customer_service.create_customer(db, data, creator=current_user)
     except DuplicateCustomerError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
@@ -170,7 +186,7 @@ def update_customer_location(
 def delete_customer(
     customer_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     customer = customer_service.soft_delete_customer(db, customer_id)
     if customer is None:

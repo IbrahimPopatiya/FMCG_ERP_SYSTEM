@@ -35,7 +35,31 @@ def _next_customer_code(db: Session) -> str:
     return f"CUST-{max_seq + 1}"
 
 
-def create_customer(db: Session, data: CustomerCreate) -> Customer:
+def _get_or_create_route_for_salesman(db: Session, salesman: User) -> Route:
+    """Finds the salesman's route, creating it if they don't have one yet -
+    a salesman's route is what scopes which customers they can see/order for
+    (see sales_order.py)."""
+    route = db.query(Route).filter(
+        Route.salesman_id == salesman.id, Route.deleted_at.is_(None)
+    ).first()
+    if route is None:
+        route = route_service.create_route(
+            db, RouteCreate(name=f"{salesman.full_name}'s Route", salesman_id=salesman.id)
+        )
+    return route
+
+
+def create_customer(db: Session, data: CustomerCreate, creator: User | None = None) -> Customer:
+    """`creator` is only passed by the "add to my customers" flow (the
+    salesman-facing customer page, which admins/managers can also use for
+    order entry) - it always attaches the new customer to the creator's own
+    route, whatever their role, so it shows up in their own customer list
+    immediately. The plain admin "Add customer" flow omits it and leaves
+    route_id as given (usually unassigned)."""
+    route_id = data.route_id
+    if creator is not None:
+        route_id = _get_or_create_route_for_salesman(db, creator).id
+
     customer = Customer(
         customer_code=_next_customer_code(db),
         business_name=data.business_name,
@@ -49,7 +73,7 @@ def create_customer(db: Session, data: CustomerCreate) -> Customer:
         pincode=data.pincode,
         credit_limit=data.credit_limit,
         payment_terms=data.payment_terms,
-        route_id=data.route_id,
+        route_id=route_id,
         price_list_id=data.price_list_id,
         password_hash=hash_password(data.password),
     )
@@ -156,13 +180,7 @@ def assign_salesman_to_customer(
     if salesman is None:
         raise SalesmanNotFoundError("Salesman not found")
 
-    route = db.query(Route).filter(
-        Route.salesman_id == salesman_id, Route.deleted_at.is_(None)
-    ).first()
-    if route is None:
-        route = route_service.create_route(
-            db, RouteCreate(name=f"{salesman.full_name}'s Route", salesman_id=salesman.id)
-        )
+    route = _get_or_create_route_for_salesman(db, salesman)
 
     customer.route_id = route.id
     db.commit()

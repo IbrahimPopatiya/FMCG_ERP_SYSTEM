@@ -3,6 +3,7 @@ import type { Page } from "@/types/pagination";
 import type {
   CustomerCreate,
   CustomerCreateResponse,
+  CustomerDeleteResponse,
   CustomerDuesResponse,
   CustomerLedgerResponse,
   CustomerListItem,
@@ -38,6 +39,12 @@ export function createCustomer(data: CustomerCreate) {
   return api.post<CustomerCreateResponse>("/customers", data).then((res) => res.data);
 }
 
+// Used by the salesman-facing "Add customer" screen — always attaches the
+// new customer to the caller's own route (see backend POST /customers/mine).
+export function createCustomerAsSalesman(data: CustomerCreate) {
+  return api.post<CustomerCreateResponse>("/customers/mine", data).then((res) => res.data);
+}
+
 export function setCustomerStatus(customerId: string, status: CustomerStatus) {
   return api
     .patch<CustomerCreateResponse>(`/customers/${customerId}/status`, { status })
@@ -48,4 +55,8 @@ export function assignCustomerSalesman(customerId: string, salesmanId: string) {
   return api
     .patch<CustomerMeResponse>(`/customers/${customerId}/salesman`, { salesman_id: salesmanId })
     .then((res) => res.data);
+}
+
+export function deleteCustomer(customerId: string) {
+  return api.delete<CustomerDeleteResponse>(`/customers/${customerId}`).then((res) => res.data);
 }

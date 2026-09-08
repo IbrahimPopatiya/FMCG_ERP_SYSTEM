@@ -163,7 +163,12 @@ export function ProductForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-8" noValidate>
       <section className="flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-ink">Identification</h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-sm font-semibold text-ink">Identification</h2>
+          <Button type="submit" isLoading={isSubmitting} className="shrink-0">
+            {submitLabel}
+          </Button>
+        </div>
         <ProductImageField
           previewUrl={previewUrl}
           onFileSelected={handleImageSelected}
@@ -280,11 +285,6 @@ export function ProductForm({
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
-          {submitLabel}
-        </Button>
-      </div>
     </form>
   );
 }
