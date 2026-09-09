@@ -32,11 +32,10 @@ function BrandFilterRow({
       <button
         type="button"
         onClick={() => onSelect(null)}
-        className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-          selectedBrandId === null
+        className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${selectedBrandId === null
             ? "bg-ink text-white"
             : "bg-surface text-ink-muted hover:bg-border"
-        }`}
+          }`}
       >
         All brands
       </button>
@@ -45,11 +44,10 @@ function BrandFilterRow({
           key={brand.id}
           type="button"
           onClick={() => onSelect(brand.id)}
-          className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-            selectedBrandId === brand.id
+          className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${selectedBrandId === brand.id
               ? "bg-ink text-white"
               : "bg-surface text-ink-muted hover:bg-border"
-          }`}
+            }`}
         >
           {brand.name}
         </button>
@@ -149,7 +147,7 @@ export default function AdminProductsPage() {
             <Button
               type="button"
               variant="secondary"
-              className="h-11 w-11 shrink-0 rounded-full px-0"
+              className="rounded-full px-0"
               aria-label="Product settings"
             >
               <SettingsIcon className="h-[18px] w-[18px]" />
