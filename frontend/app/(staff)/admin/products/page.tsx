@@ -129,34 +129,32 @@ export default function AdminProductsPage() {
     <div>
       <TopBar title="Products" subtitle="Manage All Products" />
 
-      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-ink">Products</h1>
-            <p className="mt-0.5 text-sm text-ink-muted">
-              {total > 0
-                ? `${total} product${total === 1 ? "" : "s"} in the catalog`
-                : "Manage what customers can order"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/admin/products/settings">
-              <Button
-                type="button"
-                variant="secondary"
-                className="h-11 w-11 shrink-0 rounded-full px-0"
-                aria-label="Product settings"
-              >
-                <SettingsIcon className="h-[18px] w-[18px]" />
-              </Button>
-            </Link>
-            <Link href="/admin/products/new">
-              <Button type="button" className="w-full gap-1.5 rounded-full sm:w-auto">
-                <PlusIcon className="h-4 w-4" />
-                Add Product
-              </Button>
-            </Link>
-          </div>
+      <header className="sticky top-0 z-10 flex flex-col gap-2 border-b border-border bg-white px-4 py-2 sm:px-6 sm:py-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-lg font-semibold tracking-tight text-ink">Products</h1>
+          {total > 0 && (
+            <span className="text-sm text-ink-muted">
+              {total} product{total === 1 ? "" : "s"}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <Link href="/admin/products/new">
+            <Button type="button" className="w-full gap-1.5 rounded-full sm:w-auto">
+              <PlusIcon className="h-4 w-4" />
+              Add Product
+            </Button>
+          </Link>
+          <Link href="/admin/products/settings">
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-11 w-11 shrink-0 rounded-full px-0"
+              aria-label="Product settings"
+            >
+              <SettingsIcon className="h-[18px] w-[18px]" />
+            </Button>
+          </Link>
         </div>
         <div className="relative max-w-sm">
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
@@ -165,7 +163,7 @@ export default function AdminProductsPage() {
             placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-11 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
+            className="h-10 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
           />
         </div>
         <BrandFilterRow selectedBrandId={selectedBrandId} onSelect={setSelectedBrandId} />

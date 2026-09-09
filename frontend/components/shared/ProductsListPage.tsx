@@ -4,7 +4,6 @@ import { Suspense, useCallback, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Select } from "@/components/ui/Select";
 import { FilterDrawer } from "@/components/customer/FilterDrawer";
 import { SearchIcon, SettingsIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
@@ -94,7 +93,6 @@ function ProductsListPageContent({ headerSlot, disabled, renderCard, filterMode 
   }
 
   const products = data?.pages.flatMap((page) => page.items) ?? [];
-  const total = data?.pages[0]?.total ?? 0;
 
   return (
     <div className="flex flex-col">
@@ -141,24 +139,6 @@ function ProductsListPageContent({ headerSlot, disabled, renderCard, filterMode 
         <div className="p-4 md:p-8">
           <div className="rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger">
             Couldn&apos;t load products. Pull down to refresh.
-          </div>
-        </div>
-      )}
-
-      {!isLoading && !isError && (
-        <div className="flex items-center justify-between px-4 pt-3 text-sm text-ink-muted md:px-8">
-          <span>{total} Products</span>
-          <div className="w-40">
-            <Select
-              value={sort}
-              onValueChange={(value) => setSort(value as SortOption)}
-              options={[
-                { value: "popular", label: "Sort by: Popular" },
-                { value: "price_low", label: "Price: Low to High" },
-                { value: "price_high", label: "Price: High to Low" },
-                { value: "name", label: "Name" },
-              ]}
-            />
           </div>
         </div>
       )}

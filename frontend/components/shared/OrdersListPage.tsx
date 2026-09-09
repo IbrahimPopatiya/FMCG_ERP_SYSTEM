@@ -234,7 +234,7 @@ export function OrdersListPage({
   if (groupByDate && !selectedDate) {
     return (
       <div>
-        <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
+        <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-2.5 sm:px-6 sm:py-3">
           <h2 className="text-sm font-medium text-ink-muted">Pick a day to view its orders</h2>
         </header>
         <DayListView onSelectDate={setSelectedDate} emptyState={emptyState} onlyMine={onlyMine} />
@@ -244,7 +244,7 @@ export function OrdersListPage({
 
   return (
     <div>
-      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
+      <header className="sticky top-0 z-10 flex flex-col gap-2 border-b border-border bg-white px-4 py-2.5 sm:px-6 sm:py-3">
         {groupByDate && selectedDate && (
           <button
             type="button"
@@ -263,23 +263,23 @@ export function OrdersListPage({
               placeholder="Search orders..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-11 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
+              className="h-10 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
             />
           </div>
           <button
             type="button"
             onClick={() => setShowFilters((v) => !v)}
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors ${
               showFilters ? "border-primary bg-primary-soft text-primary" : "border-border text-ink-muted hover:bg-surface"
             }`}
             aria-label="Filter orders by status"
           >
-            <FilterIcon className="h-5 w-5" />
+            <FilterIcon className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={openDateModal}
-            className={`flex h-11 shrink-0 items-center gap-1.5 rounded-xl border px-3.5 text-sm font-medium transition-colors ${
+            className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors ${
               selectedDate ? "border-primary bg-primary-soft text-primary" : "border-border text-ink-muted hover:bg-surface"
             }`}
             aria-label="Filter orders by date"
