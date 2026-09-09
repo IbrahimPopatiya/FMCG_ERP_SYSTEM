@@ -449,7 +449,7 @@ function buildBillHtml(
         <div class="salesman">
           Salesman :
           ${order.order_source === "salesman"
-      ? "Salesman"
+      ? (order.salesman_name ?? "-")
       : "Customer"
     }
         </div>

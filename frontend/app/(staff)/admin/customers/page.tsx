@@ -118,7 +118,7 @@ export default function AdminCustomersPage() {
 
   const allCustomers = data?.pages.flatMap((page) => page.items) ?? [];
   const total = data?.pages[0]?.total ?? 0;
-  const salesmen = (staffDirectory.data ?? []).filter((u) => u.role === "salesman");
+  const salesmen = (staffDirectory.data ?? []).filter((u) => u.role === "salesman" || u.role === "admin");
 
   const counts = useMemo(
     () => ({

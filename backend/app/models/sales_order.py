@@ -29,6 +29,7 @@ class SalesOrder(Base, UUIDPKMixin, TimestampMixin, SoftDeleteMixin):
 
     items = relationship("SalesOrderItem", cascade="all, delete-orphan")
     customer = relationship("Customer")
+    salesman = relationship("User", foreign_keys=[salesman_id])
 
 
 class SalesOrderItem(Base, UUIDPKMixin, TimestampMixin):

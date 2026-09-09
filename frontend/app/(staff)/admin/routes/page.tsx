@@ -47,7 +47,7 @@ export default function RoutesPage() {
   const isDesktop = useIsDesktop();
 
   const rows = routes.data ?? [];
-  const salesmen = (staff.data ?? []).filter((u) => u.role === "salesman");
+  const salesmen = (staff.data ?? []).filter((u) => u.role === "salesman" || u.role === "admin");
   const salesmanNameById = new Map(salesmen.map((s) => [s.id, s.full_name]));
 
   return (
