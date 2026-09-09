@@ -15,11 +15,6 @@ export default function SalesmanProductsPage() {
       headerSlot={
         <div className="mb-3">
           <CustomerSelect />
-          {!customerId && (
-            <p className="mt-1.5 text-xs text-ink-muted">
-              Choose a customer above before adding items to their order.
-            </p>
-          )}
         </div>
       }
       renderCard={(product, qty, onQtyChange) => (

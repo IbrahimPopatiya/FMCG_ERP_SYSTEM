@@ -49,9 +49,9 @@ export function MobileBottomNav({
 
   if (isIsland) {
     return (
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-4 pt-2 sm:hidden">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-1.5 pt-2 sm:hidden">
         <nav
-          className={`pointer-events-auto flex gap-1 rounded-full border shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl ${className}`}
+          className={`pointer-events-auto flex gap-1 rounded-2xl border shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl ${className}`}
           style={style}
         >
           {links}

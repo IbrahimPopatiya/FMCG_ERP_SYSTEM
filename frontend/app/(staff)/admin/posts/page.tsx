@@ -5,12 +5,11 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { NoProductImage } from "@/components/ui/NoProductImage";
 import { TopBar } from "@/components/layout/TopBar";
-import { SearchIcon, PlusIcon } from "@/components/admin/icons";
+import { SearchIcon, PlusIcon, PowerIcon, RefreshIcon } from "@/components/admin/icons";
 
 const PostForm = dynamic(() => import("@/components/posts/PostForm").then((m) => m.PostForm), {
   ssr: false,
@@ -56,8 +55,8 @@ function PostCard({
   const repost = useRepostPost();
 
   return (
-    <Card
-      className={`flex flex-col gap-3 overflow-hidden p-0 ${
+    <div
+      className={`relative flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-shadow hover:shadow-md ${
         selectMode && selected ? "border-primary ring-2 ring-primary-soft" : ""
       }`}
     >
@@ -65,7 +64,7 @@ function PostCard({
         type="button"
         onClick={() => selectMode && onToggleSelect(post)}
         disabled={!selectMode}
-        className="relative block h-40 w-full bg-surface disabled:cursor-default"
+        className="relative flex aspect-square w-full items-center justify-center bg-surface disabled:cursor-default"
       >
         {post.image ? (
           <Image
@@ -80,7 +79,7 @@ function PostCard({
         )}
         {!selectMode && (
           <div className="absolute right-2 top-2">
-            <Badge tone={post.is_active ? "success" : "neutral"}>{post.is_active ? "Active" : "Inactive"}</Badge>
+            <Badge tone={post.is_active ? "success" : "danger"}>{post.is_active ? "Active" : "Inactive"}</Badge>
           </div>
         )}
         {selectMode && (
@@ -96,10 +95,10 @@ function PostCard({
         )}
       </button>
 
-      <div className="flex flex-col gap-2 px-4 pb-4">
+      <div className="flex flex-1 flex-col gap-1.5 p-3">
         {!post.is_standalone && (
           <>
-            <p className="line-clamp-3 text-sm font-semibold text-ink">{post.product_name}</p>
+            <p className="line-clamp-2 text-sm font-medium leading-snug text-ink">{post.product_name}</p>
             {post.price > 0 && (
               <div className="flex items-baseline gap-1.5 text-sm">
                 <span className="font-semibold text-ink">{formatCurrency(post.price)}</span>
@@ -116,25 +115,29 @@ function PostCard({
             <Button
               type="button"
               variant="secondary"
-              className="h-9 flex-1 px-3 text-xs"
+              aria-label={post.is_active ? "Deactivate" : "Activate"}
+              className={`h-9 flex-1 px-3 ${
+                post.is_active ? "text-red-600 hover:bg-red-50" : "text-green-600 hover:bg-green-50"
+              }`}
               isLoading={setStatus.isPending && setStatus.variables?.postId === post.id}
               onClick={() => setStatus.mutate({ postId: post.id, isActive: !post.is_active })}
             >
-              {post.is_active ? "Deactivate" : "Activate"}
+              <PowerIcon className="h-4 w-4" />
             </Button>
             <Button
               type="button"
               variant="secondary"
-              className="h-9 flex-1 px-3 text-xs"
+              aria-label="Repost"
+              className="h-9 flex-1 px-3"
               isLoading={repost.isPending && repost.variables === post.id}
               onClick={() => repost.mutate(post.id)}
             >
-              Repost
+              <RefreshIcon className="h-4 w-4" />
             </Button>
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -181,12 +184,10 @@ export default function PostsPage() {
     <div>
       <TopBar title="Posts" />
 
-      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-        <div>
+      <header className="sticky top-0 z-10 flex flex-col gap-2 border-b border-border bg-white px-4 py-2 sm:px-6 sm:py-2.5">
+        <div className="flex items-center justify-between gap-2">
           <h1 className="text-lg font-semibold tracking-tight text-ink">Posts</h1>
-          <p className="mt-0.5 text-sm text-ink-muted">
-            {total > 0 ? `${total} post${total === 1 ? "" : "s"}` : "Featured posts on the customer home feed"}
-          </p>
+          {total > 0 && <span className="text-sm text-ink-muted">{total} post{total === 1 ? "" : "s"}</span>}
         </div>
         <div className="flex items-center gap-2">
           {selectMode && (
@@ -218,7 +219,7 @@ export default function PostsPage() {
       </header>
 
       <div className="px-4 py-3 sm:px-6">
-        <div className="flex h-11 items-center gap-2 rounded-xl border border-border px-3.5">
+        <div className="flex h-10 items-center gap-2 rounded-xl border border-border px-3.5">
           <SearchIcon className="h-4 w-4 shrink-0 text-ink-muted" />
           <input
             type="search"
@@ -234,7 +235,7 @@ export default function PostsPage() {
       </div>
 
       {posts.isLoading && (
-        <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 p-4 sm:p-6 md:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-64 w-full" />
           ))}
@@ -258,7 +259,7 @@ export default function PostsPage() {
 
       {!posts.isLoading && !posts.isError && rows.length > 0 && (
         <>
-          <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 p-4 sm:p-6 md:grid-cols-3 lg:grid-cols-4">
             {rows.map((post) => (
               <PostCard
                 key={post.id}
