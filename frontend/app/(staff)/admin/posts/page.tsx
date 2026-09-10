@@ -18,6 +18,7 @@ const PostForm = dynamic(() => import("@/components/posts/PostForm").then((m) =>
 import { useAllPosts } from "@/lib/hooks/usePosts";
 import { useCreatePost, useRepostPost, useRepostPosts, useSetPostStatus } from "@/lib/hooks/usePostMutations";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
+import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useRoleGuard } from "@/lib/hooks/useRoleGuard";
 import { formatCurrency } from "@/lib/utils/format";
 import type { PostResponse } from "@/types/post";
@@ -146,16 +147,15 @@ export default function PostsPage() {
 
   const [isFormOpen, setFormOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search);
 
-  const posts = useAllPosts({ page, pageSize: PAGE_SIZE, search: debouncedSearch.trim() });
+  const posts = useAllPosts(PAGE_SIZE, debouncedSearch.trim());
   const createPost = useCreatePost();
   const repostMany = useRepostPosts();
+  const sentinelRef = useInfiniteScrollSentinel(() => posts.fetchNextPage(), !!posts.hasNextPage);
 
-  const rows = posts.data?.items ?? [];
-  const total = posts.data?.total ?? 0;
-  const hasNextPage = page * PAGE_SIZE < total;
+  const rows = posts.data?.pages.flatMap((p) => p.items) ?? [];
+  const total = posts.data?.pages[0]?.total ?? 0;
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -225,10 +225,7 @@ export default function PostsPage() {
             type="search"
             placeholder="Search posts…"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
             className="h-full w-full bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
           />
         </div>
@@ -271,17 +268,9 @@ export default function PostsPage() {
             ))}
           </div>
 
-          {(page > 1 || hasNextPage) && (
-            <div className="flex items-center justify-center gap-3 pb-6">
-              <Button type="button" variant="secondary" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-                Previous
-              </Button>
-              <span className="text-sm text-ink-muted">Page {page}</span>
-              <Button type="button" variant="secondary" disabled={!hasNextPage} onClick={() => setPage((p) => p + 1)}>
-                Next
-              </Button>
-            </div>
-          )}
+          <div ref={sentinelRef} className="flex justify-center pb-6">
+            {posts.isFetchingNextPage && <Badge tone="neutral">Loading more…</Badge>}
+          </div>
         </>
       )}
 
