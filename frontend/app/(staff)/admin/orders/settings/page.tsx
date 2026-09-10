@@ -113,6 +113,7 @@ export default function OrderSettingsPage() {
   const [expandedDate, setExpandedDate] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const customerNameById = useMemo(
     () => new Map((customers.data?.items ?? []).map((c) => [c.id, c.business_name])),
@@ -147,9 +148,15 @@ export default function OrderSettingsPage() {
   }
 
   async function handleDelete() {
-    await bulkDelete.mutateAsync(Array.from(selected));
-    setSelected(new Set());
-    setConfirmOpen(false);
+    setDeleteError(null);
+    try {
+      await bulkDelete.mutateAsync(Array.from(selected));
+      setSelected(new Set());
+      setConfirmOpen(false);
+    } catch {
+      setConfirmOpen(false);
+      setDeleteError("Couldn't delete one or more selected orders. Refresh and try again.");
+    }
   }
 
   return (
@@ -212,6 +219,12 @@ export default function OrderSettingsPage() {
             </Card>
           );
         })}
+
+        {deleteError && (
+          <div className="rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm font-medium text-danger">
+            {deleteError}
+          </div>
+        )}
       </div>
 
       <SelectionBar
@@ -224,7 +237,7 @@ export default function OrderSettingsPage() {
       <ConfirmDialog
         open={confirmOpen}
         title={`Delete ${selected.size} order${selected.size === 1 ? "" : "s"}?`}
-        message="Only pending or cancelled orders can be deleted. This can't be undone."
+        message="Deleting an order that's approved or loaded also releases its reserved/shipped stock back to inventory. This can't be undone."
         confirmLabel="Delete"
         tone="danger"
         isConfirming={bulkDelete.isPending}

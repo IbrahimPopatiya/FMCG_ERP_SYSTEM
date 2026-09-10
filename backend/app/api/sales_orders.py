@@ -207,10 +207,7 @@ def delete_order(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
-    try:
-        order = sales_order_service.soft_delete_sales_order(db, order_id)
-    except OrderNotEditableError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    order = sales_order_service.soft_delete_sales_order(db, order_id)
 
     if order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")

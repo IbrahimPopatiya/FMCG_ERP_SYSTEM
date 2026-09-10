@@ -21,7 +21,7 @@ const SalesmanQuickAddForm = dynamic(
   () => import("@/components/users/SalesmanQuickAddForm").then((m) => m.SalesmanQuickAddForm),
   { ssr: false }
 );
-import { SearchIcon, PlusIcon } from "@/components/admin/icons";
+import { SearchIcon, PlusIcon, SettingsIcon } from "@/components/admin/icons";
 import { useCreateCustomer } from "@/lib/hooks/useCustomerMutations";
 import { useCreateUser, useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useCustomersManage } from "@/lib/hooks/useCustomersManage";
@@ -178,15 +178,26 @@ export default function AdminCustomersPage() {
           </Button>
         </div>
 
-        <div className="relative">
-          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
-          <input
-            type="search"
-            placeholder="Search customers..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full max-w-sm rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+            <input
+              type="search"
+              placeholder="Search customers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-10 w-full max-w-sm rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
+            />
+          </div>
+          {isAdmin && (
+            <Link
+              href="/admin/customers/settings"
+              aria-label="Customer settings"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+            >
+              <SettingsIcon className="h-4 w-4" />
+            </Link>
+          )}
         </div>
 
         <div className="flex gap-5 border-b border-border">

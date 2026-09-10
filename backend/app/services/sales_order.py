@@ -225,12 +225,43 @@ def cancel_sales_order(db: Session, order_id: uuid.UUID, principal: Principal) -
 
 
 def soft_delete_sales_order(db: Session, order_id: uuid.UUID) -> SalesOrder | None:
+    """Admin-only cleanup delete (e.g. removing test/dummy orders) - works on
+    an order in any status. Approved/loaded/delivered orders have stock
+    reserved or physically shipped against them, so deleting them also
+    reverses those inventory movements first, otherwise the warehouse's
+    reserved/physical stock would stay wrong forever."""
     order = get_sales_order(db, order_id)
     if order is None:
         return None
 
-    if order.status not in (OrderStatus.PENDING, OrderStatus.CANCELLED):
-        raise OrderNotEditableError("Only pending or cancelled orders can be deleted")
+    if order.status == OrderStatus.APPROVED:
+        warehouse = _get_fulfilling_warehouse(db)
+        for item in order.items:
+            if item.approved_qty:
+                record_movement(
+                    db,
+                    warehouse_id=warehouse.id,
+                    product_id=item.product_id,
+                    movement_type=MovementType.UNRESERVED,
+                    quantity=int(item.approved_qty),
+                    reference_type="sales_order",
+                    reference_id=order.id,
+                    remarks="Order deleted - releasing reservation",
+                )
+    elif order.status in (OrderStatus.LOADED, OrderStatus.DELIVERED):
+        warehouse = _get_fulfilling_warehouse(db)
+        for item in order.items:
+            if item.loaded_qty:
+                record_movement(
+                    db,
+                    warehouse_id=warehouse.id,
+                    product_id=item.product_id,
+                    movement_type=MovementType.RETURNED_IN,
+                    quantity=int(item.loaded_qty),
+                    reference_type="sales_order",
+                    reference_id=order.id,
+                    remarks="Order deleted - reversing shipped stock",
+                )
 
     order.deleted_at = datetime.now(timezone.utc)
     db.commit()

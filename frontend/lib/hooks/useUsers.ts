@@ -62,3 +62,15 @@ export function useDeleteUser() {
     },
   });
 }
+
+export function useBulkDeleteUsers() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userIds: string[]) => Promise.all(userIds.map((id) => deleteUser(id))),
+    onSuccess: (_results, userIds) => {
+      queryClient.setQueryData<UserResponse[]>(["users"], (old = []) =>
+        old.filter((u) => !userIds.includes(u.id))
+      );
+    },
+  });
+}

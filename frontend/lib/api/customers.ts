@@ -3,6 +3,7 @@ import type { Page } from "@/types/pagination";
 import type {
   CustomerCreate,
   CustomerCreateResponse,
+  CustomerDeleteResponse,
   CustomerDuesResponse,
   CustomerLedgerResponse,
   CustomerListItem,
@@ -48,4 +49,8 @@ export function assignCustomerSalesman(customerId: string, salesmanId: string) {
   return api
     .patch<CustomerMeResponse>(`/customers/${customerId}/salesman`, { salesman_id: salesmanId })
     .then((res) => res.data);
+}
+
+export function deleteCustomer(customerId: string) {
+  return api.delete<CustomerDeleteResponse>(`/customers/${customerId}`).then((res) => res.data);
 }
