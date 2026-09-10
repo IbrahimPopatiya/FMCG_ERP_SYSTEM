@@ -14,6 +14,7 @@ interface CartContextValue {
   getQty: (productId: string) => number;
   addItem: (product: ProductCatalogResponse, qty?: number) => void;
   setQty: (productId: string, qty: number) => void;
+  setUnitsPerBox: (productId: string, unitsPerBox: number) => void;
   removeItem: (productId: string) => void;
   clear: () => void;
 }
@@ -80,6 +81,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
+    function setUnitsPerBox(productId: string, unitsPerBox: number) {
+      setItems((prev) => {
+        if (unitsPerBox <= 0) return prev;
+        return prev.map((i) => (i.productId === productId ? { ...i, unitsPerBox } : i));
+      });
+    }
+
     function removeItem(productId: string) {
       setItems((prev) => prev.filter((i) => i.productId !== productId));
     }
@@ -104,6 +112,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       getQty,
       addItem,
       setQty,
+      setUnitsPerBox,
       removeItem,
       clear,
     };
