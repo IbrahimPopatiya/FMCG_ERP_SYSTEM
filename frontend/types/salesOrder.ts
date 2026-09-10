@@ -51,6 +51,7 @@ export interface SalesOrderResponse {
   customer_id: string;
   customer_name: string | null;
   salesman_id: string | null;
+  salesman_name: string | null;
   order_source: OrderSource;
   status: OrderStatus;
   remarks: string | null;

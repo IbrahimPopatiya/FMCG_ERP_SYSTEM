@@ -9,9 +9,18 @@ const TONE_CLASSES: Record<Tone, string> = {
   purple: "bg-purple-100 text-purple-700",
 };
 
-export function Badge({ tone = "neutral", children }: { tone?: Tone; children: React.ReactNode }) {
+export function Badge({
+  tone = "neutral",
+  size = "sm",
+  children,
+}: {
+  tone?: Tone;
+  size?: "xs" | "sm";
+  children: React.ReactNode;
+}) {
+  const sizeClasses = size === "xs" ? "px-1.5 py-0.5 text-[10px] leading-none" : "px-2.5 py-0.5 text-xs";
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${TONE_CLASSES[tone]}`}>
+    <span className={`inline-flex items-center whitespace-nowrap rounded-full font-medium ${sizeClasses} ${TONE_CLASSES[tone]}`}>
       {children}
     </span>
   );

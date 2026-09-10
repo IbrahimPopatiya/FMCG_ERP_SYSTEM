@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/Badge";
@@ -21,7 +21,7 @@ const SalesmanQuickAddForm = dynamic(
   () => import("@/components/users/SalesmanQuickAddForm").then((m) => m.SalesmanQuickAddForm),
   { ssr: false }
 );
-import { SearchIcon, PlusIcon } from "@/components/admin/icons";
+import { SearchIcon, PlusIcon, SettingsIcon } from "@/components/admin/icons";
 import { useCreateCustomer } from "@/lib/hooks/useCustomerMutations";
 import { useCreateUser, useStaffDirectory } from "@/lib/hooks/useUsers";
 import { useCustomersManage } from "@/lib/hooks/useCustomersManage";
@@ -96,7 +96,10 @@ export default function AdminCustomersPage() {
   const [tab, setTab] = useState<TabValue>("all");
   const [isFormOpen, setFormOpen] = useState(false);
   const [isSalesmanFormOpen, setSalesmanFormOpen] = useState(false);
-  const isAdmin = getStaffRole() === "admin";
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    setIsAdmin(getStaffRole() === "admin");
+  }, []);
   const {
     data,
     isLoading,
@@ -115,7 +118,7 @@ export default function AdminCustomersPage() {
 
   const allCustomers = data?.pages.flatMap((page) => page.items) ?? [];
   const total = data?.pages[0]?.total ?? 0;
-  const salesmen = (staffDirectory.data ?? []).filter((u) => u.role === "salesman");
+  const salesmen = (staffDirectory.data ?? []).filter((u) => u.role === "salesman" || u.role === "admin");
 
   const counts = useMemo(
     () => ({
@@ -144,46 +147,57 @@ export default function AdminCustomersPage() {
     <div>
       <TopBar title="Customers" subtitle="Manage All Customers" />
 
-      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-ink">Customers</h1>
-            <p className="mt-0.5 text-sm text-ink-muted">
-              {total > 0 ? `${total} customer${total === 1 ? "" : "s"}` : "Shops and retailers you sell to"}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {isAdmin && (
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full gap-1.5 rounded-full sm:w-auto"
-                onClick={() => setSalesmanFormOpen(true)}
-              >
-                <PlusIcon className="h-4 w-4" />
-                Add Salesman
-              </Button>
-            )}
+      <header className="sticky top-0 z-10 flex flex-col gap-2 border-b border-border bg-white px-4 py-2 sm:px-6 sm:py-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-lg font-semibold tracking-tight text-ink">Customers</h1>
+          {total > 0 && (
+            <span className="text-sm text-ink-muted">
+              {total} customer{total === 1 ? "" : "s"}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isAdmin && (
             <Button
               type="button"
               className="w-full gap-1.5 rounded-full sm:w-auto"
-              onClick={() => setFormOpen(true)}
+              onClick={() => setSalesmanFormOpen(true)}
             >
               <PlusIcon className="h-4 w-4" />
-              Add Customer
+              Add Salesman
             </Button>
-          </div>
+          )}
+          <Button
+            type="button"
+            className="w-full gap-1.5 rounded-full sm:w-auto"
+            onClick={() => setFormOpen(true)}
+          >
+            <PlusIcon className="h-4 w-4" />
+            Add Customer
+          </Button>
         </div>
 
-        <div className="relative">
-          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
-          <input
-            type="search"
-            placeholder="Search customers..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-11 w-full max-w-sm rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+            <input
+              type="search"
+              placeholder="Search customers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-10 w-full max-w-sm rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
+            />
+          </div>
+          {isAdmin && (
+            <Link
+              href="/admin/customers/settings"
+              aria-label="Customer settings"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+            >
+              <SettingsIcon className="h-4 w-4" />
+            </Link>
+          )}
         </div>
 
         <div className="flex gap-5 border-b border-border">
@@ -259,20 +273,20 @@ export default function AdminCustomersPage() {
 
           {/* Mobile: avatar-initial rows matching the mockup */}
           {isDesktop === false && (
-          <div className="flex flex-col gap-3 sm:hidden">
+          <div className="flex flex-col gap-1.5 sm:hidden">
             {customers.map((c) => (
               <Link key={c.id} href={`/admin/customers/${c.id}`}>
-                <Card className="flex items-center gap-3 rounded-2xl">
+                <Card className="flex items-center gap-2.5 rounded-xl p-3">
                   <div
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-semibold ${avatarTone(
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${avatarTone(
                       c.id
                     )}`}
                   >
                     {c.business_name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-ink">{c.business_name}</p>
-                    <p className="mt-0.5 truncate text-sm text-ink-muted">
+                    <p className="truncate text-sm font-medium text-ink">{c.business_name}</p>
+                    <p className="mt-0.5 truncate text-xs text-ink-muted">
                       {c.mobile} · {c.city}
                     </p>
                   </div>

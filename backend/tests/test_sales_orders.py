@@ -381,6 +381,115 @@ def test_cancel_order_not_found_returns_404(client):
     assert response.status_code == 404
 
 
+# ---------- DELETE /orders/{id} ----------
+
+def test_admin_deletes_pending_order_returns_200(client):
+    headers = admin_headers(client)
+    create_warehouse(client, headers)
+    product = create_product(client, headers)
+    create_customer(client, headers, mobile="9876599900")
+    customer_headers = customer_login_headers(client, "9876599900")
+    order = client.post(
+        "/api/v1/orders",
+        json={"items": [{"product_id": product["id"], "ordered_qty": 1}]},
+        headers=customer_headers,
+    ).json()
+
+    response = client.delete(f"/api/v1/orders/{order['id']}", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["id"] == order["id"]
+
+    get_response = client.get(f"/api/v1/orders/{order['id']}", headers=headers)
+    assert get_response.status_code == 404
+
+
+def test_non_admin_cannot_delete_order_returns_403(client):
+    headers = admin_headers(client)
+    create_warehouse(client, headers)
+    product = create_product(client, headers)
+    create_customer(client, headers, mobile="9876500011")
+    customer_headers = customer_login_headers(client, "9876500011")
+    order = client.post(
+        "/api/v1/orders",
+        json={"items": [{"product_id": product["id"], "ordered_qty": 1}]},
+        headers=customer_headers,
+    ).json()
+
+    response = client.delete(f"/api/v1/orders/{order['id']}", headers=customer_headers)
+
+    assert response.status_code == 403
+
+
+def test_delete_approved_order_releases_reservation(client, db_session):
+    headers = admin_headers(client)
+    salesman_headers, customer, warehouse = setup_salesman_and_customer(client, headers)
+    product = create_product(client, headers)
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_id": product["id"], "ordered_qty": 3}],
+        },
+        headers=salesman_headers,
+    ).json()
+    item_id = order["items"][0]["id"]
+    client.post(
+        f"/api/v1/orders/{order['id']}/approve",
+        json={"items": [{"item_id": item_id, "approved_qty": 3}]},
+        headers=headers,
+    )
+
+    response = client.delete(f"/api/v1/orders/{order['id']}", headers=headers)
+
+    assert response.status_code == 200
+
+    inventory = get_inventory(db_session, warehouse["id"], product["id"])
+    assert inventory.reserved_stock == 0
+
+
+def test_delete_loaded_order_reverses_shipped_stock(client, db_session):
+    headers = admin_headers(client)
+    salesman_headers, customer, warehouse = setup_salesman_and_customer(client, headers)
+    product = create_product(client, headers)
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_id": product["id"], "ordered_qty": 5}],
+        },
+        headers=salesman_headers,
+    ).json()
+    item_id = order["items"][0]["id"]
+    client.post(
+        f"/api/v1/orders/{order['id']}/approve",
+        json={"items": [{"item_id": item_id, "approved_qty": 5}]},
+        headers=headers,
+    )
+    client.post(
+        f"/api/v1/orders/{order['id']}/load",
+        json={"items": [{"item_id": item_id, "loaded_qty": 5}]},
+        headers=headers,
+    )
+
+    response = client.delete(f"/api/v1/orders/{order['id']}", headers=headers)
+
+    assert response.status_code == 200
+
+    inventory = get_inventory(db_session, warehouse["id"], product["id"])
+    assert inventory.physical_stock == 0
+    assert inventory.reserved_stock == 0
+
+
+def test_delete_order_not_found_returns_404(client):
+    headers = admin_headers(client)
+    fake_id = uuid.uuid4()
+
+    response = client.delete(f"/api/v1/orders/{fake_id}", headers=headers)
+
+    assert response.status_code == 404
+
+
 # ---------- GET /orders ----------
 
 def test_customer_lists_only_own_orders(client):

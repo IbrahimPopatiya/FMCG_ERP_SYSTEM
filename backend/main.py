@@ -191,4 +191,4 @@ app.include_router(poster.router, prefix="/api/v1")
 
 if __name__ == "__main__":
     create_all_tables()
-    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

@@ -68,9 +68,9 @@ export function AdminMenuButton({ className = "" }: { className?: string }) {
       type="button"
       aria-label="Open menu"
       onClick={() => ctx?.open()}
-      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-ink transition-colors hover:bg-surface sm:hidden ${className}`}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink transition-colors hover:bg-surface sm:hidden ${className}`}
     >
-      <MenuIcon className="h-5 w-5" />
+      <MenuIcon className="h-4 w-4" />
     </button>
   );
 }

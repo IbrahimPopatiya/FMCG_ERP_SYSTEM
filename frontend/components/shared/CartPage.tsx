@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { QtyStepper } from "@/components/ui/QtyStepper";
+import { QtyEditModal } from "@/components/ui/QtyEditModal";
 import { TrashIcon, CartIcon } from "@/components/customer/icons";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCreateOrder } from "@/lib/hooks/useOrderMutations";
@@ -50,12 +51,16 @@ export function CartPage({
   showLoadingCapacity = false,
 }: CartPageProps) {
   const router = useRouter();
-  const { items, subtotal, totalLoadingCapacity, setQty, removeItem, clear } = useCart();
+  const { items, subtotal, totalLoadingCapacity, setQty, setUnitsPerBox, removeItem, clear } = useCart();
   const createOrder = useCreateOrder();
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+  const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
+  const [editingUnitsPerBoxId, setEditingUnitsPerBoxId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const removalItem = items.find((i) => i.productId === pendingRemoval);
+  const editingQtyItem = items.find((i) => i.productId === editingQtyId);
+  const editingUnitsPerBoxItem = items.find((i) => i.productId === editingUnitsPerBoxId);
 
   async function handlePlaceOrder() {
     if (!canPlaceOrder) {
@@ -144,14 +149,24 @@ export function CartPage({
                       <TrashIcon className="h-4 w-4 text-white" />
                     </button> 
                   </div>
-                  <p className="mt-0.5 text-sm font-semibold text-ink">
+                  <button
+                    type="button"
+                    onClick={() => setEditingUnitsPerBoxId(item.productId)}
+                    className="mt-0.5 w-fit text-left text-sm font-semibold text-ink"
+                  >
                     {formatCurrency(item.price)}
-                    <span className="ml-0.5 text-xs font-normal text-ink-muted">
+                    <span className="ml-0.5 text-xs font-normal text-ink-muted underline decoration-dotted underline-offset-2">
                       /pc · {item.unitsPerBox} pcs/box
                     </span>
-                  </p>
+                  </button>
                   <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-                    <QtyStepper qty={item.qty} onChange={(qty) => setQty(item.productId, qty)} size="sm" />
+                    <QtyStepper
+                      qty={item.qty}
+                      onChange={(qty) => setQty(item.productId, qty)}
+                      size="sm"
+                      editorMode="modal"
+                      onEdit={() => setEditingQtyId(item.productId)}
+                    />
                     <span className="text-sm font-semibold text-ink">
                       {formatCurrency(item.price * item.unitsPerBox * item.qty)}
                     </span>
@@ -195,6 +210,29 @@ export function CartPage({
             Place order
           </Button>
         </div>
+      )}
+
+      {editingQtyItem && (
+        <QtyEditModal
+          open={editingQtyId !== null}
+          qty={editingQtyItem.qty}
+          label={editingQtyItem.name}
+          title="Edit boxes"
+          onConfirm={(qty) => setQty(editingQtyItem.productId, qty)}
+          onClose={() => setEditingQtyId(null)}
+        />
+      )}
+
+      {editingUnitsPerBoxItem && (
+        <QtyEditModal
+          open={editingUnitsPerBoxId !== null}
+          qty={editingUnitsPerBoxItem.unitsPerBox}
+          label={editingUnitsPerBoxItem.name}
+          title="Edit pieces per box"
+          min={1}
+          onConfirm={(unitsPerBox) => setUnitsPerBox(editingUnitsPerBoxItem.productId, unitsPerBox)}
+          onClose={() => setEditingUnitsPerBoxId(null)}
+        />
       )}
 
       <ConfirmDialog

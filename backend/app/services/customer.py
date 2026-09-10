@@ -151,7 +151,9 @@ def assign_salesman_to_customer(
         return None
 
     salesman = db.query(User).filter(
-        User.id == salesman_id, User.role == UserRole.SALESMAN, User.deleted_at.is_(None)
+        User.id == salesman_id,
+        User.role.in_([UserRole.SALESMAN, UserRole.ADMIN]),
+        User.deleted_at.is_(None),
     ).first()
     if salesman is None:
         raise SalesmanNotFoundError("Salesman not found")

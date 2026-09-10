@@ -20,9 +20,9 @@ function ProfileMenu() {
     <Link
       href="/admin/profile"
       aria-label="Profile"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary transition-colors hover:brightness-95"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary transition-colors hover:brightness-95"
     >
-      <AccountIcon className="h-5 w-5" />
+      <AccountIcon className="h-4 w-4" />
     </Link>
   );
 }
@@ -43,18 +43,18 @@ export function TopBar({ backHref, onBack }: TopBarProps) {
 
   return (
     <header
-      className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border/70 bg-white/80 px-4 pb-3.5 pt-5 pb-5 backdrop-blur-xl sm:px-6"
-      style={{ paddingTop: "calc(1.25rem + env(safe-area-inset-top))" }}
+      className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border/70 bg-white/80 px-4 py-3 backdrop-blur-xl sm:px-6"
+      style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
     >
-      <div className="flex w-9 shrink-0 items-center">
+      <div className="flex w-8 shrink-0 items-center">
         {backHref || onBack ? (
           <button
             type="button"
             onClick={handleBack}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-ink transition-colors hover:bg-border"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface text-ink transition-colors hover:bg-border"
             aria-label="Go back"
           >
-            <BackArrowIcon className="h-5 w-5" />
+            <BackArrowIcon className="h-4 w-4" />
           </button>
         ) : (
           <AdminMenuButton className="bg-surface hover:bg-border" />

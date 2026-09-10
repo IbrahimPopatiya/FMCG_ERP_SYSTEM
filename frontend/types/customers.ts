@@ -32,6 +32,11 @@ export interface CustomerCreateResponse {
   created_at: string;
 }
 
+export interface CustomerDeleteResponse {
+  id: string;
+  deleted_at: string;
+}
+
 export interface CustomerCreate {
   business_name: string;
   owner_name: string;

@@ -51,6 +51,10 @@ export function cancelOrder(orderId: string) {
   return api.post<{ id: string; status: string }>(`/orders/${orderId}/cancel`).then((res) => res.data);
 }
 
+export function deleteOrder(orderId: string) {
+  return api.delete<{ id: string; deleted_at: string }>(`/orders/${orderId}`).then((res) => res.data);
+}
+
 export function approveOrder(orderId: string, items: SalesOrderApproveItem[]) {
   return api.post(`/orders/${orderId}/approve`, { items }).then((res) => res.data);
 }

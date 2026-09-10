@@ -64,7 +64,7 @@ export default function CustomerDetailPage() {
   const sentinelRef = useInfiniteScrollSentinel(() => fetchNextPage(), !!hasNextPage);
   const orders = ordersData?.pages.flatMap((page) => page.items) ?? [];
 
-  const salesmen = (staffDirectory.data ?? []).filter((u) => u.role === "salesman");
+  const salesmen = (staffDirectory.data ?? []).filter((u) => u.role === "salesman" || u.role === "admin");
   const currentRoute = routes.data?.find((r) => r.id === customer.data?.route_id) ?? null;
   const currentSalesman = salesmen.find((s) => s.id === currentRoute?.salesman_id) ?? null;
 

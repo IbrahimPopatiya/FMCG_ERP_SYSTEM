@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { approveOrder, cancelOrder, createOrder, loadOrder } from "@/lib/api/salesOrders";
+import { approveOrder, cancelOrder, createOrder, deleteOrder, loadOrder } from "@/lib/api/salesOrders";
 import type { SalesOrderApproveItem, SalesOrderCreate, SalesOrderLoadItem } from "@/types/salesOrder";
 
 export function useCreateOrder() {
@@ -16,6 +16,16 @@ export function useCancelOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (orderId: string) => cancelOrder(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+}
+
+export function useBulkDeleteOrders() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderIds: string[]) => Promise.all(orderIds.map((id) => deleteOrder(id))),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },

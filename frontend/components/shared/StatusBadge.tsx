@@ -7,10 +7,16 @@ export function StatusBadge<T extends string>({
   status,
   toneMap,
   labelMap,
+  size,
 }: {
   status: T;
   toneMap: Record<T, Tone>;
   labelMap?: Record<T, string>;
+  size?: "xs" | "sm";
 }) {
-  return <Badge tone={toneMap[status]}>{labelMap?.[status] ?? toTitleCase(status)}</Badge>;
+  return (
+    <Badge tone={toneMap[status]} size={size}>
+      {labelMap?.[status] ?? toTitleCase(status)}
+    </Badge>
+  );
 }

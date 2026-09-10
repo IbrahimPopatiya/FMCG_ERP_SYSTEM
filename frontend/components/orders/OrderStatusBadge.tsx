@@ -21,6 +21,6 @@ const LABEL: Record<OrderStatus, string> = {
   cancelled: "Cancelled",
 };
 
-export function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  return <StatusBadge status={status} toneMap={TONE} labelMap={LABEL} />;
+export function OrderStatusBadge({ status, size }: { status: OrderStatus; size?: "xs" | "sm" }) {
+  return <StatusBadge status={status} toneMap={TONE} labelMap={LABEL} size={size} />;
 }

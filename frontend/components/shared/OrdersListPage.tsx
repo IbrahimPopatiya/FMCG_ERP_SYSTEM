@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { SettingsIcon } from "@/components/admin/icons";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
@@ -133,7 +134,7 @@ function DayListView({
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4 sm:p-6">
+    <div className="flex flex-col gap-3 p-4 pb-28 sm:p-6 sm:pb-6">
       {data.map(({ order_date, order_count }) => (
         <button
           key={order_date}
@@ -180,6 +181,9 @@ export interface OrdersListPageProps {
   // account, no separate salesman login — see RoleSwitchCards), whose real
   // DB role is "admin" and would otherwise see every order in the business.
   onlyMine?: boolean;
+  // Admin-only: shows a settings button on the day-list landing view linking
+  // to a screen for bulk-deleting orders by day.
+  settingsHref?: string;
 }
 
 export function OrdersListPage({
@@ -188,6 +192,7 @@ export function OrdersListPage({
   emptyState,
   groupByDate = false,
   onlyMine = false,
+  settingsHref,
 }: OrdersListPageProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
@@ -234,8 +239,17 @@ export function OrdersListPage({
   if (groupByDate && !selectedDate) {
     return (
       <div>
-        <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
+        <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-white px-4 py-2.5 sm:px-6 sm:py-3">
           <h2 className="text-sm font-medium text-ink-muted">Pick a day to view its orders</h2>
+          {settingsHref && (
+            <Link
+              href={settingsHref}
+              aria-label="Order settings"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+            >
+              <SettingsIcon className="h-4 w-4" />
+            </Link>
+          )}
         </header>
         <DayListView onSelectDate={setSelectedDate} emptyState={emptyState} onlyMine={onlyMine} />
       </div>
@@ -244,7 +258,7 @@ export function OrdersListPage({
 
   return (
     <div>
-      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-border bg-white px-4 py-4 sm:px-6 sm:py-5">
+      <header className="sticky top-0 z-10 flex flex-col gap-2 border-b border-border bg-white px-4 py-2.5 sm:px-6 sm:py-3">
         {groupByDate && selectedDate && (
           <button
             type="button"
@@ -263,23 +277,23 @@ export function OrdersListPage({
               placeholder="Search orders..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-11 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
+              className="h-10 w-full rounded-xl border border-border bg-surface pl-10 pr-3.5 text-sm text-ink placeholder:text-ink-muted/70 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-soft"
             />
           </div>
           <button
             type="button"
             onClick={() => setShowFilters((v) => !v)}
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors ${
               showFilters ? "border-primary bg-primary-soft text-primary" : "border-border text-ink-muted hover:bg-surface"
             }`}
             aria-label="Filter orders by status"
           >
-            <FilterIcon className="h-5 w-5" />
+            <FilterIcon className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={openDateModal}
-            className={`flex h-11 shrink-0 items-center gap-1.5 rounded-xl border px-3.5 text-sm font-medium transition-colors ${
+            className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-sm font-medium transition-colors ${
               selectedDate ? "border-primary bg-primary-soft text-primary" : "border-border text-ink-muted hover:bg-surface"
             }`}
             aria-label="Filter orders by date"

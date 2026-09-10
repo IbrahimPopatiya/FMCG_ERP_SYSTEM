@@ -158,6 +158,15 @@ export function RefreshIcon({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
+export function PowerIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 3v8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6.5 6.5a8 8 0 1011 0" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // Bottom-nav / sidebar icon per admin section, keyed by href so both
 // MobileBottomNav and DesktopSidebar can look one up without every caller
 // of getRoleNav() having to carry an icon component around.

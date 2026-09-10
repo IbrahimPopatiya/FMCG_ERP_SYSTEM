@@ -80,6 +80,7 @@ class SalesOrderResponse(BaseModel):
     customer_id: uuid.UUID
     customer_name: Optional[str] = None
     salesman_id: Optional[uuid.UUID]
+    salesman_name: Optional[str] = None
     order_source: OrderSource
     status: OrderStatus
     remarks: Optional[str]
@@ -103,10 +104,25 @@ class SalesOrderResponse(BaseModel):
             data.customer_name = customer.business_name
         return data
 
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_salesman_name(cls, data: Any) -> Any:
+        salesman = getattr(data, "salesman", None)
+        if salesman is not None and getattr(data, "salesman_name", None) is None:
+            data.salesman_name = salesman.full_name
+        return data
+
 
 class SalesOrderCancelResponse(BaseModel):
     id: uuid.UUID
     status: OrderStatus
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SalesOrderDeleteResponse(BaseModel):
+    id: uuid.UUID
+    deleted_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

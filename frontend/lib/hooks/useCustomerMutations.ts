@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { assignCustomerSalesman, createCustomer, setCustomerStatus } from "@/lib/api/customers";
+import { assignCustomerSalesman, createCustomer, deleteCustomer, setCustomerStatus } from "@/lib/api/customers";
 import type { CustomerCreate, CustomerStatus } from "@/types/customers";
 
 export function useCreateCustomer() {
@@ -19,6 +19,16 @@ export function useSetCustomerStatus(customerId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers", "manage"] });
       queryClient.invalidateQueries({ queryKey: ["customers", customerId] });
+    },
+  });
+}
+
+export function useBulkDeleteCustomers() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (customerIds: string[]) => Promise.all(customerIds.map((id) => deleteCustomer(id))),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers", "manage"] });
     },
   });
 }

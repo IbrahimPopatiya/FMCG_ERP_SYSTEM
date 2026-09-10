@@ -4,7 +4,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user, require_customer
+from app.core.deps import get_current_user, require_customer, require_role
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.customer import Customer
 from app.models.user import User
@@ -170,7 +171,7 @@ def update_customer_location(
 def delete_customer(
     customer_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ):
     customer = customer_service.soft_delete_customer(db, customer_id)
     if customer is None:

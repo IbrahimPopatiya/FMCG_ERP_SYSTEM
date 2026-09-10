@@ -11,13 +11,22 @@ const VARIANT_CLASSES: Record<Variant, string> = {
     "bg-danger text-white hover:bg-danger-hover active:bg-danger-hover focus-visible:ring-danger",
 };
 
+type Size = "sm" | "md";
+
+const SIZE_CLASSES: Record<Size, string> = {
+  sm: "h-9 gap-1.5 px-3 text-sm",
+  md: "h-11 gap-2 px-4 text-sm",
+};
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
+  size?: Size;
   isLoading?: boolean;
 }
 
 export function Button({
   variant = "primary",
+  size = "md",
   isLoading = false,
   disabled,
   className = "",
@@ -27,7 +36,7 @@ export function Button({
   return (
     <button
       disabled={disabled || isLoading}
-      className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${SIZE_CLASSES[size]} ${VARIANT_CLASSES[variant]} ${className}`}
       {...props}
     >
       {isLoading && (
