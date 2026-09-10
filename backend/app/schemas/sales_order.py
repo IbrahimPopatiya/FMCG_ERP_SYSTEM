@@ -120,6 +120,13 @@ class SalesOrderCancelResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class SalesOrderDeleteResponse(BaseModel):
+    id: uuid.UUID
+    deleted_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class SalesOrderApproveItem(BaseModel):
     item_id: uuid.UUID
     approved_qty: Decimal

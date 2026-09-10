@@ -15,6 +15,7 @@ from app.schemas.sales_order import (
     SalesOrderUpdate,
     SalesOrderResponse,
     SalesOrderCancelResponse,
+    SalesOrderDeleteResponse,
     SalesOrderApproveRequest,
     SalesOrderApproveResponse,
     SalesOrderLoadRequest,
@@ -197,4 +198,22 @@ def cancel_order(
         order_id=str(order.id),
         principal_type=principal.type,
     )
+    return order
+
+
+@router.delete("/{order_id}", response_model=SalesOrderDeleteResponse)
+def delete_order(
+    order_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
+):
+    try:
+        order = sales_order_service.soft_delete_sales_order(db, order_id)
+    except OrderNotEditableError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    log_event(logger, "order.deleted", order_id=str(order.id), principal_type="admin")
     return order

@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import { TopBar } from "@/components/layout/TopBar";
-import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { NoProductImage } from "@/components/ui/NoProductImage";
-import { SearchIcon, TrashIcon } from "@/components/admin/icons";
+import { SelectionBar } from "@/components/ui/SelectionBar";
+import { SearchIcon } from "@/components/admin/icons";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useInfiniteScrollSentinel } from "@/lib/hooks/useInfiniteScrollSentinel";
 import { useBrands } from "@/lib/hooks/useBrands";
@@ -53,34 +53,6 @@ function SelectRow({
         {subtitle && <p className="truncate text-xs text-ink-muted">{subtitle}</p>}
       </div>
     </label>
-  );
-}
-
-function SelectionBar({
-  count,
-  onClear,
-  onDelete,
-  isDeleting,
-}: {
-  count: number;
-  onClear: () => void;
-  onDelete: () => void;
-  isDeleting: boolean;
-}) {
-  if (count === 0) return null;
-  return (
-    <div className="sticky bottom-21 z-30 mx-4 flex items-center justify-between gap-3 rounded-2xl border border-border bg-white px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.12)] sm:sticky sm:bottom-0 sm:mx-0 sm:rounded-none sm:border-x-0 sm:border-b-0 sm:px-6 sm:shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-semibold text-ink">{count} selected</span>
-        <button type="button" onClick={onClear} className="text-sm font-medium text-primary hover:underline">
-          Clear
-        </button>
-      </div>
-      <Button type="button" variant="danger" className="gap-1.5" onClick={onDelete} isLoading={isDeleting}>
-        <TrashIcon className="h-4 w-4" />
-        Delete
-      </Button>
-    </div>
   );
 }
 

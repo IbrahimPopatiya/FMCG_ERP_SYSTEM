@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import func
@@ -219,6 +219,20 @@ def cancel_sales_order(db: Session, order_id: uuid.UUID, principal: Principal) -
         raise OrderNotEditableError("Only pending orders can be cancelled")
 
     order.status = OrderStatus.CANCELLED
+    db.commit()
+    db.refresh(order)
+    return order
+
+
+def soft_delete_sales_order(db: Session, order_id: uuid.UUID) -> SalesOrder | None:
+    order = get_sales_order(db, order_id)
+    if order is None:
+        return None
+
+    if order.status not in (OrderStatus.PENDING, OrderStatus.CANCELLED):
+        raise OrderNotEditableError("Only pending or cancelled orders can be deleted")
+
+    order.deleted_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(order)
     return order

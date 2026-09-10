@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { SettingsIcon } from "@/components/admin/icons";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
@@ -133,7 +134,7 @@ function DayListView({
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4 sm:p-6">
+    <div className="flex flex-col gap-3 p-4 pb-28 sm:p-6 sm:pb-6">
       {data.map(({ order_date, order_count }) => (
         <button
           key={order_date}
@@ -180,6 +181,9 @@ export interface OrdersListPageProps {
   // account, no separate salesman login — see RoleSwitchCards), whose real
   // DB role is "admin" and would otherwise see every order in the business.
   onlyMine?: boolean;
+  // Admin-only: shows a settings button on the day-list landing view linking
+  // to a screen for bulk-deleting orders by day.
+  settingsHref?: string;
 }
 
 export function OrdersListPage({
@@ -188,6 +192,7 @@ export function OrdersListPage({
   emptyState,
   groupByDate = false,
   onlyMine = false,
+  settingsHref,
 }: OrdersListPageProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
@@ -234,8 +239,17 @@ export function OrdersListPage({
   if (groupByDate && !selectedDate) {
     return (
       <div>
-        <header className="sticky top-0 z-10 border-b border-border bg-white px-4 py-2.5 sm:px-6 sm:py-3">
+        <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-white px-4 py-2.5 sm:px-6 sm:py-3">
           <h2 className="text-sm font-medium text-ink-muted">Pick a day to view its orders</h2>
+          {settingsHref && (
+            <Link
+              href={settingsHref}
+              aria-label="Order settings"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+            >
+              <SettingsIcon className="h-4 w-4" />
+            </Link>
+          )}
         </header>
         <DayListView onSelectDate={setSelectedDate} emptyState={emptyState} onlyMine={onlyMine} />
       </div>
