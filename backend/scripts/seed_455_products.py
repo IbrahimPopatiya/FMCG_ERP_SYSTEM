@@ -1,5 +1,5 @@
 """Seeds all 455 product photos in final_docs/products-455/ as testing
-products - uploading each image to Supabase Storage (same path
+products - uploading each image to S3 (same path
 create_product's callers use) and creating a Product with generic
 auto-generated name/category/brand/price data, since these images weren't
 individually identified.

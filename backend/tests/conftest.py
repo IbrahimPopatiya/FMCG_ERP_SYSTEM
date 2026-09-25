@@ -1,7 +1,7 @@
 """Shared test setup.
 
 The suite ALWAYS talks to a local Postgres database via TEST_DATABASE_URL —
-never the deployed Supabase URL from DATABASE_URL. That keeps the app free to
+never the deployed database from DATABASE_URL. That keeps the app free to
 use a remote DB for day-to-day work while tests stay fast and isolated.
 
 Override in backend/.env if needed:
@@ -16,6 +16,7 @@ so tests never leak data into each other.
 
 import os
 import re
+from urllib.parse import urlparse
 
 import pytest
 from sqlalchemy import create_engine, event
@@ -47,7 +48,8 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_database():
     print(f"\n[pytest] Using LOCAL test database: {_redact_url(TEST_DATABASE_URL)}")
-    if "supabase.com" in TEST_DATABASE_URL or "pooler." in TEST_DATABASE_URL:
+    # drop_all below wipes every table - refuse anything that isn't this machine.
+    if urlparse(TEST_DATABASE_URL).hostname not in ("localhost", "127.0.0.1"):
         raise RuntimeError(
             "TEST_DATABASE_URL points at a remote/deployed database. "
             "Tests must use a local Postgres URL (e.g. localhost dms_test_db)."

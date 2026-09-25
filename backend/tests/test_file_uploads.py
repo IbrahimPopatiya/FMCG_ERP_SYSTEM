@@ -1,14 +1,15 @@
 """Tests for POST /files - per api_reference.md Section 17, uploads a file to
-Supabase Storage and returns its public URL; the caller then passes that URL
-into the relevant business API (customer_signature, image, etc.).
+S3 and returns its public URL; the caller then passes that URL into the
+relevant business API (customer_signature, image, etc.).
 
-The real Supabase client is mocked so these tests don't hit the network.
+The real S3 client is mocked so these tests don't hit the network.
 """
 
 import io
 import uuid
 from unittest.mock import MagicMock, patch
 
+from app.core.config import settings
 from app.core.security import create_access_token
 
 
@@ -27,20 +28,10 @@ def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 
 
-def mock_supabase_storage():
-    """Returns a mock whose from_(bucket).get_public_url(path) echoes back a
-    predictable fake URL derived from the storage path."""
-    mock_client = MagicMock()
-    mock_client.storage.from_.return_value.get_public_url.side_effect = (
-        lambda path: f"https://fake.supabase.co/storage/v1/object/public/fmcg_products/{path}"
-    )
-    return mock_client
-
-
-def test_upload_file_returns_public_url(client):
+def test_upload_file_returns_public_s3_url(client):
     headers = auth_headers(client)
 
-    with patch("app.services.file_upload._supabase", mock_supabase_storage()):
+    with patch("app.services.file_upload._s3", MagicMock()):
         response = client.post(
             "/api/v1/files",
             files={"file": ("photo.jpg", io.BytesIO(b"fake image bytes"), "image/jpeg")},
@@ -49,15 +40,16 @@ def test_upload_file_returns_public_url(client):
         )
 
     assert response.status_code == 201
-    body = response.json()
-    assert "deliveries/" in body["file_url"]
-    assert body["file_url"].endswith(".jpg")
+    file_url = response.json()["file_url"]
+    bucket_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_region}.amazonaws.com/"
+    assert file_url.startswith(bucket_url + "deliveries/")
+    assert file_url.endswith(".jpg")
 
 
 def test_upload_file_defaults_category_to_misc(client):
     headers = auth_headers(client)
 
-    with patch("app.services.file_upload._supabase", mock_supabase_storage()):
+    with patch("app.services.file_upload._s3", MagicMock()):
         response = client.post(
             "/api/v1/files",
             files={"file": ("note.txt", io.BytesIO(b"hello"), "text/plain")},
@@ -65,7 +57,57 @@ def test_upload_file_defaults_category_to_misc(client):
         )
 
     assert response.status_code == 201
-    assert "misc/" in response.json()["file_url"]
+    assert "/misc/" in response.json()["file_url"]
+
+
+def test_upload_file_stores_bytes_with_content_type_and_cache_header(client):
+    headers = auth_headers(client)
+    mock_s3 = MagicMock()
+
+    with patch("app.services.file_upload._s3", mock_s3):
+        response = client.post(
+            "/api/v1/files",
+            files={"file": ("photo.png", io.BytesIO(b"png bytes"), "image/png")},
+            data={"category": "products"},
+            headers=headers,
+        )
+
+    upload = mock_s3.put_object.call_args.kwargs
+    assert upload["Bucket"] == settings.s3_bucket_name
+    assert upload["Body"] == b"png bytes"
+    assert upload["ContentType"] == "image/png"
+    assert "max-age=31536000" in upload["CacheControl"]
+    assert response.json()["file_url"].endswith(upload["Key"])
+
+
+def test_upload_file_guesses_content_type_from_filename_when_missing(client):
+    headers = auth_headers(client)
+    mock_s3 = MagicMock()
+
+    with patch("app.services.file_upload._s3", mock_s3):
+        client.post(
+            "/api/v1/files",
+            files={"file": ("photo.jpeg", io.BytesIO(b"x"), "")},
+            headers=headers,
+        )
+
+    assert mock_s3.put_object.call_args.kwargs["ContentType"] == "image/jpeg"
+
+
+def test_upload_file_uses_cloudfront_domain_when_set(client):
+    headers = auth_headers(client)
+
+    with (
+        patch("app.services.file_upload._s3", MagicMock()),
+        patch.object(settings, "cloudfront_domain", "d123.cloudfront.net"),
+    ):
+        response = client.post(
+            "/api/v1/files",
+            files={"file": ("photo.jpg", io.BytesIO(b"x"), "image/jpeg")},
+            headers=headers,
+        )
+
+    assert response.json()["file_url"].startswith("https://d123.cloudfront.net/misc/")
 
 
 def test_upload_file_without_token_returns_401_or_403(client):

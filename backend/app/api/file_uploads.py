@@ -19,7 +19,7 @@ async def upload_file(
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE_BYTES:
         raise HTTPException(status_code=413, detail="File too large - maximum size is 10MB")
-    # save_file() does a blocking network call to Supabase Storage - running it
+    # save_file() does a blocking network call to S3 - running it
     # directly here would freeze every other in-flight request on the event loop
     # until the upload finishes, so it runs in a worker thread instead.
     file_url = await run_in_threadpool(

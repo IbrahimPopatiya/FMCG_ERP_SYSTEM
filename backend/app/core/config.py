@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # database_url so this is opt-in per environment.
     direct_database_url: str = ""
     # Pytest only — always local. Independent of database_url so the app can
-    # point at Supabase while the suite stays on localhost.
+    # point at a remote database while the suite stays on localhost.
     test_database_url: str = "postgresql://postgres@localhost:5432/dms_test_db"
     secret_key: str
     # 7 days, matching the frontend's session cookie lifetime (see
@@ -21,9 +21,15 @@ class Settings(BaseSettings):
     # Matches this client's Vercel preview deploys (project-name-git-branch-*.vercel.app).
     # Each client's Render service should set this to their own Vercel project name.
     cors_vercel_preview_regex: str = r"https://fmcg-erp-system.*\.vercel\.app"
-    supabase_url: str
-    supabase_service_role_key: str
-    supabase_storage_bucket: str = "fmcg_products"
+    # S3 file storage (product images, signatures, return photos, posters).
+    # Use an IAM user limited to PutObject/GetObject on this one bucket.
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    aws_region: str = "ap-south-1"
+    s3_bucket_name: str
+    # Optional - when set, file URLs use this CloudFront domain instead of
+    # the plain S3 bucket URL.
+    cloudfront_domain: str = ""
 
     # OpenAI API key - server-side only, used to generate AI product ad
     # posters (admin > Poster AI). Get one at platform.openai.com.

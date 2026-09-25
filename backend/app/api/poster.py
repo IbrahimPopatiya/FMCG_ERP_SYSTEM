@@ -28,7 +28,7 @@ async def generate_poster_ad(
     mime_type = image.content_type or "image/jpeg"
 
     try:
-        # Both the Gemini call and the Supabase upload are blocking network
+        # Both the image-generation call and the S3 upload are blocking network
         # calls - run them off the event loop so they don't stall every other
         # in-flight request while the ad generates.
         poster_bytes, poster_mime = await run_in_threadpool(generate_poster, contents, mime_type, prompt)

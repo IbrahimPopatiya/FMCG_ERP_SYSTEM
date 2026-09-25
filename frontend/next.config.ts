@@ -14,9 +14,16 @@ const nextConfig: NextConfig = {
   images: {
     // Lets next/image auto-resize/optimize images from these sources instead
     // of shipping the original full-size file for a thumbnail-sized slot:
-    // real product photos (Supabase Storage) and the demo/placeholder
+    // real product photos (each client's S3 bucket) and the demo/placeholder
     // fallback images (Wikimedia brand photos, picsum.photos).
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.s3.ap-south-1.amazonaws.com",
+        pathname: "/**",
+      },
+      // Old Supabase Storage URLs - still in the database until the final
+      // cutover rewrites them to S3. Remove once no row points here.
       {
         protocol: "https",
         hostname: "*.supabase.co",

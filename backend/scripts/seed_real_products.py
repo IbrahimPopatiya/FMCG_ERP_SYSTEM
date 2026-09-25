@@ -1,5 +1,5 @@
 """Seeds the 50 real product catalog photos in final_docs/products-images/
-as actual products - uploading each image to Supabase Storage (same path
+as actual products - uploading each image to S3 (same path
 create_product's callers use) and creating a Product that points at it.
 
 This is destructive: Step 1 deletes every product NOT in the PRODUCTS list
@@ -196,7 +196,7 @@ def main() -> None:
         categories: dict = {}
         brands: dict = {}
 
-        print(f"Step 2/3: Uploading {len(PRODUCTS)} product images to Supabase Storage...")
+        print(f"Step 2/3: Uploading {len(PRODUCTS)} product images to S3...")
         created = 0
         for filename, name, brand_name, category_name in PRODUCTS:
             if db.query(Product).filter(Product.name == name, Product.deleted_at.is_(None)).first():
