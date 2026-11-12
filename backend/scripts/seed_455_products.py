@@ -22,7 +22,6 @@ import sys
 from decimal import Decimal
 from pathlib import Path
 
-from app.core.config import settings
 from app.core.enums import UserRole
 from app.db.session import SessionLocal
 import app.models  # noqa: F401 - registers all models on Base.metadata
@@ -38,6 +37,7 @@ from app.services import category as category_service
 from app.services import product as product_service
 from app.services.product import DuplicateProductError
 from app.services.file_upload import save_file
+from scripts.local_only import require_local_database
 
 IMAGES_DIR = Path(__file__).resolve().parent.parent.parent / "final_docs" / "products-455"
 
@@ -94,11 +94,7 @@ def main() -> None:
         print(f"No product images found in {IMAGES_DIR}")
         sys.exit(1)
 
-    if "test" in settings.database_url or "prod" in settings.database_url:
-        print(f"Refusing to run against {settings.database_url!r} - point this at your local dev DB only.")
-        sys.exit(1)
-
-    print(f"Target database: {settings.database_url}")
+    require_local_database()
     print(f"This will create up to {len(image_files)} test products from images in {IMAGES_DIR}.")
     if "--yes" not in sys.argv:
         confirm = input("Type 'yes' to continue: ")

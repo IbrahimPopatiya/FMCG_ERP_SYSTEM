@@ -23,6 +23,7 @@ from app.models.product import Product
 from app.models.purchase import PurchaseItem
 from app.models.return_ import ReturnItem
 from app.models.sales_order import SalesOrderItem
+from scripts.local_only import require_local_database
 
 # Children before parent (Product) to satisfy foreign-key constraints.
 WIPE_ORDER = [
@@ -42,6 +43,7 @@ def main() -> None:
     parser.add_argument("--yes", action="store_true", help="Skip the confirmation prompt")
     args = parser.parse_args()
 
+    require_local_database()
     if not args.yes:
         confirm = input("This will delete ALL products and product-linked rows. Type 'yes' to continue: ")
         if confirm.strip().lower() != "yes":

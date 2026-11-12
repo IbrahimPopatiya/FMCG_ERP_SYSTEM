@@ -23,7 +23,6 @@ Skip the confirmation prompt with:
 import sys
 from decimal import Decimal
 
-from app.core.config import settings
 from app.core.deps import Principal
 from app.core.enums import ReturnReason, UserRole, WarehouseStatus
 from app.db.session import SessionLocal
@@ -86,6 +85,7 @@ from app.services import user as user_service
 from app.services import vehicle as vehicle_service
 from app.services import warehouse as warehouse_service
 from app.services.warehouse import set_warehouse_status
+from scripts.local_only import require_local_database
 
 # Deletion order matters - children before parents.
 WIPE_ORDER = [
@@ -1015,11 +1015,7 @@ def print_credentials() -> None:
 
 
 def main() -> None:
-    if "test" in settings.database_url or "prod" in settings.database_url:
-        print(f"Refusing to run against {settings.database_url!r} - point this at your local dev DB only.")
-        sys.exit(1)
-
-    print(f"Target database: {settings.database_url}")
+    require_local_database()
     print("This script will CLEAR all existing data, then insert a fresh seed dataset.")
     if "--yes" not in sys.argv:
         confirm = input("Type 'yes' to continue: ")

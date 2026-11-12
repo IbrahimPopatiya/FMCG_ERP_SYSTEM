@@ -102,6 +102,25 @@ alembic upgrade head
 ```
 If this runs with no errors, your database now has the same tables as everyone else on the team.
 
+> ⚠️ **Never point your `.env` at the production database.** Production (Supabase) holds the client's real data, so anything you test against it changes real data. Its URL lives only in the hosting provider's settings. Scripts that delete data (`seed_dummy_data`, `clear_products`, `wipe_products`, `seed_455_products`, `seed_real_products`) refuse to run unless `DATABASE_URL` points at `localhost`, `127.0.0.1` or the docker `db` container.
+
+### Optional — work with a copy of the production data
+To get real products/customers locally without touching production, copy it into a separate local database. `pg_dump` only **reads** from production. Use a `pg_dump` with the same major version as the server (Postgres 17).
+```bash
+# 1. Dump production's public schema (ask the team lead for the URL - don't save it in .env)
+pg_dump "<production-url>" --schema=public --format=custom --no-owner --no-privileges --file=prod.dump
+
+# 2. Restore into a new local database. Supabase keeps pg_trgm in another schema,
+#    so create it first or the product search indexes fail to restore.
+createdb -h localhost -U postgres dms_dev
+psql -h localhost -U postgres -d dms_dev -c "create extension if not exists pg_trgm"
+pg_restore -h localhost -U postgres -d dms_dev --no-owner --no-privileges prod.dump
+
+# 3. Delete the dump - it contains client data
+rm prod.dump
+```
+Then set `DATABASE_URL=postgresql://postgres:<your-password>@localhost:5432/dms_dev` in `backend/.env`. The one error `schema "public" already exists` during restore is harmless.
+
 ### Step 5 — Start the backend
 ```bash
 uvicorn main:app --reload

@@ -1,7 +1,10 @@
 from sqlalchemy import create_engine, text
 
-url = open(".env").read().split("DATABASE_URL=")[1].splitlines()[0]
-engine = create_engine(url)
+from app.core.config import settings
+from scripts.local_only import require_local_database
+
+require_local_database()
+engine = create_engine(settings.database_url)
 
 with engine.begin() as conn:
     conn.execute(text("""

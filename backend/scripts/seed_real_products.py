@@ -24,7 +24,6 @@ from pathlib import Path
 
 from sqlalchemy import text
 
-from app.core.config import settings
 from app.core.enums import UserRole
 from app.db.session import SessionLocal
 import app.models  # noqa: F401 - registers all models on Base.metadata
@@ -39,6 +38,7 @@ from app.services import brand as brand_service
 from app.services import category as category_service
 from app.services import product as product_service
 from app.services.file_upload import save_file
+from scripts.local_only import require_local_database
 
 IMAGES_DIR = Path(__file__).resolve().parent.parent.parent / "final_docs" / "products-images"
 
@@ -173,7 +173,7 @@ def main() -> None:
         print(f"Image folder not found: {IMAGES_DIR}")
         sys.exit(1)
 
-    print(f"Target database: {settings.database_url}")
+    require_local_database()
     print("This will DELETE every product not in the 50-item list below (and anything")
     print("referencing them - posts, price list entries, order/purchase/return lines,")
     print("saved products, inventory), then seed exactly these 50.")
