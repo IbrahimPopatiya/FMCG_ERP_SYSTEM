@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import require_staff
+from app.core.deps import require_role, require_staff
+from app.core.enums import UserRole
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserStatusUpdate, UserResponse, UserDeleteResponse
@@ -24,7 +25,11 @@ def get_current_user_profile(current_user: User = Depends(require_staff)):
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(data: UserCreate, db: Session = Depends(get_db)):
+def create_user(
+    data: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
+):
     try:
         return user_service.create_user(db, data)
     except DuplicateUserError as e:
@@ -32,7 +37,12 @@ def create_user(data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{user_id}", response_model=UserResponse)
-def update_user(user_id: uuid.UUID, data: UserUpdate, db: Session = Depends(get_db)):
+def update_user(
+    user_id: uuid.UUID,
+    data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
+):
     user = user_service.update_user(db, user_id, data)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -40,7 +50,12 @@ def update_user(user_id: uuid.UUID, data: UserUpdate, db: Session = Depends(get_
 
 
 @router.patch("/{user_id}/status", response_model=UserResponse)
-def update_user_status(user_id: uuid.UUID, data: UserStatusUpdate, db: Session = Depends(get_db)):
+def update_user_status(
+    user_id: uuid.UUID,
+    data: UserStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
+):
     user = user_service.set_user_status(db, user_id, data.status)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -48,7 +63,11 @@ def update_user_status(user_id: uuid.UUID, data: UserStatusUpdate, db: Session =
 
 
 @router.delete("/{user_id}", response_model=UserDeleteResponse)
-def delete_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
+def delete_user(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
+):
     user = user_service.soft_delete_user(db, user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

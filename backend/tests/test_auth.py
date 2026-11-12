@@ -2,6 +2,8 @@
 customers (by mobile) share the same endpoint, per api_reference.md Section 1/19.
 """
 
+from tests.helpers import create_test_user
+
 
 def create_user(client, **overrides):
     payload = {
@@ -12,7 +14,7 @@ def create_user(client, **overrides):
         "role": "admin",
     }
     payload.update(overrides)
-    return client.post("/api/v1/users", json=payload).json()
+    return create_test_user(client, payload)
 
 
 def create_customer(client, headers, **overrides):

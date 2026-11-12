@@ -7,19 +7,20 @@ each test first creates a user and builds a token by hand.
 import uuid
 
 from app.core.security import create_access_token
+from tests.helpers import create_test_user
 
 
 def auth_headers(client):
-    user = client.post(
-        "/api/v1/users",
-        json={
+    user = create_test_user(
+        client,
+        {
             "full_name": "Supplier Tester",
             "mobile": "9777788899",
             "email": "supplier.tester@example.com",
             "password": "secret123",
             "role": "admin",
         },
-    ).json()
+    )
     token = create_access_token(uuid.UUID(user["id"]))
     return {"Authorization": f"Bearer {token}"}
 

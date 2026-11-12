@@ -14,6 +14,7 @@ from app.core.security import create_access_token
 from app.core.deps import get_current_user
 from app.models.user import User
 from main import app
+from tests.helpers import create_test_user
 
 
 @app.get("/api/v1/_test/whoami")
@@ -34,7 +35,7 @@ def make_user_payload(**overrides):
 
 
 def test_valid_token_grants_access(client):
-    created = client.post("/api/v1/users", json=make_user_payload()).json()
+    created = create_test_user(client, make_user_payload())
     token = create_access_token(uuid.UUID(created["id"]))
 
     response = client.get(
@@ -60,9 +61,9 @@ def test_invalid_token_returns_401(client):
 
 
 def test_token_for_deleted_user_returns_401(client):
-    created = client.post("/api/v1/users", json=make_user_payload()).json()
+    created = create_test_user(client, make_user_payload())
     token = create_access_token(uuid.UUID(created["id"]))
-    client.delete(f"/api/v1/users/{created['id']}")
+    client.delete(f"/api/v1/users/{created['id']}", headers={"Authorization": f"Bearer {token}"})
 
     response = client.get(
         "/api/v1/_test/whoami", headers={"Authorization": f"Bearer {token}"}

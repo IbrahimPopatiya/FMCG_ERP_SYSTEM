@@ -7,6 +7,7 @@ approved/loaded order - staff-only, one invoice per order.
 import uuid
 
 from app.models.sales_order import SalesOrder
+from tests.helpers import create_test_user
 
 
 def create_user(client, **overrides):
@@ -18,20 +19,20 @@ def create_user(client, **overrides):
         "role": "salesman",
     }
     payload.update(overrides)
-    return client.post("/api/v1/users", json=payload).json()
+    return create_test_user(client, payload)
 
 
 def admin_headers(client):
-    admin = client.post(
-        "/api/v1/users",
-        json={
+    admin = create_test_user(
+        client,
+        {
             "full_name": "Admin Tester",
             "mobile": "9000011111",
             "email": "admin.tester@example.com",
             "password": "secret123",
             "role": "admin",
         },
-    ).json()
+    )
     login = client.post(
         "/api/v1/auth/login", json={"identifier": admin["email"], "password": "secret123"}
     ).json()
